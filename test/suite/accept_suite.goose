@@ -210,5 +210,154 @@ fn run_accept() -> i64 {
     let zz = list([-0.0, 0.0]);
     let zm, c59 = statistics::mean(zz[..]);
     check(bad, c59 == 0 && zm == 0.0 && 1.0 / zm > 0.0, "the mean of -0 and 0 is +0");
+    bad += run_accept_assoc();
+    return bad;
+}
+
+// One test for each acceptance scenario of the association calls.
+fn run_accept_assoc() -> i64 {
+    var bad: i64 = 0;
+
+    // The covariance and the correlation of one pair.
+    let x = list([1.0, 2.0, 3.0, 4.0, 5.0]);
+    let y = list([2.0, 4.0, 5.0, 4.0, 5.0]);
+    let cov, c1 = statistics::covariance(x[..], y[..]);
+    let pcov, c2 = statistics::pcovariance(x[..], y[..]);
+    check(bad, within(cov, 1.5, 4.0) && within(pcov, 1.2, 4.0) && c1 == 0 && c2 == 0, "the covariance of 1 2 3 4 5 and 2 4 5 4 5 is 1.5 and 1.2");
+    let r, c3 = statistics::correlation(x[..], y[..]);
+    check(bad, within(r, 0.7745966692414834, 4.0) && c3 == 0, "the correlation of the pair is 0.7745966692414834");
+    let off = list([1e9 + 1.0, 1e9 + 2.0, 1e9 + 3.0]);
+    let lin = list([1.0, 2.0, 3.0]);
+    let ro, c4 = statistics::correlation(off[..], lin[..]);
+    check(bad, within(ro, 1.0, 4.0) && c4 == 0, "the correlation of a large offset and a line is 1");
+    // A perfectly correlated pair: the rounding of the sums pushes the
+    // correlation past one, and the clamp holds it.
+    let perfect_x = list([23.0, 5.0, 27.0]);
+    let perfect_y = list([69.0, 15.0, 81.0]);
+    let rp, c4b = statistics::correlation(perfect_x[..], perfect_y[..]);
+    check(bad, rp == 1.0 && c4b == 0, "the correlation of a perfectly correlated pair is exactly 1");
+    // A sample with a large magnitude: the products of the values do not
+    // fit in a float, but the correlation does.
+    let big_x = list([1e200, 2e200, 3e200, 4e200]);
+    let big_y = list([2e200, 4e200, 5e200, 9e200]);
+    let rb, c4c = statistics::correlation(big_x[..], big_y[..]);
+    check(bad, within(rb, 0.9647638212377322, 4.0) && c4c == 0, "the correlation of a large sample keeps its value");
+    let cb, c4d = statistics::covariance(big_x[..], big_y[..]);
+    check(bad, is_nan(cb) && c4d == statistics::ERR_OVERFLOW, "the covariance of a large sample gives the overflow fault");
+    // Two columns of a very different magnitude. The small column must not
+    // fall to zero. The covariance is 1 and the correlation is 1.
+    let mix_x = list([1e300, 2e300, 3e300]);
+    let mix_y = list([1e-300, 2e-300, 3e-300]);
+    let cm, c4e = statistics::covariance(mix_x[..], mix_y[..]);
+    check(bad, within(cm, 1.0, 4.0) && c4e == 0, "the covariance of columns of a different magnitude keeps its value");
+    let rm, c4f = statistics::correlation(mix_x[..], mix_y[..]);
+    check(bad, rm == 1.0 && c4f == 0, "the correlation of columns of a different magnitude is exactly 1");
+    let dec = list([1.0, 2.0, 3.0, 4.0]);
+    let rev = list([4.0, 3.0, 2.0, 1.0]);
+    let rn, c5 = statistics::correlation(dec[..], rev[..]);
+    check(bad, within(rn, -1.0, 4.0) && c5 == 0, "the correlation of a line and its reverse is -1");
+    let flat = list([2.0, 2.0, 2.0, 2.0]);
+    let rc, c6 = statistics::correlation(dec[..], flat[..]);
+    check(bad, is_nan(rc) && c6 == statistics::ERR_UNDEFINED, "the correlation of a constant column is undefined");
+    let w1 = list([1.0, 2.0, 3.0]);
+    let w2 = list([1.0, 1.0, 2.0]);
+    let w3 = list([2.0, 3.0, 4.0]);
+    // The weights 2, 3 and 4 repeat the points of the sample.
+    let rep_x = list([1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 3.0]);
+    let rep_y = list([1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0]);
+    let wc, c7 = statistics::weighted_covariance(w1[..], w2[..], w3[..], statistics::WEIGHT_FREQUENCY);
+    let rc2, c8 = statistics::covariance(rep_x[..], rep_y[..]);
+    check(bad, within(wc, rc2, 4.0) && c7 == 0 && c8 == 0, "the weighted covariance in the frequency form equals the repeated sample covariance");
+
+    // The ranks and the rank correlations.
+    let rs = list([3.0, 1.0, 3.0, 2.0]);
+    var avg: f64[>..] = [];
+    var mn: f64[>..] = [];
+    var mx: f64[>..] = [];
+    var dense: f64[>..] = [];
+    var ord: f64[>..] = [];
+    let n1, c9 = statistics::rankdata(avg, rs[..], statistics::TIE_AVERAGE);
+    let n2, c10 = statistics::rankdata(mn, rs[..], statistics::TIE_MIN);
+    let n3, c11 = statistics::rankdata(mx, rs[..], statistics::TIE_MAX);
+    let n4, c12 = statistics::rankdata(dense, rs[..], statistics::TIE_DENSE);
+    let n5, c13 = statistics::rankdata(ord, rs[..], statistics::TIE_ORDINAL);
+    check(bad, c9 == 0 && c10 == 0 && c11 == 0 && c12 == 0 && c13 == 0
+        && avg[0] == 3.5 && avg[1] == 1.0 && avg[2] == 3.5 && avg[3] == 2.0
+        && mn[0] == 3.0 && mn[1] == 1.0 && mn[2] == 3.0 && mn[3] == 2.0
+        && mx[0] == 4.0 && mx[1] == 1.0 && mx[2] == 4.0 && mx[3] == 2.0
+        && dense[0] == 3.0 && dense[1] == 1.0 && dense[2] == 3.0 && dense[3] == 2.0
+        && ord[0] == 3.0 && ord[1] == 1.0 && ord[2] == 4.0 && ord[3] == 2.0, "the five rank methods of 3 1 3 2");
+    let rx = list([1.0, 2.0, 2.0, 3.0]);
+    let ry = list([1.0, 3.0, 2.0, 2.0]);
+    let rho, c14 = statistics::spearman(rx[..], ry[..]);
+    check(bad, within(rho, 0.5, 4.0) && c14 == 0, "the Spearman coefficient of the pair is 0.5");
+    let tb, c15 = statistics::kendall(rx[..], ry[..], statistics::KENDALL_B);
+    let tc, c16 = statistics::kendall(rx[..], ry[..], statistics::KENDALL_C);
+    check(bad, within(tb, 0.4, 4.0) && within(tc, 0.375, 4.0) && c15 == 0 && c16 == 0, "the Kendall tau-b is 0.4 and tau-c is 0.375");
+    let rc3, c17 = statistics::spearman(dec[..], flat[..]);
+    let tc2, c18 = statistics::kendall(dec[..], flat[..], statistics::KENDALL_B);
+    check(bad, is_nan(rc3) && c17 == statistics::ERR_UNDEFINED && is_nan(tc2) && c18 == statistics::ERR_UNDEFINED, "the Spearman and the Kendall coefficient of a constant column are undefined");
+
+    // The line and the Theil-Sen estimate.
+    let l, c19 = statistics::linear_regression(x[..], y[..], false);
+    check(bad, within(l.slope, 0.6, 4.0) && within(l.intercept, 2.2, 4.0) && c19 == 0, "the line of the pair has the slope 0.6 and the intercept 2.2");
+    let se, ie, c20 = statistics::regression_errors(x[..], y[..]);
+    check(bad, within(se, 0.28284271247461906, 4.0) && within(ie, 0.9380831519646861, 4.0) && c20 == 0, "the standard errors of the line are 0.28284271247461906 and 0.9380831519646861");
+    let ox = list([1.0, 2.0, 3.0]);
+    let oy = list([2.0, 4.0, 7.0]);
+    let l2, c21 = statistics::linear_regression(ox[..], oy[..], true);
+    check(bad, within(l2.slope, 2.2142857142857144, 4.0) && l2.intercept == 0.0 && c21 == 0, "the line through the origin has the slope 2.2142857142857144");
+    let ts, ti, c22 = statistics::theil_sen(x[..], y[..]);
+    check(bad, within(ts, 0.7083333333333333, 4.0) && within(ti, 1.875, 4.0) && c22 == 0, "the Theil-Sen estimate of the pair is 0.7083333333333333 and 1.875");
+    let lc, c23 = statistics::linear_regression(dec[..], flat[..], false);
+    check(bad, is_nan(lc.slope) && c23 == statistics::ERR_UNDEFINED, "the line of a constant column is undefined");
+    var big: f64[>..] = [];
+    for k in 0..statistics::MAX_THEIL + 1 {
+        let v: f64 = k;
+        big.push(v);
+    }
+    let ts2, ti2, c24 = statistics::theil_sen(big[..], big[..]);
+    check(bad, is_nan(ts2) && is_nan(ti2) && c24 == statistics::ERR_TOO_LONG, "the Theil-Sen call above its bound gives the too long fault");
+
+    // The matrices.
+    var data: f64[>..] = [1.0, 2.0, 3.0, 4.0, 2.0, 4.0, 5.0, 9.0, 4.0, 3.0, 2.0, 1.0];
+    var cells: f64[>..] = [];
+    let nc, c25 = statistics::covariance_matrix(cells, data[..], 3, 1);
+    check(bad, nc == 9 && c25 == 0 && within(cells[1], 3.6666666666666665, 4.0) && within(cells[0], 1.6666666666666667, 4.0), "the cell (0,1) of the covariance matrix is 3.6666666666666665");
+    var ccells: f64[>..] = [];
+    let nc2, c26 = statistics::correlation_matrix(ccells, data[..], 3);
+    check(bad, nc2 == 9 && c26 == 0 && ccells[0] == 1.0 && ccells[4] == 1.0 && ccells[8] == 1.0 && within(ccells[2], -1.0, 4.0), "the diagonal of the correlation matrix is 1 and the cell (0,2) is -1");
+    var one: f64[>..] = [1.0, 2.0, 3.0, 4.0];
+    var onecells: f64[>..] = [];
+    let nc3, c27 = statistics::covariance_matrix(onecells, one[..], 1, 1);
+    let v, c28 = statistics::variance(one[..]);
+    check(bad, nc3 == 1 && c27 == 0 && within(onecells[0], v, 4.0) && c28 == 0, "the covariance matrix of one column is the variance of the column");
+    var cdata: f64[>..] = [1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0, 5.0];
+    var cccells: f64[>..] = [];
+    let nc4, c29 = statistics::correlation_matrix(ccells, cdata[..], 2);
+    check(bad, nc4 == 0 && c29 == statistics::ERR_UNDEFINED && cccells.len == 0, "the correlation matrix of a constant column gives no partial matrix");
+    var onecol: f64[>..] = [1.0, 2.0];
+    var rowcells: f64[>..] = [];
+    let nc5, c31 = statistics::covariance_matrix(rowcells, onecol[..], 2, 1);
+    check(bad, nc5 == 0 && c31 == statistics::ERR_TOO_SHORT && rowcells.len == 0, "a matrix of one row gives the too short fault");
+    let nc6, c32 = statistics::covariance_matrix(cells, data[..], statistics::MAX_COLUMNS + 1, 1);
+    check(bad, nc6 == 0 && c32 == statistics::ERR_TOO_LONG && cells.len == 0, "a matrix call above the column bound gives the too long fault");
+
+    // The faults of the pair calls.
+    let short = list([1.0]);
+    let cs, c33 = statistics::covariance(short[..], short[..]);
+    check(bad, is_nan(cs) && c33 == statistics::ERR_TOO_SHORT, "the sample covariance of one point gives the too short fault");
+    let other = list([1.0, 2.0]);
+    let cl, c34 = statistics::covariance(short[..], other[..]);
+    check(bad, is_nan(cl) && c34 == statistics::ERR_LENGTH, "a pair of columns of another length gives the length fault");
+    let nan_col = list([1.0, 0.0 / 0.0, 3.0, 4.0]);
+    let cn, c35 = statistics::correlation(nan_col[..], dec[..]);
+    check(bad, is_nan(cn) && c35 == statistics::ERR_NAN, "a NaN in a column gives the NaN fault");
+    let inf_col = list([1.0, 1.0 / 0.0, 3.0, 4.0]);
+    let ci, c36 = statistics::correlation(inf_col[..], dec[..]);
+    check(bad, is_nan(ci) && c36 == statistics::ERR_INFINITY, "an infinity in a column gives the infinity fault");
+    let huge = list([1e308, -1e308, 1.0]);
+    let ch, c37 = statistics::covariance(huge[..], huge[..]);
+    check(bad, is_nan(ch) && c37 == statistics::ERR_OVERFLOW, "the covariance of 1e308 -1e308 1 gives the overflow fault");
     return bad;
 }

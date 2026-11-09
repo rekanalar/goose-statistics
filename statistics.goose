@@ -16,6 +16,10 @@ import spread;
 import order;
 import shape;
 import weighted;
+import cross;
+import ranks;
+import line;
+import matrix;
 
 // ---- fault codes ----------------------------------------------------
 const OK: i64 = 0;
@@ -32,6 +36,20 @@ const ERR_TOO_LONG: i64 = 9;    // the sample has more than MAX_INPUT values
 // ---- bounds ---------------------------------------------------------
 const MAX_INPUT: i64 = 4194304;  // values in a sample
 const MAX_ORDER: i64 = 8;        // the largest moment order
+const MAX_THEIL: i64 = 4096;     // points in a Theil-Sen estimate
+const MAX_COLUMNS: i64 = 1024;   // columns in a matrix
+const MAX_WORK: i64 = 268435456; // cell computations in a matrix
+
+// ---- tie methods -------------------------------------------------------
+const TIE_AVERAGE: i64 = 0;   // the tied values share the mean of their ranks
+const TIE_MIN: i64 = 1;       // the tied values share the lowest rank of the run
+const TIE_MAX: i64 = 2;       // the tied values share the highest rank of the run
+const TIE_DENSE: i64 = 3;     // the tied values share the count of the distinct smaller values plus one
+const TIE_ORDINAL: i64 = 4;   // the tied values take the next ranks in the order of the input
+
+// ---- Kendall variants --------------------------------------------------
+const KENDALL_B: i64 = 0;   // the tau-b coefficient
+const KENDALL_C: i64 = 1;   // the tau-c coefficient
 
 // ---- quantile methods -------------------------------------------------
 const METHOD_INVERTED_CDF: i64 = 0;

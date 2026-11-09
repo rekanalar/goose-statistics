@@ -8,6 +8,7 @@ import suite from "./suite";
 fn main() {
     var bad: i64 = 0;
     bad += suite::run_vectors();
+    bad += suite::run_assoc();
     bad += suite::run_weighted();
     bad += suite::run_accept();
     bad += suite::run_hostile();

@@ -1,5 +1,7 @@
 // The gonum oracle of the statistics package. It reads a JSON list of
 // samples and writes a JSON list of results from gonum.org/v1/gonum/stat.
+// With the argument pairs it reads a JSON list of pairs of samples and
+// writes the covariance and the correlation of each pair.
 package main
 
 import (
@@ -19,6 +21,16 @@ type row struct {
 	ExKurt   float64 `json:"exkurt"`
 }
 
+type pairRow struct {
+	Covariance  float64 `json:"covariance"`
+	Correlation float64 `json:"correlation"`
+}
+
+type pairIn struct {
+	X []float64 `json:"x"`
+	Y []float64 `json:"y"`
+}
+
 // clean maps a NaN or an infinity to 0, which JSON can hold.
 func clean(x float64) float64 {
 	if math.IsNaN(x) || math.IsInf(x, 0) {
@@ -32,6 +44,23 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+	if len(os.Args) > 2 && os.Args[2] == "pairs" {
+		var pairs []pairIn
+		if err := json.Unmarshal(raw, &pairs); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		out := make([]pairRow, 0, len(pairs))
+		for _, p := range pairs {
+			out = append(out, pairRow{
+				Covariance:  clean(stat.Covariance(p.X, p.Y, nil)),
+				Correlation: clean(stat.Correlation(p.X, p.Y, nil)),
+			})
+		}
+		b, _ := json.Marshal(out)
+		fmt.Println(string(b))
+		return
 	}
 	var samples [][]float64
 	if err := json.Unmarshal(raw, &samples); err != nil {

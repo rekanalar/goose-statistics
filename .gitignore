@@ -11,3 +11,6 @@ test/oracle-rust/target/
 
 # The installed packages of the Node oracle
 test/oracle-node/node_modules/
+
+# The scratch of the probe runs
+tmp/

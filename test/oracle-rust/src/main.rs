@@ -8,6 +8,24 @@ fn main() {
     let path = std::env::args().nth(1).expect("a path to a file of samples");
     let text = fs::read_to_string(&path).expect("a readable file");
     for line in text.lines() {
+        // A line with a bar holds two samples. The oracle writes the
+        // covariance of the pair.
+        if let Some((left, right)) = line.split_once('|') {
+            let xs: Vec<f64> = left
+                .split_whitespace()
+                .map(|w| w.parse::<f64>().expect("a number"))
+                .collect();
+            let ys: Vec<f64> = right
+                .split_whitespace()
+                .map(|w| w.parse::<f64>().expect("a number"))
+                .collect();
+            if xs.is_empty() || ys.is_empty() {
+                continue;
+            }
+            let covariance = xs.iter().covariance(ys.iter());
+            println!("{}", covariance);
+            continue;
+        }
         let vals: Vec<f64> = line
             .split_whitespace()
             .map(|w| w.parse::<f64>().expect("a number"))

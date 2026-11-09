@@ -8,6 +8,17 @@ const path = process.argv[2];
 const text = readFileSync(path, "utf8");
 for (const line of text.split("\n")) {
     if (line.trim() === "") { continue; }
+    // A line with a bar holds two samples. The oracle writes the
+    // covariance and the correlation of the pair.
+    if (line.includes("|")) {
+        const [left, right] = line.split("|");
+        const xs = left.trim().split(/\s+/).map(Number);
+        const ys = right.trim().split(/\s+/).map(Number);
+        const covariance = xs.length > 1 ? ss.sampleCovariance(xs, ys) : NaN;
+        const correlation = xs.length > 1 ? ss.sampleCorrelation(xs, ys) : NaN;
+        console.log([covariance, correlation].join(" "));
+        continue;
+    }
     const vals = line.trim().split(/\s+/).map(Number);
     const mean = ss.mean(vals);
     const variance = ss.sampleVariance(vals);

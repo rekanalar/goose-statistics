@@ -47,14 +47,18 @@ fn top_weight(ws: const f64[:]) -> f64 {
 // The divisor of the weights. Dividing rounds the weights, so the raw
 // weights are kept whenever the products and the sums stay far from the
 // limits of the type. Otherwise the weights are divided by the largest.
-fn weight_divisor(xs: const f64[:], ws: const f64[:]) -> f64 {
+fn weight_top_for(ws: const f64[:], big: f64) -> f64 {
     let top = top_weight(ws);
+    if top >= 1e-100 && top <= 1e100 && big <= 1e100 { return 1.0; }
+    return top;
+}
+
+fn weight_divisor(xs: const f64[:], ws: const f64[:]) -> f64 {
     var big: f64 = 0.0;
     for x in xs {
         if abs(x) > big { big = abs(x); }
     }
-    if top >= 1e-100 && top <= 1e100 && big <= 1e100 { return 1.0; }
-    return top;
+    return weight_top_for(ws, big);
 }
 
 // The weighted mean: the sum of w * x over the sum of w.

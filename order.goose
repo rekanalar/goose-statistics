@@ -67,6 +67,14 @@ fn median(xs: const f64[:]) -> f64, i64 {
     return mid(s[n / 2 - 1], s[n / 2]), 0;
 }
 
+// The median of a sample that the caller has sorted.
+fn median_sorted(s: const f64[:]) -> f64 {
+    let n = s.len;
+    if n == 0 { return nan(); }
+    if n % 2 == 1 { return s[n / 2]; }
+    return mid(s[n / 2 - 1], s[n / 2]);
+}
+
 fn median_low(xs: const f64[:]) -> f64, i64 {
     let c = check_sample(xs, 1);
     if c != 0 { return nan(), c; }

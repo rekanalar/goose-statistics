@@ -48,38 +48,66 @@ weighted.goose|if p.w > 0.0 \&\& cum >= half|if p.w > 0.0 \&\& cum > half|weight
 check.goose|if xs.len > 4194304 { return 9; }|if xs.len > 4194305 { return 9; }|input length bound
 check.goose|if xs.len < need { return 2; }|if xs.len < 0 { return 2; }|sample too short
 check.goose|if w < 0.0 { return 5; }|if w < -1.0 { return 5; }|negative weight
-check.goose|if ws.len != xs.len { return 6; }|if false { return 6; }|weight length
+check.goose|if ws.len != n { return 6; }|if false { return 6; }|weight length
+cross.goose|let e = ((ah * bh - p) + ah * bl + al * bh) + al * bl;|let e = 0.0;|two product drops the error term
+cross.goose|if n_xx == n_yy { den = n_xx; } else { den = sqrt(n_xx) * sqrt(n_yy); }|var den: f64 = sqrt(n_xx) * sqrt(n_yy);|correlation shares the denominator of equal variances
+cross.goose|if v > 1.0 { return 1.0, 0; }|if v > 2.0 { return 1.0, 0; }|correlation clamps to one
+cross.goose|if e > 400.0 { return 400 - e as i64; }|if e > 1000.0 { return 400 - e as i64; }|column scale bounds the column magnitude
+cross.goose|if form == WEIGHT_FREQUENCY { return r.w * (r.w - 1.0 / r.top); }|if form == WEIGHT_FREQUENCY { return r.w * r.w - 1.0 / r.top; }|reliability weight divisor
+cross.goose|if form == WEIGHT_POPULATION { return r.w * r.w; }|if form == WEIGHT_POPULATION { return r.w * (r.w - 1.0 / r.top); }|frequency weight divisor
+ranks.goose|stable_sort(idx) { a, b => a.v < b.v };|sort(idx) { a, b => a.v < b.v };|rank sort is stable
+ranks.goose|if method == TIE_DENSE { rank = dense + 1; }|if method == TIE_DENSE { rank = first; }|dense rank numbers groups
+ranks.goose|if method == TIE_ORDINAL { rank = first + (m - k); }|if method == TIE_ORDINAL { rank = first; }|ordinal rank follows the input order
+ranks.goose|if method == TIE_MAX { rank = first + (count - 1); }|if method == TIE_MAX { rank = first; }|max rank ends at the group end
+ranks.goose|if a[i] <= a[j] {|if a[i] < a[j] {|merge counts no swap for a tie in y
+ranks.goose|let cd = n0 - t.n1 - t.n2 + t.n3 - 2 * swaps;|let cd = n0 - t.n1 - t.n2 + t.n3;|kendall counts the discordant pairs
+ranks.goose|let den = nf * nf * (mf - 1.0) / mf;|let den = nf * nf * (mf - 1.0) / (mf - 1.0);|tau c denominator scale
+line.goose|let slope = scale_pow2(r.n_xy / r.n_xx, r.exp_x - r.exp_y);|let slope = scale_pow2(r.s_xy / r.s_xx, r.exp_x - r.exp_y);|line slope uses the centered sums
+line.goose|let slope = scale_pow2(r.s_xy / r.s_xx, r.exp_x - r.exp_y);|let slope = scale_pow2(r.n_xy / r.n_xx, r.exp_x - r.exp_y);|proportional slope goes through the origin
+line.goose|let intercept_err = scale_pow2(se * sqrt(r.s_xx / n), -r.exp_y);|let intercept_err = scale_pow2(se, -r.exp_y);|intercept error carries the sum of squares
+line.goose|if xs.len > MAX_THEIL { return nan(), nan(), 9; }|if xs.len > MAX_THEIL * 2 { return nan(), nan(), 9; }|theil sen pair bound
+line.goose|let intercept = my - slope * mx;|let intercept = my - slope * mx + 1.0;|theil sen intercept uses the median of x
+matrix.goose|if rows < 2 { return 2; }|if rows < 1 { return 2; }|matrix needs two rows
 PROBES
 )
 
-n=0
-failures=0
-while IFS='|' read -r file from to name; do
-  [ -z "$file" ] && continue
-  n=$((n + 1))
+# One probe of the list. The helper writes its verdict into the work
+# directory, because a parallel run cannot share a counter.
+run_probe() {
+  local n="$1" file="$2" from="$3" to="$4" name="$5"
   dir="$work/p$n"
   mkdir -p "$dir"
   (cd "$here" && tar cf - --exclude=.git --exclude=mutate-work .) | (cd "$dir" && tar xf -)
-  python3 - "$dir/$file" "$from" "$to" <<'PY'
-import sys
-path, old, new = sys.argv[1:4]
-old = old.replace("\\&", "&")
-new = new.replace("\\&", "&")
-text = open(path).read()
-if text.count(old) < 1:
-    sys.exit("probe text found %d times (needs at least one) in %s: %s" % (text.count(old), path, old))
-open(path, "w").write(text.replace(old, new))
-PY
-  if [ $? -ne 0 ]; then
+  python3 "$here/test/mutate_one.py" "$dir/$file" "$from" "$to" || {
     echo "BROKEN PROBE $n: $name"
-    failures=$((failures + 1))
-    continue
-  fi
+    echo broken > "$work/verdict$n"
+    rm -rf "$dir"
+    return
+  }
   if (cd "$dir" && goose run test/run.goose >"$dir/out.txt" 2>&1); then
     echo "SURVIVED $n: $name"
-    failures=$((failures + 1))
+    echo survived > "$work/verdict$n"
   fi
   rm -rf "$dir"
-done <<< "$probes"
-echo "$n probes, $failures failures"
+}
+
+# The probes run at most four at a time. A copy of the package holds at
+# most a few hundred megabytes, and the machine needs the rest.
+jobs="${MUTATE_JOBS:-4}"
+total=0
+
+while IFS='|' read -r file from to name; do
+  [ -z "$file" ] && continue
+  echo "$file|$from|$to|$name"
+done <<< "$probes" > "$work/list.txt"
+
+while IFS='|' read -r file from to name; do
+  while [ "$(jobs -rp | wc -l)" -ge "$jobs" ]; do sleep 1; done
+  total=$((total + 1))
+  run_probe "$total" "$file" "$from" "$to" "$name" &
+done < "$work/list.txt"
+wait
+
+failures=$(cat "$work"/verdict* 2>/dev/null | wc -l)
+echo "$total probes, $failures failures"
 [ "$failures" -eq 0 ]

@@ -60,6 +60,19 @@ import statistics from "rekanalar/goose-statistics@v0.1.0";
 | `weighted_mean(xs, ws)` | the weighted mean |
 | `weighted_variance(xs, ws, form)` | the weighted variance in one of the three forms |
 | `weighted_median(xs, ws)` | the weighted median |
+| `pcovariance(xs, ys)` | the population covariance of two samples |
+| `covariance(xs, ys)` | the sample covariance of two samples |
+| `correlation(xs, ys)` | the Pearson correlation of two samples |
+| `weighted_covariance(xs, ys, ws, form)` | the weighted covariance of two samples in one of the three forms |
+| `weighted_correlation(xs, ys, ws)` | the weighted correlation of two samples |
+| `rankdata(out, xs, method)` | writes each rank into `out`; gives the count and the code |
+| `spearman(xs, ys)` | the Spearman rank correlation of two samples |
+| `kendall(xs, ys, variant)` | the Kendall rank correlation, tau-b or tau-c |
+| `linear_regression(xs, ys, proportional)` | the least squares line of two samples; gives the line and the code |
+| `regression_errors(xs, ys)` | the standard error of the slope and the standard error of the intercept |
+| `theil_sen(xs, ys)` | the Theil-Sen slope and the Theil-Sen intercept |
+| `covariance_matrix(out, data, ncols, ddof)` | writes the covariance matrix into `out`; gives the count and the code |
+| `correlation_matrix(out, data, ncols)` | writes the correlation matrix into `out`; gives the count and the code |
 
 The argument `method` is one of the nine `METHOD_` constants. The
 constants `METHOD_EXCLUSIVE` and `METHOD_INCLUSIVE` stand for the two
@@ -68,8 +81,32 @@ methods of Python.
 The argument `form` is one of `WEIGHT_POPULATION`, `WEIGHT_FREQUENCY` and
 `WEIGHT_RELIABILITY`.
 
+The argument `method` of `rankdata` is one of the five `TIE_` constants.
+The constants `TIE_AVERAGE`, `TIE_MIN`, `TIE_MAX`, `TIE_DENSE` and
+`TIE_ORDINAL` name the five tie methods of SciPy.
+
+The argument `variant` of `kendall` is one of the two `KENDALL_`
+constants. The constant `KENDALL_B` gives tau-b and the constant
+`KENDALL_C` gives tau-c.
+
 The argument `bias` and the argument `fisher` are booleans. The argument
 `ddof` is 0 or 1, and any other value gives `ERR_DOMAIN`.
+
+The call `linear_regression` gives a line. The line holds the fields
+`slope`, `intercept`, `r` and `r2`. The call `regression_errors` gives the
+standard error of the slope first and the standard error of the intercept
+second. The call `theil_sen` gives the slope first and the intercept
+second.
+
+The buffer of a matrix call holds the columns one after the other. The
+result buffer holds the cells row by row. The argument `ncols` gives the
+count of the columns. The argument `ddof` of `covariance_matrix` is 0 for
+the population form and 1 for the sample form.
+
+The constant `MAX_THEIL` of 4,096 points gives the largest sample of the
+Theil-Sen call. The constant `MAX_COLUMNS` of 1,024 gives the largest
+count of the columns of a matrix call. The constant `MAX_WORK` of
+268,435,456 gives the largest work of a matrix call.
 
 Every call returns the result first and the fault code second. A fault
 gives NaN as the result and one of these codes.
@@ -115,13 +152,22 @@ The quantiles use the nine methods of NumPy. The method is a required
 argument, because NumPy uses `linear` and Python uses `exclusive`. A
 silent default would give a different answer to half of the callers.
 
+The calls that take two columns scale each column by its own power of
+two. The largest value of a column becomes at most 2 to the power 400.
+It becomes at least 2 to the power -300. The products and the sums then
+stay finite and stay normal. The scale of a column is an exponent, so
+the result comes back without a false overflow.
+
 ## Limits
 
-- The package holds no correlation, covariance or regression. Python holds
-  `correlation`, `covariance` and `linear_regression`. SciPy holds
-  `pearsonr` and `spearmanr`. gonum holds `Correlation` and
-  `LinearRegression`.
-- The package holds no rank data. SciPy holds `rankdata`.
+- The package holds no p-value and no confidence interval. SciPy holds
+  `pearsonr`, `spearmanr` and `kendalltau` with these values.
+- The package holds no confidence slope of the Theil-Sen estimate. SciPy
+  holds `theilslopes` with the low and the high slope.
+- The package holds no partial correlation and no partial rank
+  correlation. SciPy holds `partialcorr`.
+- The package holds no complex sample. NumPy holds the complex forms.
+- The package holds no significance test for the rank correlations.
 - The package holds no special function. SciPy holds `special`. The crate
   `statrs` of Rust holds `function`.
 - The package holds no distribution. Python holds `NormalDist`. SciPy holds
@@ -149,6 +195,20 @@ silent default would give a different answer to half of the callers.
   the power -974. The error stays below one unit of the largest value.
 - The tolerance of the tests is relative. A value near zero has no
   absolute tolerance.
+- The Theil-Sen call reaches its bound at 4,096 points. It then gives
+  `ERR_TOO_LONG`. A larger sample gives no slope and no intercept.
+- A matrix call takes at most 1,024 columns. The work of the call is the
+  count of the cells times the count of the rows. It stays at most
+  `MAX_WORK`. A larger work gives `ERR_TOO_LONG` and writes no cell.
+- The intercept of a line with a large offset keeps the digits of the
+  exact sums. SciPy rounds the slope first, so its intercept differs from
+  the exact value.
+- A slope below 2 to the power -1074 fits in no float. Two columns whose
+  magnitudes differ by more than about 300 orders of magnitude give such
+  a slope. The call gives 0 for it and no fault.
+- The weighted forms divide the weights by the largest weight. The
+  weights of a sample that reach 1e150 lose a few units in the last
+  place.
 
 ## Security
 
@@ -177,6 +237,27 @@ go beyond the reference libraries.
 - The exact sum keeps a growable list of partial sums. The list holds at
   most 2098 entries, one for each bit position of a double. A guard of
   2200 entries gives `ERR_UNDEFINED` and writes nothing past the list.
+- A call that takes two columns checks that both have the same length.
+  A different length gives `ERR_LENGTH` and no work starts. The
+  reference libraries raise or give a wrong answer.
+- A call that takes two columns rejects a NaN and an infinity in both
+  columns. The reference libraries let them reach the result.
+- The correlation stays between -1 and 1. The clamp holds a result that
+  the rounding pushes past the range.
+- A call that takes two columns scales each column on its own. The
+  reference libraries use one scale for both columns. A small column
+  next to a huge column falls to zero there. The call gives a wrong
+  result with no warning. This package scales each column, so the value
+  of the small column survives.
+- The Theil-Sen call stops at 4,096 points. It then gives
+  `ERR_TOO_LONG` and computes no slope. The call of SciPy has no such
+  bound and uses the memory of the caller without a limit.
+- A matrix call checks the work before it starts. A work above
+  `MAX_WORK` gives `ERR_TOO_LONG` and writes no cell. The count of the
+  cells stays at most 1,048,576.
+- The Kendall count sorts the pairs and counts the swaps. It runs in the
+  time of a sort. The test suite times the count on five crafted samples
+  of the maximum length.
 
 These risks stay.
 
@@ -196,10 +277,12 @@ goose run test/run.goose
 goose run examples/describe.goose
 goose run examples/quantiles.goose
 goose run examples/hostile.goose
+goose run examples/association.goose
+goose run examples/ranks.goose
 ```
 
-The script `test/make_vectors.py` builds the vectors of the test suite. It
-writes numbers only into the package. Each vector is compared with a second
+The scripts `test/make_vectors.py` and `test/make_assoc_vectors.py` build
+the vectors of the test suite. They write numbers only into the package. Each vector is compared with a second
 source, and the script fails on a difference beyond the tolerance.
 
 The second sources are in four languages. Python gives the exact value

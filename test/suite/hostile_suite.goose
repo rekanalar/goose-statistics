@@ -67,6 +67,53 @@ fn same(a: f64, b: f64) -> bool {
     return a == b || (is_nan(a) && is_nan(b));
 }
 
+// The code that a pair of columns alone fixes, in the order of the
+// package: empty, length match, NaN, infinity, then the length the call
+// needs.
+fn pair_code(xs: const f64[:], ys: const f64[:], need: i64) -> i64 {
+    if xs.len == 0 || ys.len == 0 { return statistics::ERR_EMPTY; }
+    if xs.len != ys.len { return statistics::ERR_LENGTH; }
+    for x in xs {
+        if is_nan(x) { return statistics::ERR_NAN; }
+    }
+    for y in ys {
+        if is_nan(y) { return statistics::ERR_NAN; }
+    }
+    for x in xs {
+        if is_inf(x) { return statistics::ERR_INFINITY; }
+    }
+    for y in ys {
+        if is_inf(y) { return statistics::ERR_INFINITY; }
+    }
+    if xs.len < need { return statistics::ERR_TOO_SHORT; }
+    return 0;
+}
+
+// The code of a pair and its weights: the pair first, then the weight
+// length, NaN, infinity, a negative weight, the largest weight and the
+// length the call needs.
+fn weighted_code(xs: const f64[:], ys: const f64[:], ws: const f64[:], need: i64) -> i64 {
+    let c = pair_code(xs, ys, 0);
+    if c != 0 { return c; }
+    if ws.len != xs.len { return statistics::ERR_LENGTH; }
+    for w in ws {
+        if is_nan(w) { return statistics::ERR_NAN; }
+    }
+    for w in ws {
+        if is_inf(w) { return statistics::ERR_INFINITY; }
+    }
+    for w in ws {
+        if w < 0.0 { return statistics::ERR_DOMAIN; }
+    }
+    var top: f64 = 0.0;
+    for w in ws {
+        if w > top { top = w; }
+    }
+    if top <= 0.0 { return statistics::ERR_UNDEFINED; }
+    if xs.len < need { return statistics::ERR_TOO_SHORT; }
+    return 0;
+}
+
 // 100,000 seeded inputs through every call.
 fn hostile_random() -> i64 {
     var bad: i64 = 0;
@@ -154,11 +201,60 @@ fn hostile_random() -> i64 {
         let a32, c32 = statistics::weighted_median(xs[..], ws[..]);
         judge(bad, a32, c32, sc, "weighted_median");
 
+        // The association calls take a pair of columns.
+        var ys: f64[>..] = [];
+        let yn = if rnd(st) % 8 == 0 { rnd(st) % 9 } else { n };
+        for k in 0..yn { ys.push(pick(st)); }
+        var before_y: f64[>..] = [];
+        for y in ys { before_y.push(y); }
+        let a33, c33 = statistics::pcovariance(xs[..], ys[..]);
+        judge(bad, a33, c33, pair_code(xs[..], ys[..], 1), "pcovariance");
+        let a34, c34 = statistics::covariance(xs[..], ys[..]);
+        judge(bad, a34, c34, pair_code(xs[..], ys[..], 2), "covariance");
+        let a35, c35 = statistics::correlation(xs[..], ys[..]);
+        judge(bad, a35, c35, pair_code(xs[..], ys[..], 2), "correlation");
+        let a36, c36 = statistics::spearman(xs[..], ys[..]);
+        judge(bad, a36, c36, pair_code(xs[..], ys[..], 2), "spearman");
+        let tau_b, c37 = statistics::kendall(xs[..], ys[..], statistics::KENDALL_B);
+        judge(bad, tau_b, c37, pair_code(xs[..], ys[..], 2), "kendall b");
+        let tau_c, c38 = statistics::kendall(xs[..], ys[..], (rnd(st) % 3) - 1);
+        judge(bad, tau_c, c38, pair_code(xs[..], ys[..], 2), "kendall");
+        let l39, c39 = statistics::linear_regression(xs[..], ys[..], rnd(st) % 2 == 0);
+        judge(bad, l39.slope, c39, pair_code(xs[..], ys[..], 2), "linear_regression slope");
+        judge(bad, l39.intercept, c39, pair_code(xs[..], ys[..], 2), "linear_regression intercept");
+        judge(bad, l39.r, c39, pair_code(xs[..], ys[..], 2), "linear_regression r");
+        judge(bad, l39.r2, c39, pair_code(xs[..], ys[..], 2), "linear_regression r2");
+        let se, ie, c40 = statistics::regression_errors(xs[..], ys[..]);
+        judge(bad, se, c40, pair_code(xs[..], ys[..], 3), "regression_errors slope");
+        judge(bad, ie, c40, pair_code(xs[..], ys[..], 3), "regression_errors intercept");
+        let ts41, ti41, c41 = statistics::theil_sen(xs[..], ys[..]);
+        judge(bad, ts41, c41, pair_code(xs[..], ys[..], 2), "theil_sen slope");
+        judge(bad, ti41, c41, pair_code(xs[..], ys[..], 2), "theil_sen intercept");
+        let a42, c42 = statistics::weighted_covariance(xs[..], ys[..], ws[..], (rnd(st) % 5) - 1);
+        judge(bad, a42, c42, weighted_code(xs[..], ys[..], ws[..], 1), "weighted_covariance");
+        let a43, c43 = statistics::weighted_correlation(xs[..], ys[..], ws[..]);
+        judge(bad, a43, c43, weighted_code(xs[..], ys[..], ws[..], 2), "weighted_correlation");
+        var ranks: f64[>..] = [];
+        var cells: f64[>..] = [];
+        let k44, c44 = statistics::rankdata(ranks, xs[..], (rnd(st) % 7) - 1);
+        judge_count(bad, k44, c44, sc, "rankdata");
+        let ddx = (rnd(st) % 3) - 1;
+        let k45, c45 = statistics::covariance_matrix(cells, xs[..], (rnd(st) % 5) - 1, ddx);
+        judge_count(bad, k45, c45, sc, "covariance_matrix");
+        let k46, c46 = statistics::correlation_matrix(cells, xs[..], (rnd(st) % 5) - 1);
+        judge_count(bad, k46, c46, sc, "correlation_matrix");
+
         // No call changes the data of the caller.
         for k in 0..n {
             if !same(xs[k], before[k]) {
                 bad += 1;
                 if bad <= 12 { print("FAIL hostile a call changed the sample\n"); }
+            }
+        }
+        for k in 0..yn {
+            if !same(ys[k], before_y[k]) {
+                bad += 1;
+                if bad <= 12 { print("FAIL hostile a call changed the second sample\n"); }
             }
         }
     }
@@ -251,5 +347,110 @@ fn run_hostile() -> i64 {
     bad += hostile_random();
     bad += hostile_partials();
     bad += hostile_sort_time();
+    bad += hostile_kendall_time();
+    bad += hostile_theil_time();
+    return bad;
+}
+
+// Fills two columns of the given length in one of the crafted shapes.
+fn crafted_pair(xs: f64[>..]&, ys: f64[>..]&, shape: i64, n: i64) {
+    xs.resize(0);
+    ys.resize(0);
+    var st: u64 = 11;
+    if shape == 0 {
+        for i in 0..n { xs.push(i); ys.push(i); }
+    }
+    if shape == 1 {
+        for i in 0..n { xs.push(i); ys.push(n - i); }
+    }
+    if shape == 2 {
+        for i in 0..n { xs.push(1.0); ys.push(1.0); }
+    }
+    if shape == 3 {
+        for i in 0..n {
+            xs.push(i);
+            if i < n / 2 { ys.push(i); } else { ys.push(n - i); }
+        }
+    }
+    if shape == 4 {
+        // The median of three killer: it forces the worst case on a
+        // quicksort that takes the median of three as its pivot.
+        for i in 0..n { xs.push(0.0); }
+        let k = n / 2;
+        var i = 1;
+        while i <= k {
+            if i % 2 == 1 {
+                xs[i - 1] = i;
+                xs[i] = k + i;
+            }
+            xs[k + i - 1] = 2 * i;
+            i += 1;
+        }
+        for i in 0..n { ys.push(xs[i]); }
+    }
+    if shape == 5 {
+        for i in 0..n { xs.push(rnd(st) % 1000); ys.push(rnd(st) % 1000); }
+    }
+}
+
+// The Kendall count must run in the time of a sort. A crafted sample of
+// the maximum length must not take much longer than a random sample of
+// the same length.
+fn hostile_kendall_time() -> i64 {
+    var bad: i64 = 0;
+    var xs: f64[>..] = [];
+    var ys: f64[>..] = [];
+    let n = statistics::MAX_INPUT / 16;
+    crafted_pair(xs, ys, 5, n);
+    var t0 = clock();
+    let _t, _c = statistics::kendall(xs[..], ys[..], statistics::KENDALL_B);
+    let random_time = clock() - t0;
+    let names: const u8[:][6] = ["sorted", "reversed", "all equal", "organ pipe", "median of three killer", "random"];
+    for shape in 0..5 {
+        crafted_pair(xs, ys, shape, n);
+        t0 = clock();
+        let _t, c = statistics::kendall(xs[..], ys[..], statistics::KENDALL_B);
+        let spent = clock() - t0;
+        if c < 0 || c > 9 {
+            bad += 1;
+            print("FAIL kendall code ", c, "\n");
+            continue;
+        }
+        if spent > 5.0 * random_time + 1.0 {
+            bad += 1;
+            print("FAIL kendall time of ", names[shape], ": ", spent, " seconds, random ", random_time, " seconds\n");
+        }
+    }
+    return bad;
+}
+
+// The Theil-Sen call reaches its bound of 4,096 points. The call must
+// finish, and it must stay below the guard of the pair count.
+fn hostile_theil_time() -> i64 {
+    var bad: i64 = 0;
+    let n = statistics::MAX_THEIL;
+    var xs: f64[>..] = [];
+    var ys: f64[>..] = [];
+    var st: u64 = 13;
+    for i in 0..n {
+        xs.push(i);
+        ys.push((rnd(st) % 2001) - 1000);
+    }
+    let t0 = clock();
+    let slope, intercept, c = statistics::theil_sen(xs[..], ys[..]);
+    let spent = clock() - t0;
+    if c != 0 || is_nan(slope) || is_nan(intercept) {
+        bad += 1;
+        print("FAIL theil sen at the bound, code ", c, "\n");
+    }
+    print("theil sen at ", n, " points took ", spent, " seconds\n");
+    // One point above the bound gives the too long fault.
+    xs.push(0.0);
+    ys.push(0.0);
+    let _s, _i, c2 = statistics::theil_sen(xs[..], ys[..]);
+    if c2 != statistics::ERR_TOO_LONG {
+        bad += 1;
+        print("FAIL theil sen above the bound, code ", c2, "\n");
+    }
     return bad;
 }
