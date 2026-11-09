@@ -20,7 +20,7 @@ Pure Goose, no C.
 Add this to the root file of the program that uses it:
 
 ```goose
-import statistics from "rekanalar/goose-statistics@v0.1.0";
+import statistics from "rekanalar/goose-statistics@v0.2.0";
 ```
 
 ## API
