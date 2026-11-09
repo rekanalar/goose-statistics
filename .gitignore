@@ -5,3 +5,9 @@
 *.a
 /build/
 /out/
+
+# The build output of the Rust oracle
+test/oracle-rust/target/
+
+# The installed packages of the Node oracle
+test/oracle-node/node_modules/

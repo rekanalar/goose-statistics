@@ -1,0 +1,10 @@
+{
+  "name": "oracle",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The simple-statistics oracle of the statistics package.",
+  "dependencies": {
+    "simple-statistics": "7.8.7"
+  }
+}
