@@ -21,6 +21,7 @@ import ranks;
 import line;
 import matrix;
 import special;
+import distributions;
 
 // ---- fault codes ----------------------------------------------------
 const OK: i64 = 0;
@@ -47,6 +48,11 @@ const MAX_SHAPE: f64 = 10000000000.0;   // the largest shape of an incomplete ca
 const MAX_ITER_SERIES: i64 = 2048;      // terms of a power series
 const MAX_ITER_CF: i64 = 40000;         // steps of a continued fraction
 const MAX_ITER_INVERSE: i64 = 100;      // steps of an inverse loop
+
+// The bounds of the distributions.
+const MAX_COUNT: f64 = 9007199254740992.0;  // 2^53, the largest exact count
+const MAX_DIST_SUPPORT: i64 = 100000;   // counts in the support of a hypergeometric sum
+const MAX_ITER_SEARCH: i64 = 200;       // steps of the search of a discrete quantile
 
 // ---- tie methods -------------------------------------------------------
 const TIE_AVERAGE: i64 = 0;   // the tied values share the mean of their ranks

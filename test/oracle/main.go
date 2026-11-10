@@ -44,6 +44,10 @@ func main() {
 		runSpecial(os.Args[1])
 		return
 	}
+	if len(os.Args) > 2 && os.Args[2] == "distribution" {
+		runDistribution(os.Args[1])
+		return
+	}
 	raw, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

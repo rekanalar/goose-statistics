@@ -566,4 +566,5 @@ def main():
     print("wrote", len(ROWS), "rows to", OUT)
 
 
-main()
+if __name__ == "__main__":
+    main()

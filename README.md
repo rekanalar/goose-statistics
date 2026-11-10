@@ -10,6 +10,11 @@ a sample of 64 bit floats. It gives the trimmed forms and the weighted
 forms too. The sum is exact, so the mean and the variance keep their
 digits.
 
+The package gives fifteen probability families too. Ten are continuous
+and five are discrete. Each family has its density or mass, its
+cumulative function, its survival function, its quantile and its four
+moments.
+
 Every call returns the result first and a fault code second. A fault gives
 NaN as the result. A call never changes the data of the caller.
 
@@ -85,6 +90,22 @@ import statistics from "rekanalar/goose-statistics@v0.3.0";
 | `betainc(a, b, x)` | the regularized incomplete beta, for `x` from 0 to 1 |
 | `betaincinv(a, b, p)` | the inverse of the regularized incomplete beta |
 | `log1p(x)`, `expm1(x)` | the log of 1 + x and the exponential minus 1, exact near 0 |
+| `norm_pdf(x, mu, sigma)`, `norm_cdf`, `norm_sf`, `norm_ppf` | the normal family; `mu` = 0 and `sigma` = 1 |
+| `norm_mean(mu, sigma)`, `norm_var`, `norm_skew`, `norm_kurt` | the moments of the normal family |
+| `unif_pdf(x, lo, hi)`, and the same seven calls | the uniform family; `lo` = 0 and `hi` = 1 |
+| `expon_pdf(x, rate)`, and the same seven calls | the exponential family; `rate` = 1 |
+| `lognorm_pdf(x, mu, sigma)`, and the same seven calls | the lognormal family; `mu` = 0 and `sigma` = 1 |
+| `weibull_pdf(x, shape, scale)`, and the same seven calls | the Weibull family; `shape` = 1 and `scale` = 1 |
+| `gammadist_pdf(x, shape, scale)`, and the same seven calls | the gamma family; `shape` = 1 and `scale` = 1 |
+| `betadist_pdf(x, a, b)`, and the same seven calls | the beta family; `a` = 1 and `b` = 1 |
+| `chi2_pdf(x, df)`, and the same seven calls | the chi-square family; `df` = 1 |
+| `tdist_pdf(x, df)`, and the same seven calls | the Student t family; `df` = 1 |
+| `fdist_pdf(x, df1, df2)`, and the same seven calls | the F family; `df1` = 1 and `df2` = 1 |
+| `binom_pmf(k, n, p)`, and the same seven calls | the binomial family; `p` = 0.5 |
+| `poisson_pmf(k, rate)`, and the same seven calls | the Poisson family; `rate` = 1 |
+| `geom_pmf(k, p)`, and the same seven calls | the geometric family in the trials form; `p` = 0.5 |
+| `nbinom_pmf(k, r, p)`, and the same seven calls | the negative binomial family; `r` = 1 and `p` = 0.5 |
+| `hypergeom_pmf(k, M, n, N)`, and the same seven calls | the hypergeometric family, no default |
 
 The argument `method` is one of the nine `METHOD_` constants. The
 constants `METHOD_EXCLUSIVE` and `METHOD_INCLUSIVE` stand for the two
@@ -123,6 +144,25 @@ count of the columns of a matrix call. The constant `MAX_WORK` of
 The special functions take one to three numbers and no sample. The call
 `lgamma` returns three values: the log of the absolute gamma, the sign
 and the code. A pole gives `ERR_UNDEFINED`. A NaN gives `ERR_NAN`.
+
+Each family name stands for eight calls. The endings are `pdf` or `pmf`,
+`cdf`, `sf`, `ppf`, `mean`, `var`, `skew` and `kurt`. The names `gamma`
+and `beta` belong to the special functions. The family calls carry the
+prefixes `gammadist_` and `betadist_`. A continuous family takes a
+density, and a discrete family takes a mass. The call `kurt` gives the
+excess kurtosis, as gonum gives it.
+
+The quantile calls take the probability first.
+
+A discrete quantile gives the smallest count whose cumulative function
+reaches the probability. The probability 0 gives the smallest count of
+the support. The probability 1 gives the largest count of the support.
+
+The support of the geometric family starts at 1, because the call counts
+the trials. The negative binomial family counts the failures before the
+r-th success. The support of the hypergeometric family holds at most
+`MAX_DIST_SUPPORT` of 100,000 counts. A larger support gives
+`ERR_TOO_LONG`. The mass of a count outside the support is 0.
 
 An infinity gives `ERR_INFINITY`, except for `erf` and `erfc`, where it is
 a valid limit. A shape or a probability out of range gives `ERR_DOMAIN`.
@@ -192,6 +232,18 @@ The forward call of an inverse returns the input within 20 units. This
 holds for a shape up to 10. For a larger shape the root itself stays
 within 64 units.
 
+The distributions use the same pairs. The normal cumulative function is
+the tail itself, and so is the survival function. Neither loses the
+digits of a far tail. The tails of the Student t and of the F family
+take a first order correction on the ratio argument. The discrete
+quantiles run a bounded search. A search that meets its bound gives
+`ERR_OVERFLOW`, never a silent wrong count.
+
+The tests allow 4 units for the density of the normal family. They allow
+8 for the exponential and the lognormal forms. They allow 16 for the
+gamma, the beta and the tailed families, and for every moment. The
+counts of the discrete quantiles are exact.
+
 ## Limits
 
 - The package holds no p-value and no confidence interval. SciPy holds
@@ -221,8 +273,30 @@ within 64 units.
 - An inverse of the incomplete functions loses digits when the input
   probability is near 1. Pass the small tail instead, with `gammainccinv`
   or the complement of the shape.
-- The package holds no distribution. Python holds `NormalDist`. SciPy holds
-  the distributions of `stats`. gonum holds `distuv`.
+- A tail below the smallest subnormal gives 0 and no fault. This happens
+  for the survival function of the normal family from 38.6 standard
+  deviations. It happens for the mass of a Poisson count far from the
+  rate. The call `beta` behaves the same.
+- The survival function of the reference libraries loses the digits of a
+  small tail. At 6 standard deviations the value of SciPy differs from
+  the exact tail by 8 units in the last place. The value of gonum
+  differs by 630 units. The value of the crate `statrs` differs by 242
+  units. This package gives the exact tail there.
+- SciPy and gonum return NaN or an infinity for a domain error, without a
+  signal. The crate `statrs` panics for some arguments. This package
+  gives a fault code.
+- The kurtosis call of SciPy gives the kurtosis. This call `kurt` gives
+  the excess kurtosis, which is 3 less.
+- gonum holds no geometric, negative binomial or hypergeometric family.
+  It holds no quantile of the binomial and the Poisson families. The
+  package `jstat` holds no geometric family and no skewness or kurtosis.
+- The mean of the Student t family needs `df` above 1. The variance
+  needs it above 2, the skewness above 3 and the kurtosis above 4. The
+  moments of the F family need `df2` above 2, 4, 6 and 8 in the same
+  order. A pole gives `ERR_UNDEFINED`.
+- The quantile of a discrete family is the smallest count whose
+  cumulative function reaches the probability. The references agree on
+  this rule.
 - The package holds no hypothesis test. SciPy holds `ttest_ind`,
   `chisquare` and `mannwhitneyu`.
 - The package holds no resampling call. SciPy holds `bootstrap` and
@@ -323,6 +397,27 @@ go beyond the reference libraries.
 - The Kendall count sorts the pairs and counts the swaps. It runs in the
   time of a sort. The test suite times the count on five crafted samples
   of the maximum length.
+- The support of the hypergeometric family is bounded. A support above
+  `MAX_DIST_SUPPORT` gives `ERR_TOO_LONG` and no sum starts. The sum
+  holds pairs, so a mass far below the largest mass keeps its digits.
+- The search of a discrete quantile has two fixed bounds. The doubling
+  of an unbounded support has 200 steps, and the bisection has 200 steps.
+  A search that meets a bound gives a fault.
+- A count of a discrete family has to be a whole number from 0. The
+  geometric family starts at 1. A fraction gives `ERR_DOMAIN`. gonum and
+  SciPy accept a fraction and truncate it.
+- The moments check their poles before any division. A moment with no
+  defined value gives `ERR_UNDEFINED`, never an infinity.
+- A density at a pole gives `ERR_OVERFLOW`. An example is the gamma
+  density at 0 with a shape below 1. SciPy returns an infinity there. A density that does not fit also gives
+  `ERR_OVERFLOW`.
+- A call with a fault code of 0 never returns an infinity or a NaN. The
+  test suite checks 40,960 calls with extreme arguments, from 1e-300 to
+  1e300, on every continuous family. A product of two large values keeps
+  a finite result. A ratio that underflows uses the difference of two logs.
+- The checks run in one order for every call: NaN, infinity, domain. An
+  infinite value of x gives `ERR_INFINITY` in every density and
+  cumulative call, and an infinite scale gives `ERR_INFINITY` too.
 
 These risks stay.
 
@@ -345,11 +440,14 @@ goose run examples/hostile.goose
 goose run examples/association.goose
 goose run examples/ranks.goose
 goose run examples/special.goose
+goose run examples/distributions.goose
 ```
 
-The scripts `test/make_vectors.py`, `test/make_assoc_vectors.py` and
-`test/make_special_vectors.py` build the vectors of the test suite. They write numbers only into the package. Each vector is compared with a second
-source, and the script fails on a difference beyond the tolerance.
+The scripts `test/make_vectors.py`, `test/make_assoc_vectors.py`,
+`test/make_special_vectors.py` and `test/make_distribution_vectors.py`
+build the vectors of the test suite. They write numbers only into the
+package. Each vector is compared with a second source, and the script
+fails on a difference beyond the tolerance.
 
 The second sources are in four languages. Python gives the exact value
 through the modules `fractions` and `decimal`. NumPy, SciPy and Python
@@ -360,8 +458,16 @@ package `simple-statistics` of Node.
 The oracle programs are under `test/`. The program `test/oracle` reads a
 list of samples and gives the values of Go with gonum. The program
 `test/oracle-rust` gives the values of the crate `statrs`. The program
-`test/oracle-node` gives the values of the package `simple-statistics`.
-Each program needs its own toolchain and its own packages.
+`test/oracle-node` gives the values of the package `simple-statistics`,
+and of the package `jstat` in the distribution mode. Each program needs
+its own toolchain and its own packages.
+
+The distribution vectors carry 3,190 rows. The exact value of each row
+comes from `mpmath` at 50 digits. Run the vector script with `--oracles`
+to compare the three libraries with the rows. The package `jstat` holds
+a beta solver with an error near 1e-8, so its rows take a wider bound.
+gonum forms a survival function as one minus a value. Its small tails
+take the bound that this loss gives.
 
 For the special functions each program runs in the mode `special`. The script
 `test/make_special_vectors.py` needs `mpmath` for the exact values. Run it
@@ -378,6 +484,16 @@ seeded inputs of the hostile suite. The default is 100000. The script
 `test/mutate.sh` sets it to 2000, because it runs the suite many times.
 The three inverse calls take a fiftieth of that count. Each one costs
 milliseconds, so a full count would take too long.
+
+The distributions take a fiftieth of that count too. The cumulative
+function of every family costs a continued fraction. The quantile costs
+a search. The moments of the hypergeometric cost a sum of the masses of
+its support.
+
+The environment variable `STATISTICS_ROUND_N` sets the count of the
+points of the round trip of the quantiles. The default is 2000 points
+for each family, so 30,000 points in all. The script `test/mutate.sh`
+sets it to 200, because it runs the suite many times.
 
 ## License
 

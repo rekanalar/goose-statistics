@@ -18,6 +18,9 @@ const SPLIT: f64 = 134217729.0;
 // p + e equal to a * b. The split needs no overflow and no underflow.
 fn two_prod(a: f64, b: f64) -> f64, f64 {
     let p = a * b;
+    // The split overflows for a magnitude above 1e299. The error term is
+    // then lost, but the product stays finite when it fits.
+    if abs(a) > 1e299 || abs(b) > 1e299 { return p, 0.0; }
     let ca = SPLIT * a;
     let ah = ca - (ca - a);
     let al = a - ah;

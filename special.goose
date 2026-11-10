@@ -229,6 +229,7 @@ fn dd_to_f64(a: DD) -> f64 { return a.hi + a.lo; }
 
 fn dd_add(a: DD, b: DD) -> DD {
     let s, e = two_sum(a.hi, b.hi);
+    if is_inf(s) { return DD { hi: s, lo: 0.0 }; }
     let t = e + a.lo + b.lo;
     let h, l = two_sum(s, t);
     return DD { hi: h, lo: l };
@@ -236,6 +237,7 @@ fn dd_add(a: DD, b: DD) -> DD {
 
 fn dd_add_d(a: DD, b: f64) -> DD {
     let s, e = two_sum(a.hi, b);
+    if is_inf(s) { return DD { hi: s, lo: 0.0 }; }
     let t = e + a.lo;
     let h, l = two_sum(s, t);
     return DD { hi: h, lo: l };
@@ -249,6 +251,7 @@ fn dd_neg(a: DD) -> DD { return DD { hi: -a.hi, lo: -a.lo }; }
 
 fn dd_mul(a: DD, b: DD) -> DD {
     let p, e = two_prod(a.hi, b.hi);
+    if is_inf(p) { return DD { hi: p, lo: 0.0 }; }
     let t = e + a.hi * b.lo + a.lo * b.hi;
     let h, l = two_sum(p, t);
     return DD { hi: h, lo: l };
@@ -256,6 +259,7 @@ fn dd_mul(a: DD, b: DD) -> DD {
 
 fn dd_mul_d(a: DD, b: f64) -> DD {
     let p, e = two_prod(a.hi, b);
+    if is_inf(p) { return DD { hi: p, lo: 0.0 }; }
     let t = e + a.lo * b;
     let h, l = two_sum(p, t);
     return DD { hi: h, lo: l };
@@ -263,6 +267,7 @@ fn dd_mul_d(a: DD, b: f64) -> DD {
 
 fn dd_div(a: DD, b: DD) -> DD {
     let q1 = a.hi / b.hi;
+    if is_inf(q1) { return DD { hi: q1, lo: 0.0 }; }
     var r = dd_sub(a, dd_mul(b, dd_from(q1)));
     let q2 = r.hi / b.hi;
     r = dd_sub(r, dd_mul(b, dd_from(q2)));
@@ -1021,6 +1026,15 @@ fn beta(a: f64, b: f64) -> f64, i64 {
 }
 
 // The log of the binomial coefficient. The end points give the exact 0.
+// The log of the binomial coefficient as a pair.
+fn dd_lchoose(n: f64, k: f64) -> DD {
+    if k == 0.0 || k == n { return dd_from(0.0); }
+    // C(n, k) = 1 / ((n + 1) B(k + 1, n - k + 1))
+    let k1 = dd_add_d(dd_from(k), 1.0);
+    let nk1 = dd_add_d(dd_sub(dd_from(n), dd_from(k)), 1.0);
+    return dd_neg(dd_add(dd_log(dd_add_d(dd_from(n), 1.0)), dd_lnbeta_dd(k1, nk1)));
+}
+
 fn lchoose(n: f64, k: f64) -> f64, i64 {
     let cn = check_scalar(n);
     if cn != 0 { return nan(), cn; }
@@ -1028,10 +1042,7 @@ fn lchoose(n: f64, k: f64) -> f64, i64 {
     if ck != 0 { return nan(), ck; }
     if n < 0.0 || k < 0.0 || k > n { return nan(), 5; }
     if k == 0.0 || k == n { return 0.0, 0; }
-    // C(n, k) = 1 / ((n + 1) B(k + 1, n - k + 1))
-    let k1 = dd_add_d(dd_from(k), 1.0);
-    let nk1 = dd_add_d(dd_sub(dd_from(n), dd_from(k)), 1.0);
-    let r = dd_to_f64(dd_neg(dd_add(dd_log(dd_add_d(dd_from(n), 1.0)), dd_lnbeta_dd(k1, nk1))));
+    let r = dd_to_f64(dd_lchoose(n, k));
     if is_inf(r) || is_nan(r) { return nan(), 8; }
     return r, 0;
 }
@@ -1495,35 +1506,69 @@ fn beta_series_tail(a: f64, b: f64, xd: DD) -> f64, i64 {
     return dd_scale(dd_mul(mant, ssum), k), 0;
 }
 
-// The regularized incomplete beta function I_x(a, b). The small tail comes
-// straight, and the other tail is one minus it, in pairs. A tiny shape
-// makes the direct tail equal to one within 1e-15. If the wanted tail is
-// then the other one, it comes from the series, because the difference
-// holds none of its digits.
-fn betainc_value(a: f64, b: f64, x: f64) -> f64, i64 {
-    if x <= 0.0 { return 0.0, 0; }
-    if x >= 1.0 { return 1.0, 0; }
+// The code of the arguments of the incomplete beta function. A shape at
+// or below 0 and a probability outside the unit range are out of range.
+fn check_beta_args(a: f64, b: f64, x: f64) -> i64 {
+    let ca = check_shape(a);
+    if ca != 0 { return ca; }
+    let cb = check_shape(b);
+    if cb != 0 { return cb; }
+    if is_nan(x) { return 3; }
+    if is_inf(x) { return 5; }
+    if x < 0.0 || x > 1.0 { return 5; }
+    if a > MAX_SHAPE || b > MAX_SHAPE { return 5; }
+    return 0;
+}
+
+// The regularized incomplete beta function I_x(a, b), or its upper tail
+// 1 - I_x(a, b). The small tail comes straight, and the other tail is
+// one minus it, in pairs. A tiny shape makes the direct tail equal to
+// one within 1e-15. If the wanted tail is then the other one, it comes
+// from the series, because the difference holds none of its digits.
+fn beta_value(a: f64, b: f64, x: f64, upper: bool) -> f64, i64 {
+    if x <= 0.0 {
+        if upper { return 1.0, 0; }
+        return 0.0, 0;
+    }
+    if x >= 1.0 {
+        if upper { return 0.0, 0; }
+        return 1.0, 0;
+    }
     let side, tail, k, code = beta_tail(a, b, x);
     if code != 0 { return nan(), code; }
     let direct = dd_scale(tail, k);
-    if side == 0 { return direct, 0; }
-    // the direct tail is the upper one, and the wanted tail is one minus it
-    if direct > 1.0 - 1e-15 { return beta_series_tail(a, b, dd_from(x)); }
+    // the direct tail is the wanted one
+    if upper {
+        if side == 1 { return direct, 0; }
+    } else {
+        if side == 0 { return direct, 0; }
+    }
+    // the wanted tail is one minus the direct tail
+    if direct > 1.0 - 1e-15 {
+        if upper {
+            let ys, ye = two_sum(1.0, -x);
+            return beta_series_tail(b, a, DD { hi: ys, lo: ye });
+        }
+        return beta_series_tail(a, b, dd_from(x));
+    }
     let scaled = DD { hi: tail.hi * pow2_int(k), lo: tail.lo * pow2_int(k) };
     return dd_to_f64(dd_sub(dd_from(1.0), scaled)), 0;
 }
 
 // The regularized incomplete beta function I_x(a, b).
 fn betainc(a: f64, b: f64, x: f64) -> f64, i64 {
-    let ca = check_shape(a);
-    if ca != 0 { return nan(), ca; }
-    let cb = check_shape(b);
-    if cb != 0 { return nan(), cb; }
-    if is_nan(x) { return nan(), 3; }
-    if is_inf(x) { return nan(), 5; }
-    if x < 0.0 || x > 1.0 { return nan(), 5; }
-    if a > MAX_SHAPE || b > MAX_SHAPE { return nan(), 5; }
-    return betainc_value(a, b, x);
+    let c = check_beta_args(a, b, x);
+    if c != 0 { return nan(), c; }
+    return beta_value(a, b, x, false);
+}
+
+// The upper tail 1 - I_x(a, b) of the regularized incomplete beta
+// function, with x exact. The distributions use it, because a caller
+// that passes 1 - x would lose the digits of a small x.
+fn betainc_upper(a: f64, b: f64, x: f64) -> f64, i64 {
+    let c = check_beta_args(a, b, x);
+    if c != 0 { return nan(), c; }
+    return beta_value(a, b, x, true);
 }
 
 // ---- the inverses ----------------------------------------------------

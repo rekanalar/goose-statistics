@@ -14,6 +14,10 @@ fn main() {
     bad += suite::run_hostile();
     bad += suite::run_special(false);
     bad += suite::run_special_extra();
+    bad += suite::run_distributions(false);
+    bad += suite::run_distribution_extra();
+    bad += suite::run_accept_dist();
+    bad += suite::run_accept_round();
     if bad > 0 {
         print(bad, " checks failed\n");
         assert(false);

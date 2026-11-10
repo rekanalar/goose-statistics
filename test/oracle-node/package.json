@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "The simple-statistics oracle of the statistics package.",
+  "description": "The oracle of the statistics package, with simple-statistics and jstat.",
   "dependencies": {
+    "jstat": "^1.9.6",
     "simple-statistics": "7.8.7"
   }
 }
