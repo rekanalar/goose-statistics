@@ -20,6 +20,7 @@ import cross;
 import ranks;
 import line;
 import matrix;
+import special;
 
 // ---- fault codes ----------------------------------------------------
 const OK: i64 = 0;
@@ -39,6 +40,13 @@ const MAX_ORDER: i64 = 8;        // the largest moment order
 const MAX_THEIL: i64 = 4096;     // points in a Theil-Sen estimate
 const MAX_COLUMNS: i64 = 1024;   // columns in a matrix
 const MAX_WORK: i64 = 268435456; // cell computations in a matrix
+
+// The bounds of the special functions. The measurement of the prototypes
+// set each bound. A loop that meets its bound gives the overflow code.
+const MAX_SHAPE: f64 = 10000000000.0;   // the largest shape of an incomplete call
+const MAX_ITER_SERIES: i64 = 2048;      // terms of a power series
+const MAX_ITER_CF: i64 = 40000;         // steps of a continued fraction
+const MAX_ITER_INVERSE: i64 = 100;      // steps of an inverse loop
 
 // ---- tie methods -------------------------------------------------------
 const TIE_AVERAGE: i64 = 0;   // the tied values share the mean of their ranks

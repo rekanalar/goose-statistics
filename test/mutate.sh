@@ -6,6 +6,8 @@
 set -u
 here="$(cd "$(dirname "$0")/.." && pwd)"
 work="${TMPDIR:-/tmp}/statistics-mutate"
+# The probes check the rules, so they run a smaller hostile count.
+export STATISTICS_HOSTILE_N="${STATISTICS_HOSTILE_N:-2000}"
 rm -rf "$work"
 mkdir -p "$work"
 
@@ -68,6 +70,42 @@ line.goose|let intercept_err = scale_pow2(se * sqrt(r.s_xx / n), -r.exp_y);|let 
 line.goose|if xs.len > MAX_THEIL { return nan(), nan(), 9; }|if xs.len > MAX_THEIL * 2 { return nan(), nan(), 9; }|theil sen pair bound
 line.goose|let intercept = my - slope * mx;|let intercept = my - slope * mx + 1.0;|theil sen intercept uses the median of x
 matrix.goose|if rows < 2 { return 2; }|if rows < 1 { return 2; }|matrix needs two rows
+special.goose|return 1.0 - erf_series(x), OK;|return 1.0 - erf_series(abs(x)), OK;|erfc keeps the sign near zero
+special.goose|if x > 27.25 { return 0.0, OK; }|if x > 26.0 { return 0.0, OK; }|erfc underflow bound
+special.goose|if p <= 0.5 { return erfcinv_core(p), OK; }|if p <= 0.0 { return erfcinv_core(p), OK; }|erfcinv split of the range
+special.goose|if a == 1.0 { return nan(), ERR_OVERFLOW; }|if a == 1.0 { return 1.0, OK; }|erfinv at one
+special.goose|if x > 171.6243769563027 { return nan(), 8; }|if x > 170.0 { return nan(), 8; }|gamma overflow bound
+special.goose|let sg = gamma_sign(n);|let sg = 1.0;|sign of the gamma and the log gamma on the negative side
+special.goose|if x == -1.0 { return nan(), ERR_OVERFLOW; }|if x == -1.0 { return nan(), ERR_DOMAIN; }|log1p at minus one
+special.goose|if x < -40.0 { return -1.0, OK; }|if x < -20.0 { return -1.0, OK; }|expm1 saturates at minus one
+special.goose|if a > MAX_SHAPE|if a > 2.0 * MAX_SHAPE|shape bound
+special.goose|if delta > 2.5 {|if delta > -0.9 {|fraction start of the large shapes
+special.goose|if delta < -0.5 {|if delta < 5.0 {|series start of the large shapes
+special.goose|if a >= 2500.0 {|if a >= 250000.0 {|saddle point branch start
+special.goose|if hi.hi < 1e8 {|if hi.hi < 1e300 {|log beta of the large shapes
+special.goose|if lo.hi >= 20.0 {|if lo.hi >= -1.0 {|log beta of two large shapes
+special.goose|if target > 1e-290 {|if false {|polish of the gamma inverse
+special.goose|var xn = xr - (v - target) / dens;|var xn = xr + (v - target) / dens;|direction of the polish step
+special.goose|if a >= 1e100 { return dd_from(0.0); }|if a >= 1e3 { return dd_from(0.0); }|Stirling sum of a huge argument
+special.goose|let n = (floor(STIRLING_SHIFT - z.hi) + 1.0) as i64;|let n = floor(STIRLING_SHIFT - z.hi) as i64;|shift of the log gamma reaches the Stirling range
+special.goose|if p == 1.0 { return 1.0, 0; }|if p == 1.0 { return 0.5, 0; }|betaincinv at one
+special.goose|if x <= 0.0 { return 0.0, 0; }|if x <= 0.0 { return 0.5, 0; }|betainc at zero
+special.goose|if x >= 1.0 { return 1.0, 0; }|if x >= 1.0 { return 0.5, 0; }|betainc at one
+special.goose|if is_nan(x) { return nan(), 3; }|if is_nan(x) { return 0.0, 3; }|betainc with a NaN
+special.goose|if is_inf(p) { return ERR_DOMAIN; }|if is_inf(p) { return ERR_INFINITY; }|probability that is infinite
+special.goose|while k <= MAX_ITER_SERIES {|while k <= 3 {|bound of the power series
+special.goose|while i <= MAX_ITER_CF {|while i <= 3 {|bound of the gamma fraction
+special.goose|while m <= MAX_ITER_CF {|while m <= 3 {|bound of the beta fraction
+special.goose|let w = sqrt(2.0 * bigd);|let w = sqrt(2.0 * bigd) * 1.0000001;|saddle point variable
+special.goose|ssum += bn * y[0] * e;|ssum += bn * y[0];|saddle point leading term
+special.goose|if !upper \&\& n % 2 == 0 { bn = -bn; }|if upper \&\& n % 2 == 0 { bn = -bn; }|saddle point series sign of the lower tail
+special.goose|if upper \&\& a < 1e-3 {|if upper \&\& a < 1e-300 {|branch of the tiny shape
+special.goose|if abs(u.hi) >= 1e-3 { return 0.0, false; }|if abs(u.hi) >= 1e-300 { return 0.0, false; }|guard of the tiny shape
+special.goose|return dd_mul_d(s, a);|return dd_mul_d(s, 1.0);|series of the log gamma of a tiny shape
+special.goose|while k <= 100 {|while k <= 1 {|series of the tiny shape tail
+special.goose|if direct > 1.0 - 1e-15 {|if direct > 2.0 {|betainc upper side of a tiny shape
+special.goose|if abs(part.hi) <= 1e-33 * abs(ssum.hi) { done = true; break; }|if abs(part.hi) <= 1e300 * abs(ssum.hi) { done = true; break; }|stop of the beta series
+special.goose|while n <= MAX_ITER_SERIES {|while n <= 3 {|bound of the beta series
 PROBES
 )
 

@@ -40,6 +40,10 @@ func clean(x float64) float64 {
 }
 
 func main() {
+	if len(os.Args) > 2 && os.Args[2] == "special" {
+		runSpecial(os.Args[1])
+		return
+	}
 	raw, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

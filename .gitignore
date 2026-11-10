@@ -14,3 +14,6 @@ test/oracle-node/node_modules/
 
 # The scratch of the probe runs
 tmp/
+
+# The captured output of the CI test step
+test-output.txt

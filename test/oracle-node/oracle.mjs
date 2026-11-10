@@ -6,6 +6,24 @@ import * as ss from "simple-statistics";
 
 const path = process.argv[2];
 const text = readFileSync(path, "utf8");
+
+// The special function mode. Each line holds the function number and three
+// arguments. The package holds the error function, the gamma function and
+// its log. The other numbers give NaN.
+if (process.argv[3] === "special") {
+    for (const line of text.split("\n")) {
+        if (line.trim() === "") { continue; }
+        const [f, a, b, x] = line.trim().split(/\s+/).map(Number);
+        let r = NaN;
+        try {
+            if (f === 0) { r = ss.errorFunction(x); }
+            if (f === 4) { r = ss.gamma(x); }
+            if (f === 5) { r = ss.gammaln(x); }
+        } catch (e) { r = NaN; }
+        console.log(String(r));
+    }
+    process.exit(0);
+}
 for (const line of text.split("\n")) {
     if (line.trim() === "") { continue; }
     // A line with a bar holds two samples. The oracle writes the

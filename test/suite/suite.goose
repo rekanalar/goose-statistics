@@ -10,3 +10,6 @@ import assoc_suite;
 import accept_suite;
 import util;
 import hostile_suite;
+import special_vectors;
+import special_suite;
+import special_hostile;

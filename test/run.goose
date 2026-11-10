@@ -12,6 +12,8 @@ fn main() {
     bad += suite::run_weighted();
     bad += suite::run_accept();
     bad += suite::run_hostile();
+    bad += suite::run_special(false);
+    bad += suite::run_special_extra();
     if bad > 0 {
         print(bad, " checks failed\n");
         assert(false);

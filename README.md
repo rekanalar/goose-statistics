@@ -73,6 +73,18 @@ import statistics from "rekanalar/goose-statistics@v0.2.0";
 | `theil_sen(xs, ys)` | the Theil-Sen slope and the Theil-Sen intercept |
 | `covariance_matrix(out, data, ncols, ddof)` | writes the covariance matrix into `out`; gives the count and the code |
 | `correlation_matrix(out, data, ncols)` | writes the correlation matrix into `out`; gives the count and the code |
+| `erf(x)`, `erfc(x)` | the error function and its complement; `erfc` keeps its digits far in the tail |
+| `erfinv(y)`, `erfcinv(p)` | the inverses; `erfinv` takes -1 to 1 and `erfcinv` takes 0 to 2 |
+| `gamma(x)` | the gamma function; a pole gives `ERR_UNDEFINED` and a result that does not fit gives `ERR_OVERFLOW` |
+| `lgamma(x)` | gives the log of the absolute gamma, the sign and the code |
+| `digamma(x)` | the logarithmic derivative of the gamma function |
+| `beta(a, b)`, `lbeta(a, b)` | the beta function and its log, for `a` and `b` above 0 |
+| `lchoose(n, k)` | the log of the binomial coefficient, for `k` from 0 to `n` |
+| `gammainc(a, x)`, `gammaincc(a, x)` | the regularized lower and upper incomplete gamma, for `a` up to `MAX_SHAPE` |
+| `gammaincinv(a, p)`, `gammainccinv(a, q)` | the inverses of the two incomplete gamma functions |
+| `betainc(a, b, x)` | the regularized incomplete beta, for `x` from 0 to 1 |
+| `betaincinv(a, b, p)` | the inverse of the regularized incomplete beta |
+| `log1p(x)`, `expm1(x)` | the log of 1 + x and the exponential minus 1, exact near 0 |
 
 The argument `method` is one of the nine `METHOD_` constants. The
 constants `METHOD_EXCLUSIVE` and `METHOD_INCLUSIVE` stand for the two
@@ -107,6 +119,15 @@ The constant `MAX_THEIL` of 4,096 points gives the largest sample of the
 Theil-Sen call. The constant `MAX_COLUMNS` of 1,024 gives the largest
 count of the columns of a matrix call. The constant `MAX_WORK` of
 268,435,456 gives the largest work of a matrix call.
+
+The special functions take one to three numbers and no sample. The call
+`lgamma` returns three values: the log of the absolute gamma, the sign
+and the code. A pole gives `ERR_UNDEFINED`. A NaN gives `ERR_NAN`.
+
+An infinity gives `ERR_INFINITY`, except for `erf` and `erfc`, where it is
+a valid limit. A shape or a probability out of range gives `ERR_DOMAIN`.
+A result that does not fit in a float gives `ERR_OVERFLOW`. The constant
+`MAX_SHAPE` of 1e10 gives the largest shape of an incomplete function.
 
 Every call returns the result first and the fault code second. A fault
 gives NaN as the result and one of these codes.
@@ -158,6 +179,19 @@ It becomes at least 2 to the power -300. The products and the sums then
 stay finite and stay normal. The scale of a column is an exponent, so
 the result comes back without a false overflow.
 
+The special functions use pairs of doubles where the plain form loses
+digits. The log of the beta function subtracts log gamma terms of equal
+size. The incomplete functions form the small tail directly and give the
+large tail as one minus the small tail. So neither tail loses its digits.
+
+The tests allow 4 units in the last place for the error functions and 8
+for the gamma family. They allow 16 for the incomplete functions up to a
+shape of 1e4. They allow 64 up to a shape of 1e10.
+
+The forward call of an inverse returns the input within 20 units. This
+holds for a shape up to 10. For a larger shape the root itself stays
+within 64 units.
+
 ## Limits
 
 - The package holds no p-value and no confidence interval. SciPy holds
@@ -168,8 +202,25 @@ the result comes back without a false overflow.
   correlation. SciPy holds `partialcorr`.
 - The package holds no complex sample. NumPy holds the complex forms.
 - The package holds no significance test for the rank correlations.
-- The package holds no special function. SciPy holds `special`. The crate
-  `statrs` of Rust holds `function`.
+- The special functions hold no unregularized incomplete gamma. The crate
+  `statrs` holds `gamma_li` and `gamma_ui`.
+- The package holds no integer factorial and no exact binomial
+  coefficient. Python holds `math.factorial` and `math.comb`.
+- The package holds no complex gamma, no Bessel function, no zeta
+  function and no elliptic integral. SciPy holds them in `special`.
+- The package holds no `ndtr` and no `ndtri`. SciPy holds both.
+- The package holds no inverse of the digamma. The crate `statrs` holds
+  `inv_digamma`.
+- A shape above `MAX_SHAPE` of 1e10 gives `ERR_DOMAIN` in the incomplete
+  functions and their inverses. SciPy gives a number there.
+- A tail below the smallest subnormal float gives 0 and no fault. The
+  call `erfc` gives 0 from 27.25. The call `beta` gives 0 when the true
+  value is below the smallest subnormal.
+- The log gamma of an argument near a root keeps a relative error only
+  away from the zeros. Near 1 and 2 the error is absolute, near 1e-15.
+- An inverse of the incomplete functions loses digits when the input
+  probability is near 1. Pass the small tail instead, with `gammainccinv`
+  or the complement of the shape.
 - The package holds no distribution. Python holds `NormalDist`. SciPy holds
   the distributions of `stats`. gonum holds `distuv`.
 - The package holds no hypothesis test. SciPy holds `ttest_ind`,
@@ -246,7 +297,7 @@ go beyond the reference libraries.
   the rounding pushes past the range.
 - A call that takes two columns scales each column on its own. The
   reference libraries use one scale for both columns. A small column
-  next to a huge column falls to zero there. The call gives a wrong
+  next to a column of large values falls to zero there. The call gives a wrong
   result with no warning. This package scales each column, so the value
   of the small column survives.
 - The Theil-Sen call stops at 4,096 points. It then gives
@@ -255,6 +306,20 @@ go beyond the reference libraries.
 - A matrix call checks the work before it starts. A work above
   `MAX_WORK` gives `ERR_TOO_LONG` and writes no cell. The count of the
   cells stays at most 1,048,576.
+- The special functions return a fault code and NaN for a NaN, a domain
+  error, a pole and an overflow. SciPy and Go return NaN or an infinity
+  without a signal. gonum and the crate `statrs` panic on a shape out of
+  range. Python raises an exception.
+- Every iteration of the special functions has a fixed bound. A series
+  has 2048 terms, a fraction has 40,000 steps and an inverse has 100
+  steps. A loop that meets its bound gives `ERR_OVERFLOW`. It never gives
+  a wrong value without a signal.
+- A shape above 1e10 gives `ERR_DOMAIN`. The bounds above hold for every
+  shape up to that value.
+- No special function allocates memory that grows with its argument, and
+  none keeps state between calls.
+- The test suite runs 100,000 seeded inputs on every special function.
+  It times crafted shapes against a random call.
 - The Kendall count sorts the pairs and counts the swaps. It runs in the
   time of a sort. The test suite times the count on five crafted samples
   of the maximum length.
@@ -279,10 +344,11 @@ goose run examples/quantiles.goose
 goose run examples/hostile.goose
 goose run examples/association.goose
 goose run examples/ranks.goose
+goose run examples/special.goose
 ```
 
-The scripts `test/make_vectors.py` and `test/make_assoc_vectors.py` build
-the vectors of the test suite. They write numbers only into the package. Each vector is compared with a second
+The scripts `test/make_vectors.py`, `test/make_assoc_vectors.py` and
+`test/make_special_vectors.py` build the vectors of the test suite. They write numbers only into the package. Each vector is compared with a second
 source, and the script fails on a difference beyond the tolerance.
 
 The second sources are in four languages. Python gives the exact value
@@ -297,9 +363,21 @@ list of samples and gives the values of Go with gonum. The program
 `test/oracle-node` gives the values of the package `simple-statistics`.
 Each program needs its own toolchain and its own packages.
 
+For the special functions each program runs in the mode `special`. The script
+`test/make_special_vectors.py` needs `mpmath` for the exact values. Run it
+with `--oracles` to compare gonum, `statrs` and `simple-statistics` with
+them. The `gamma` of `simple-statistics` errs by up to half a
+percent. The script leaves it out of the gamma comparison.
+
 The script `test/mutate.sh` flips one rule of the code at a time in a copy
 of the package. Each flip must make the test program fail. The last line
 reads `N probes, 0 failures`.
+
+The environment variable `STATISTICS_HOSTILE_N` sets the count of the
+seeded inputs of the hostile suite. The default is 100000. The script
+`test/mutate.sh` sets it to 2000, because it runs the suite many times.
+The three inverse calls take a fiftieth of that count. Each one costs
+milliseconds, so a full count would take too long.
 
 ## License
 
