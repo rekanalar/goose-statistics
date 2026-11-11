@@ -295,7 +295,7 @@ counts of the discrete quantiles are exact.
 
 ## Limits
 
-- The package holds no p-value and no confidence interval. SciPy holds
+- The package holds no confidence interval of a correlation. SciPy holds
   `pearsonr`, `spearmanr` and `kendalltau` with these values.
 - The package holds no confidence slope of the Theil-Sen estimate. SciPy
   holds `theilslopes` with the low and the high slope.
