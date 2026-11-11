@@ -44,6 +44,10 @@ func main() {
 		runSpecial(os.Args[1])
 		return
 	}
+	if len(os.Args) > 2 && os.Args[2] == "tests" {
+		runTests(os.Args[1])
+		return
+	}
 	if len(os.Args) > 2 && os.Args[2] == "distribution" {
 		runDistribution(os.Args[1])
 		return

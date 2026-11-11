@@ -8,8 +8,8 @@ here="$(cd "$(dirname "$0")/.." && pwd)"
 work="${TMPDIR:-/tmp}/statistics-mutate"
 # The probes check the rules, so they run a smaller hostile count.
 export STATISTICS_HOSTILE_N="${STATISTICS_HOSTILE_N:-2000}"
-# The round trip of the quantiles costs an inverse per point, so the
-# probes run it on fewer points than the test program does.
+# The round trip of the quantiles costs an inverse per point. The probes
+# run it on fewer points than the test program does.
 export STATISTICS_ROUND_N="${STATISTICS_ROUND_N:-200}"
 rm -rf "$work"
 mkdir -p "$work"
@@ -65,7 +65,7 @@ ranks.goose|if method == TIE_DENSE { rank = dense + 1; }|if method == TIE_DENSE 
 ranks.goose|if method == TIE_ORDINAL { rank = first + (m - k); }|if method == TIE_ORDINAL { rank = first; }|ordinal rank follows the input order
 ranks.goose|if method == TIE_MAX { rank = first + (count - 1); }|if method == TIE_MAX { rank = first; }|max rank ends at the group end
 ranks.goose|if a[i] <= a[j] {|if a[i] < a[j] {|merge counts no swap for a tie in y
-ranks.goose|let cd = n0 - t.n1 - t.n2 + t.n3 - 2 * swaps;|let cd = n0 - t.n1 - t.n2 + t.n3;|kendall counts the discordant pairs
+ranks.goose|return n0 - t.n1 - t.n2 + t.n3 - 2 * swaps, t;|return n0 - t.n1 - t.n2 + t.n3, t;|kendall counts the discordant pairs
 ranks.goose|let den = nf * nf * (mf - 1.0) / mf;|let den = nf * nf * (mf - 1.0) / (mf - 1.0);|tau c denominator scale
 line.goose|let slope = scale_pow2(r.n_xy / r.n_xx, r.exp_x - r.exp_y);|let slope = scale_pow2(r.s_xy / r.s_xx, r.exp_x - r.exp_y);|line slope uses the centered sums
 line.goose|let slope = scale_pow2(r.s_xy / r.s_xx, r.exp_x - r.exp_y);|let slope = scale_pow2(r.n_xy / r.n_xx, r.exp_x - r.exp_y);|proportional slope goes through the origin
@@ -150,6 +150,36 @@ distributions.goose|return base + sign * pdf * u.lo;|return base + sign * pdf * 
 distributions.goose|if p == 0.0 { return lo, OK; }|if p == 0.0 { return lo + 1.0, OK; }|the probability 0 gives the smallest count
 distributions.goose|return n * d / m, OK;|return n * n / m, OK;|mean of the hypergeometric
 distributions.goose|if p <= 0.5 {|if p <= 0.0 {|the F quantile uses the upper tail above the middle
+@statistics.goose|const MAX_EXACT_MW: i64 = 8;|const MAX_EXACT_MW: i64 = 7;|the exact Mann-Whitney size bound
+@statistics.goose|const MAX_MW_CELLS: i64 = 100000;|const MAX_MW_CELLS: i64 = 1000;|the cell bound of the Mann-Whitney table
+@statistics.goose|const MAX_EXACT_WILCOXON: i64 = 50;|const MAX_EXACT_WILCOXON: i64 = 49;|the exact Wilcoxon pair bound
+@statistics.goose|const MAX_ENUM_WILCOXON: i64 = 13;|const MAX_ENUM_WILCOXON: i64 = 12;|the sign pattern bound of the Wilcoxon test
+@statistics.goose|const MAX_EXACT_KENDALL: i64 = 33;|const MAX_EXACT_KENDALL: i64 = 32;|the exact Kendall pair bound
+@statistics.goose|const MAX_EXACT_KS: i64 = 10000;|const MAX_EXACT_KS: i64 = 9999;|the exact Kolmogorov-Smirnov product bound
+@tests.goose|alt > 2 { return ERR_DOMAIN; }|alt > 3 { return ERR_DOMAIN; }|an unknown alternative gives the domain fault
+@tests.goose|return 2.0 * p, c;|return p, c;|the two-sided t p-value doubles the tail
+@tests.goose|df = 1.0 / (ra * ra / (n1 - 1.0) + rb * rb / (n2 - 1.0));|df = 1.0 / (ra * ra / (n1 - 1.0) + rb * rb / n2);|Welch degrees of freedom
+@tests.goose|let mag = min(0.5, abs(diff));|let mag = min(0.4, abs(diff));|Yates correction size
+@tests.goose|let target = d * (1.0 + 1e-7);|let target = d * (1.0 + 1e-3);|binomial two-sided tolerance
+@tests.goose|let gamma = 1.0 + 1e-14;|let gamma = 1.0 + 1e-2;|Fisher two-sided tolerance
+@tests.goose|if zero_method == ZERO_ZSPLIT {|if zero_method == ZERO_PRATT {|the zsplit zero method
+@tests.goose|if zero_method == ZERO_PRATT {|if zero_method == ZERO_ZSPLIT {|the pratt zero method
+@tests.goose|let h = round(d * lcm) as i64;|let h = floor(d * lcm) as i64;|the lattice height rounds
+@tests.goose|return 2.0 * p;|return p;|the square method doubles the tail
+@tests.goose|if product <= MAX_EXACT_KS \&\& !tied {|if product <= MAX_EXACT_KS {|a tie in a Kolmogorov-Smirnov sample gives the normal form
+@tests.goose|let up = (k + 1) as f64 / n - f;|let up = k as f64 / n - f;|the upper step of the one-sample statistic
+@tests.goose|let down = f - k as f64 / n;|let down = f - (k + 1) as f64 / n;|the lower step of the one-sample statistic
+@tests.goose|if alt == ALT_GREATER { d = dplus; }|if alt == ALT_GREATER { d = dminus; }|the one-sided two-sample statistic
+@tests.goose|a.push(sqrt(0.5));|a.push(sqrt(0.4));|the Shapiro-Wilk coefficient of three values
+@tests.goose|norm_std_ppf((i - 0.375) / an25)|norm_std_ppf((i - 0.4) / an25)|the Shapiro-Wilk normal scores
+@tests.goose|if alt == ALT_TWO_SIDED { x = 0.5 * (1.0 - abs(r)); }|if alt == ALT_TWO_SIDED { x = 0.4 * (1.0 - abs(r)); }|the Pearson p-value argument
+@tests.goose|if n == 2 { return good_result(r, 1.0, df, nan()); }|if n == 2 { return good_result(r, 0.5, df, nan()); }|the Pearson test of two points
+@tests.goose|if n <= MAX_EXACT_KENDALL|if n <= 20|the exact Kendall bound in the call
+@tests.goose|let v = ps[order[k]] * (nf - k);|let v = ps[order[k]] * nf;|the Holm multiplier
+@tests.goose|let v = ps[order[k]] * nf / (k + 1);|let v = ps[order[k]] * nf / (k + 2);|the Benjamini-Hochberg divisor
+@tests.goose|for k in 0..n { adj[k] = ps[k] * nf; }|for k in 0..n { adj[k] = ps[k]; }|the Bonferroni multiplier
+@tests.goose|if v > 1.0 { v = 1.0; }|if v > 2.0 { v = 1.0; }|the adjusted p-value clamps to 1
+
 PROBES
 )
 
@@ -158,6 +188,9 @@ PROBES
 run_probe() {
   local n="$1" file="$2" from="$3" to="$4" name="$5"
   dir="$work/p$n"
+  # A file name with a leading @ runs the suites of the hypothesis tests only.
+  local only=""
+  case "$file" in @*) only="tests"; file="${file#@}" ;; esac
   mkdir -p "$dir"
   (cd "$here" && tar cf - --exclude=.git --exclude=mutate-work .) | (cd "$dir" && tar xf -)
   python3 "$here/test/mutate_one.py" "$dir/$file" "$from" "$to" || {
@@ -166,7 +199,7 @@ run_probe() {
     rm -rf "$dir"
     return
   }
-  if (cd "$dir" && goose run test/run.goose >"$dir/out.txt" 2>&1); then
+  if (cd "$dir" && STATISTICS_SUITES="$only" goose run test/run.goose >"$dir/out.txt" 2>&1); then
     echo "SURVIVED $n: $name"
     echo survived > "$work/verdict$n"
   fi
@@ -180,6 +213,10 @@ total=0
 
 while IFS='|' read -r file from to name; do
   [ -z "$file" ] && continue
+  # The variable MUTATE_ONLY keeps the probes whose line matches the pattern.
+  if [ -n "${MUTATE_ONLY:-}" ]; then
+    echo "$file|$from|$to|$name" | grep -Eq -- "$MUTATE_ONLY" || continue
+  fi
   echo "$file|$from|$to|$name"
 done <<< "$probes" > "$work/list.txt"
 

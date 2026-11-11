@@ -106,6 +106,26 @@ import statistics from "rekanalar/goose-statistics@v0.4.0";
 | `geom_pmf(k, p)`, and the same seven calls | the geometric family in the trials form; `p` = 0.5 |
 | `nbinom_pmf(k, r, p)`, and the same seven calls | the negative binomial family; `r` = 1 and `p` = 0.5 |
 | `hypergeom_pmf(k, M, n, N)`, and the same seven calls | the hypergeometric family, no default |
+| `ttest_1samp(xs, popmean, alt)` | the one-sample t test; gives a `TestResult` |
+| `ttest_ind(xs, ys, alt, equal_var)` | the two-sample t test; `equal_var` false gives the Welch form |
+| `ttest_rel(xs, ys, alt)` | the paired t test |
+| `f_oneway(groups, sizes)` | the one-way analysis of variance of the groups in one flat buffer |
+| `mean_confidence_interval(xs, confidence)` | the t interval of the mean; gives the lower bound, the upper bound and the code |
+| `chisquare(obs, expected, ddof)` | the chi-square test of a fit; an empty `expected` gives the uniform fit; a zero expected count gives `ERR_UNDEFINED`, or `ERR_DOMAIN` when the sums differ |
+| `chi2_contingency(table, rows, cols, correction)` | the chi-square test of a table; `correction` applies the Yates form to a 2x2 table |
+| `binomtest(k, n, p, alt)` | the exact binomial test |
+| `fisher_exact(table, alt)` | the exact test of a 2x2 table; the statistic is the odds ratio |
+| `mannwhitneyu(xs, ys, continuity, alt, method)` | the Mann-Whitney U test |
+| `wilcoxon(diffs, alt, zero_method, correction)` | the Wilcoxon signed-rank test of the differences |
+| `wilcoxon_paired(xs, ys, alt, zero_method, correction)` | the same test of two paired samples |
+| `kruskal(groups, sizes)` | the Kruskal-Wallis test with the correction for ties |
+| `ks_1samp(xs, family, params, alt)` | the Kolmogorov-Smirnov test against one of the ten families |
+| `ks_2samp(xs, ys, alt)` | the two-sample Kolmogorov-Smirnov test |
+| `shapiro(xs)` | the Shapiro-Wilk test of normality; it needs 3 values |
+| `pearsonr(xs, ys, alt)` | the Pearson correlation with its p-value |
+| `spearmanr(xs, ys, alt)` | the Spearman correlation with its p-value |
+| `kendalltau(xs, ys, alt)` | the Kendall tau-b with its p-value |
+| `multipletests(out, ps, method)` | writes the adjusted p-values into `out`; gives the count and the code |
 
 The argument `method` is one of the nine `METHOD_` constants. The
 constants `METHOD_EXCLUSIVE` and `METHOD_INCLUSIVE` stand for the two
@@ -151,6 +171,35 @@ and `beta` belong to the special functions. The family calls carry the
 prefixes `gammadist_` and `betadist_`. A continuous family takes a
 density, and a discrete family takes a mass. The call `kurt` gives the
 excess kurtosis, as gonum gives it.
+
+A test returns a `TestResult` and then the fault code. The fields are
+`statistic`, `pvalue`, `df` and `df2`. A field that the test does not have
+holds NaN. A fault gives NaN in every field. A p-value with the code `OK`
+lies from 0 to 1 and is never NaN.
+
+The argument `alt` is one of `ALT_TWO_SIDED`, `ALT_LESS` and `ALT_GREATER`.
+Another value gives `ERR_DOMAIN`. The argument `method` of `mannwhitneyu`
+is one of `MW_AUTO`, `MW_EXACT` and `MW_ASYMPTOTIC`. The argument
+`zero_method` is one of `ZERO_WILCOX`, `ZERO_PRATT` and `ZERO_ZSPLIT`. The
+argument `method` of `multipletests` is one of `ADJUST_BONFERRONI`,
+`ADJUST_HOLM` and `ADJUST_BH`.
+
+A group call takes one flat buffer of all the values and an array of the
+group sizes. A table call takes the counts row by row. The argument
+`family` of `ks_1samp` is one of the ten `FAMILY_` constants, from
+`FAMILY_NORMAL` to `FAMILY_F`. The buffer `params` holds the parameters in
+the order of the family call. Most families take two. The exponential,
+the chi-square and the Student t family take one.
+
+The exact forms follow the rules of SciPy. The Mann-Whitney test counts the
+exact distribution when one sample holds at most 8 values and no value
+repeats. The Wilcoxon test counts exactly for at most 50 pairs without
+ties and zeros. It also counts exactly for at most 13 pairs with them. The Kendall test is
+exact for at most 33 pairs without ties. The two-sample Kolmogorov-Smirnov
+test is exact when the product of the sizes is at most 10,000 and no value
+repeats.
+
+The other cases use the normal form with the correction for ties.
 
 The quantile calls take the probability first.
 
@@ -297,8 +346,37 @@ counts of the discrete quantiles are exact.
 - The quantile of a discrete family is the smallest count whose
   cumulative function reaches the probability. The references agree on
   this rule.
-- The package holds no hypothesis test. SciPy holds `ttest_ind`,
-  `chisquare` and `mannwhitneyu`.
+- The package holds no resampling test. SciPy holds `permutation_test`
+  and the random permutation form of `wilcoxon`. The Wilcoxon test counts
+  all sign patterns for at most 13 pairs and uses the normal form above.
+- The package holds no normality test besides Shapiro-Wilk. SciPy holds
+  `normaltest` and `anderson`. The Shapiro-Wilk p-value is not accurate
+  above 5,000 values, as in SciPy.
+- The multiple-testing call holds three methods. R `p.adjust` also holds
+  Hochberg, Hommel and Benjamini-Yekutieli.
+- The Mann-Whitney call limits each of its two samples to `MAX_INPUT`
+  values. The call copies both samples into one pool, so the pool can
+  hold twice the limit. A sample above the limit gives `ERR_TOO_LONG`.
+- The Mann-Whitney table has at most 100,000 cells. A larger exact case
+  uses the normal form. SciPy keeps the exact form.
+- The two-sample Kolmogorov-Smirnov test uses the exact form for a product
+  of the sizes up to 10,000. SciPy attempts it for sizes up to 10,000
+  each, so it differs for large samples. A tie in either sample gives the
+  normal form, because the exact tables assume distinct values. SciPy
+  computes the exact value on tied data.
+- The one-sample Kolmogorov-Smirnov test gives the exact p-value for any
+  sample, tied or not, up to 10,000 values. It uses the series above that.
+- `chi2_contingency` accepts a count with a fraction, as SciPy does.
+  `fisher_exact` rejects it.
+- The Wilcoxon test of a sample of all zeros gives NaN with
+  `ERR_UNDEFINED`. SciPy gives a p-value of 1. The statistic of such a
+  sample has no meaning, so this package refuses it.
+- R and SciPy differ on a constant sample. R stops with an error and SciPy
+  gives NaN. This package gives NaN and `ERR_UNDEFINED`.
+- The package returns the statistic k/n for `binomtest`, as SciPy does.
+- The `simple-statistics` function `tTest` divides by the population
+  deviation, so its statistic differs from SciPy by the factor
+  `sqrt(n / (n - 1))`. This package follows SciPy and R.
 - The package holds no resampling call. SciPy holds `bootstrap` and
   `permutation_test`.
 - The package holds no histogram and no density estimate. NumPy holds
@@ -334,6 +412,11 @@ counts of the discrete quantiles are exact.
 - The weighted forms divide the weights by the largest weight. The
   weights of a sample that reach 1e150 lose a few units in the last
   place.
+- The review of this release did not check some parts of the code.
+  It did not check the coefficients of the Shapiro-Wilk test. It did
+  not check the bounds of the series of the exact Kolmogorov-Smirnov
+  test. It did not check the asymptotic branches of the one-sample
+  Kolmogorov-Smirnov test. A wrong value in those places stays.
 
 ## Security
 
@@ -343,6 +426,21 @@ go beyond the reference libraries.
 - Every call checks the length of its input before any other work. The
   limit is `MAX_INPUT` of 4,194,304 values. A longer sample gives
   `ERR_TOO_LONG` and no work starts.
+- A test that reads a sample checks the length and the empty sample
+  first. It checks NaN and infinity before it reads a table or a group.
+  A test that reads counts checks each count for NaN, for an infinity
+  and for a negative value.
+  Every exact count has a bound: 8 values, 50 pairs, 13 pairs, 33 pairs
+  and a product of 10,000.
+  The Mann-Whitney table stops at 100,000 cells. A p-value with the code
+  `OK` is a number from 0 to 1, never NaN.
+- An exact count stays below 2 to the power 53, or it is a probability.
+  An exact value never overflows in silence.
+- `chi2_contingency` and `fisher_exact` reject a negative count and a
+  count above 2 to the power 53. `fisher_exact` rejects a fraction too.
+- `multipletests` rejects a p-value outside 0 to 1 and clamps each
+  adjusted value to 1.
+- `mean_confidence_interval` rejects a confidence outside 0 to 1.
 - Every call rejects a NaN and an infinity in the sample and in the
   weights. The reference libraries let a NaN reach the result, and some
   of them let an infinity reach it too.
@@ -351,9 +449,10 @@ go beyond the reference libraries.
 - Every call checks its result for an infinity and for a NaN. A result
   that does not fit gives `ERR_OVERFLOW`. The reference libraries return
   an infinity without a warning in many cases.
-- A call that sorts copies the sample first. The copy holds at most
-  `MAX_INPUT` values, which is 32 MiB. The data of the caller never
-  changes.
+- A call that sorts copies the sample first. The copy of one sample
+  holds at most `MAX_INPUT` values, which is 32 MiB. The calls that
+  read two samples copy both, so their copy can reach 64 MiB. The data
+  of the caller never changes.
 - The sort comes from the standard library. It is a pattern defeating
   quicksort with a heapsort fallback, so its worst case is n log n. The
   test suite times the sort on five crafted samples. It fails when a
@@ -441,11 +540,12 @@ goose run examples/association.goose
 goose run examples/ranks.goose
 goose run examples/special.goose
 goose run examples/distributions.goose
+goose run examples/tests.goose
 ```
 
 The scripts `test/make_vectors.py`, `test/make_assoc_vectors.py`,
-`test/make_special_vectors.py` and `test/make_distribution_vectors.py`
-build the vectors of the test suite. They write numbers only into the
+`test/make_special_vectors.py`, `test/make_distribution_vectors.py` and
+`test/make_test_vectors.py` build the vectors of the test suite. They write numbers only into the
 package. Each vector is compared with a second source, and the script
 fails on a difference beyond the tolerance.
 
@@ -489,6 +589,48 @@ The distributions take a fiftieth of that count too. The cumulative
 function of every family costs a continued fraction. The quantile costs
 a search. The moments of the hypergeometric cost a sum of the masses of
 its support.
+
+The script `test/make_test_vectors.py` writes the vectors of the hypothesis
+tests. It checks each exact p-value of the Mann-Whitney and the Wilcoxon
+test against a count in Python integers. It also compares the t tests, the
+analysis of variance and the Pearson correlation with `jstat` and
+`simple-statistics`. Each call has its own bound.
+
+The worst relative difference from SciPy is 2.4e-8 for a p-value. The
+statistics agree to 1e-13. Those libraries are less exact than this
+package, so a difference there is no defect here.
+
+The same script compares the crate `statrs` with SciPy. The crate holds
+seven tests. The statistics and the p-values agree to 1e-9 relative, with
+these differences:
+
+- The exact Mann-Whitney p-value of the crate is wrong. For 1, 2, 3, 4
+  against 5, 6, 7, 8.5 it gives 1.0. SciPy and this package give
+  0.02857142857142857. The script compares the asymptotic form only.
+- The crate computes the Kolmogorov-Smirnov p-values with the asymptotic
+  series by default. The p-value of its two-sample series differs from
+  SciPy, so the script compares the statistic only.
+- The crate loses the relative digits of a small chi-square p-value.
+  One case differs by 5% at an absolute difference below 1e-12.
+- The crate panics on a constant sample with the mean it tests. This package
+  gives `ERR_UNDEFINED`.
+- The crate gives an infinite statistic and p-value 0 for a zero expected
+  count in the chi-square test. This package gives a fault.
+
+gonum holds the chi-square and Kolmogorov-Smirnov statistics but no
+p-value. R is not installed, so the rules of R come from its
+documentation only.
+
+The hypothesis tests allocate at most 8 times the bytes of their input. The
+script `test/memory.sh` measures the peak of every call at the largest
+input of the package. The worst case is `wilcoxon` at 7.1 times its input.
+The Mann-Whitney test takes 6.1 times its two samples, and the rest take
+less. The exact tables hold at most 100,000 cells.
+
+A zero expected count in `chisquare` is a fault. SciPy gives an infinite
+statistic and p-value 0 when the sums are equal. It raises an error when the
+sums differ. This package gives `ERR_UNDEFINED` for equal sums and
+`ERR_DOMAIN` for different sums, so no infinity reaches the caller.
 
 The environment variable `STATISTICS_ROUND_N` sets the count of the
 points of the round trip of the quantiles. The default is 2000 points

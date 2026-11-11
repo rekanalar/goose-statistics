@@ -70,6 +70,12 @@ jobs:
         env:
           GOOSE_HOME: ${{ runner.temp }}/goose-home
 
+      - name: Check the memory of the tests
+        if: runner.os != 'Windows'
+        run: bash test/memory.sh
+        env:
+          GOOSE_HOME: ${{ runner.temp }}/goose-home
+
       - name: Run the examples
         run: |
           set -e

@@ -22,16 +22,25 @@ struct Kp { x: f64, y: f64 }
 // the sample. The method is one of the TIE_ constants. Another value gives
 // the domain fault. Returns the count and the code. A fault gives 0.
 fn rankdata(out: f64[>..]&, xs: const f64[:], method: i64) -> i64, i64 {
+    let n, ties, c = rankdata_ties(out, xs, method);
+    return n, c;
+}
+
+// The same call as rankdata. It also gives the sum of t cubed minus t
+// over the groups of equal values. The groups are known while the ranks
+// are made, so the sum costs no second sort.
+fn rankdata_ties(out: f64[>..]&, xs: const f64[:], method: i64) -> i64, f64, i64 {
     out.resize(0);
     let c = check_sample(xs, 1);
-    if c != 0 { return 0, c; }
-    if method < 0 || method > TIE_ORDINAL { return 0, 5; }
+    if c != 0 { return 0, 0.0, c; }
+    if method < 0 || method > TIE_ORDINAL { return 0, 0.0, 5; }
     let n = xs.len;
     var idx: Vi[>..] = [];
     for k in 0..n { idx.push(Vi { v: xs[k], i: k }); }
     stable_sort(idx) { a, b => a.v < b.v };
     for k in 0..n { out.push(0.0); }
     var dense: i64 = 0;
+    var ties: f64 = 0.0;
     var k: i64 = 0;
     while k < n {
         var j = k + 1;
@@ -46,10 +55,12 @@ fn rankdata(out: f64[>..]&, xs: const f64[:], method: i64) -> i64, i64 {
             if method == TIE_ORDINAL { rank = first + (m - k); }
             out[idx[m].i] = rank;
         }
+        let t = count as f64;
+        ties += t * t * t - t;
         if method == TIE_DENSE { dense += 1; }
         k = j;
     }
-    return out.len, 0;
+    return out.len, ties, 0;
 }
 
 // The Spearman coefficient: the Pearson correlation of the average ranks.
@@ -149,6 +160,34 @@ fn kendall(xs: const f64[:], ys: const f64[:], variant: i64) -> f64, i64 {
     if c != 0 { return nan(), c; }
     if variant < 0 || variant > 1 { return nan(), 5; }
     let n = xs.len;
+    let cd, t = kendall_counts(xs, ys);
+    let n0 = n * (n - 1) / 2;
+    if variant == 0 {
+        let a = n0 - t.n1;
+        let b = n0 - t.n2;
+        if a <= 0 || b <= 0 { return nan(), 7; }
+        // Widen before the product. Two i64 values multiply as i64 and wrap
+        // above 2 to the power 63, which happens at about 78,000 values.
+        let fa: f64 = a;
+        let fb: f64 = b;
+        let ab = fa * fb;
+        let den = sqrt(ab);
+        if den == 0.0 { return nan(), 7; }
+        return cd / den, 0;
+    }
+    let m = if t.ux < t.uy { t.ux } else { t.uy };
+    if m < 2 { return nan(), 7; }
+    let nf: f64 = n;
+    let mf: f64 = m;
+    let den = nf * nf * (mf - 1.0) / mf;
+    if den == 0.0 { return nan(), 7; }
+    return 2.0 * cd / den, 0;
+}
+
+// The concordant minus the discordant pairs of two checked samples, and
+// the tie counts of the pairs.
+fn kendall_counts(xs: const f64[:], ys: const f64[:]) -> i64, Ties {
+    let n = xs.len;
     var ps: Kp[>..] = [];
     for k in 0..n { ps.push(Kp { x: xs[k], y: ys[k] }); }
     sort(ps) { a, b => a.x < b.x || (a.x == b.x && a.y < b.y) };
@@ -161,21 +200,5 @@ fn kendall(xs: const f64[:], ys: const f64[:], variant: i64) -> f64, i64 {
     let swaps = merge_count(ys2, tmp);
     let t = kendall_ties(ps, ys2);
     let n0 = n * (n - 1) / 2;
-    let cd = n0 - t.n1 - t.n2 + t.n3 - 2 * swaps;
-    if variant == 0 {
-        let a = n0 - t.n1;
-        let b = n0 - t.n2;
-        if a <= 0 || b <= 0 { return nan(), 7; }
-        let ab: f64 = a * b;
-        let den = sqrt(ab);
-        if den == 0.0 { return nan(), 7; }
-        return cd / den, 0;
-    }
-    let m = if t.ux < t.uy { t.ux } else { t.uy };
-    if m < 2 { return nan(), 7; }
-    let nf: f64 = n;
-    let mf: f64 = m;
-    let den = nf * nf * (mf - 1.0) / mf;
-    if den == 0.0 { return nan(), 7; }
-    return 2.0 * cd / den, 0;
+    return n0 - t.n1 - t.n2 + t.n3 - 2 * swaps, t;
 }

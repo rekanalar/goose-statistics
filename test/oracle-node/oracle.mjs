@@ -20,6 +20,50 @@ const { jStat } = jStatPackage;
 const path = process.argv[2];
 const text = readFileSync(path, "utf8");
 
+
+// The test mode. Each input line holds a test name and the numbers of its
+// arguments: ttest1 mu n x..., ttest2 n1 x... n2 y..., anova k n1 x... n2 y...
+// and pearson n x... y.... Each output line holds the statistic and the
+// two-sided p-value, or the word nan when the library gives no number.
+if (process.argv[3] === "tests") {
+    for (const line of text.split("\n")) {
+        if (line.trim() === "") { continue; }
+        const w = line.trim().split(/\s+/);
+        const name = w[0];
+        const v = w.slice(1).map(Number);
+        let out = "nan nan";
+        if (name === "ttest1") {
+            const n = v[1];
+            const xs = v.slice(2, 2 + n);
+            out = (-jStat.tscore(v[0], xs)) + " " + jStat.ttest(v[0], xs, 2);
+        } else if (name === "ttest2") {
+            const n1 = v[0];
+            const xs = v.slice(1, 1 + n1);
+            const n2 = v[1 + n1];
+            const ys = v.slice(2 + n1, 2 + n1 + n2);
+            const t = ss.tTestTwoSample(xs, ys, 0);
+            const df = n1 + n2 - 2;
+            out = t + " " + 2 * jStat.studentt.cdf(-Math.abs(t), df);
+        } else if (name === "anova") {
+            const k = v[0];
+            const groups = [];
+            let at = 1;
+            for (let g = 0; g < k; g++) {
+                const n = v[at];
+                groups.push(v.slice(at + 1, at + 1 + n));
+                at += 1 + n;
+            }
+            out = "nan " + jStat.anovaftest(...groups);
+        } else if (name === "pearson") {
+            const n = v[0];
+            const r = ss.sampleCorrelation(v.slice(1, 1 + n), v.slice(1 + n, 1 + 2 * n));
+            out = r + " nan";
+        }
+        console.log(out);
+    }
+    process.exit(0);
+}
+
 // The distribution mode.
 if (process.argv[3] === "distribution") {
     for (const line of text.split("\n")) {

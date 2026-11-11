@@ -8,6 +8,13 @@ use statrs::distribution::{
 };
 use statrs::function::{beta, erf, gamma};
 use statrs::statistics::{Accumulate, Data, Distribution, OnlineMoments, OrderStatistics, Statistics};
+use statrs::stats_tests::chisquare::chisquare;
+use statrs::stats_tests::f_oneway::f_oneway;
+use statrs::stats_tests::fisher::fishers_exact_with_odds_ratio;
+use statrs::stats_tests::ks_test::{ks_onesample, ks_twosample, KSOneSampleAlternativeMethod, KSTwoSampleAlternativeMethod};
+use statrs::stats_tests::mannwhitneyu::{mannwhitneyu, MannWhitneyUMethod};
+use statrs::stats_tests::ttest_onesample::ttest_onesample;
+use statrs::stats_tests::{Alternative, NaNPolicy};
 use std::fs;
 
 // The result of the special function number fn. The crate holds no
@@ -149,10 +156,81 @@ fn run_distribution(path: &str) {
     }
 }
 
+// The hypothesis test mode. Each line holds a test name and its numbers:
+// ttest1 mu n x.., chi n counts.., anova k n1 x.. n2 y.., fisher a b c d,
+// mwu n1 x.. n2 y.. (asymptotic with the continuity correction),
+// ks1 n x.. (standard normal, asymptotic) and ks2 n1 x.. n2 y.. (asymptotic).
+// Each result line holds the statistic and the p-value. The crate panics
+// or fails on some inputs, and a failure gives NaN.
+fn run_tests(path: &str) {
+    std::panic::set_hook(Box::new(|_| {}));
+    let text = fs::read_to_string(path).expect("a readable file");
+    for line in text.lines() {
+        let mut it = line.split_whitespace();
+        let name = it.next().unwrap_or("").to_string();
+        let w: Vec<f64> = it.map(|v| v.parse::<f64>().expect("a number")).collect();
+        let r = std::panic::catch_unwind(|| one_test(&name, &w)).unwrap_or((f64::NAN, f64::NAN));
+        println!("{} {}", r.0, r.1);
+    }
+}
+
+fn one_test(name: &str, w: &[f64]) -> (f64, f64) {
+    let nan = (f64::NAN, f64::NAN);
+    let take = |at: usize| -> (Vec<f64>, usize) {
+        let n = w[at] as usize;
+        (w[at + 1..at + 1 + n].to_vec(), at + 1 + n)
+    };
+    match name {
+        "ttest1" => {
+            let (x, _) = take(1);
+            ttest_onesample(x, w[0], Alternative::TwoSided, NaNPolicy::Error).unwrap_or(nan)
+        }
+        "chi" => {
+            let obs: Vec<usize> = w[1..1 + w[0] as usize].iter().map(|v| *v as usize).collect();
+            chisquare(&obs, None, None).unwrap_or(nan)
+        }
+        "anova" => {
+            let mut groups = Vec::new();
+            let mut at = 1;
+            for _ in 0..w[0] as usize {
+                let (g, next) = take(at);
+                groups.push(g);
+                at = next;
+            }
+            f_oneway(groups, NaNPolicy::Error).unwrap_or(nan)
+        }
+        "fisher" => {
+            let t = [w[0] as u64, w[1] as u64, w[2] as u64, w[3] as u64];
+            fishers_exact_with_odds_ratio(&t, Alternative::TwoSided).unwrap_or(nan)
+        }
+        "mwu" => {
+            let (x, at) = take(0);
+            let (y, _) = take(at);
+            mannwhitneyu(&x, &y, MannWhitneyUMethod::AsymptoticInclContinuityCorrection, Alternative::TwoSided)
+                .unwrap_or(nan)
+        }
+        "ks1" => {
+            let (x, _) = take(0);
+            let d = Normal::new(0.0, 1.0).unwrap();
+            ks_onesample(x, &d, KSOneSampleAlternativeMethod::TwoSidedAsymptotic, NaNPolicy::Error).unwrap_or(nan)
+        }
+        "ks2" => {
+            let (x, at) = take(0);
+            let (y, _) = take(at);
+            ks_twosample(x, y, KSTwoSampleAlternativeMethod::TwoSidedAsymptotic, NaNPolicy::Error).unwrap_or(nan)
+        }
+        _ => nan,
+    }
+}
+
 fn main() {
     let path = std::env::args().nth(1).expect("a path to a file of samples");
     if std::env::args().nth(2).as_deref() == Some("special") {
         run_special(&path);
+        return;
+    }
+    if std::env::args().nth(2).as_deref() == Some("tests") {
+        run_tests(&path);
         return;
     }
     if std::env::args().nth(2).as_deref() == Some("distribution") {

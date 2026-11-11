@@ -18,3 +18,7 @@ import distribution_suite;
 import distribution_hostile;
 import distribution_accept;
 import distribution_round;
+import test_suite;
+import test_vectors;
+import test_hostile;
+import test_time;

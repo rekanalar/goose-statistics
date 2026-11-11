@@ -22,6 +22,7 @@ import line;
 import matrix;
 import special;
 import distributions;
+import tests;
 
 // ---- fault codes ----------------------------------------------------
 const OK: i64 = 0;
@@ -82,3 +83,43 @@ const METHOD_INCLUSIVE: i64 = 6;   // the inclusive method of Python, the same a
 const WEIGHT_POPULATION: i64 = 0;   // divide by the sum of the weights
 const WEIGHT_FREQUENCY: i64 = 1;    // divide by the sum minus 1
 const WEIGHT_RELIABILITY: i64 = 2;  // divide by the sum minus the sum of squares over the sum
+
+// The alternative of a test.
+const ALT_TWO_SIDED: i64 = 0;   // the p-value covers both tails
+const ALT_LESS: i64 = 1;        // the first sample lies below the second
+const ALT_GREATER: i64 = 2;     // the first sample lies above the second
+
+// The method of the Mann-Whitney test.
+const MW_AUTO: i64 = 0;         // the exact form where the rules allow it
+const MW_EXACT: i64 = 1;        // the exact form, or a fault
+const MW_ASYMPTOTIC: i64 = 2;   // the normal form
+
+// The treatment of a zero difference in the Wilcoxon test.
+const ZERO_WILCOX: i64 = 0;     // drop the zero differences
+const ZERO_PRATT: i64 = 1;      // rank the zeros, then adjust the mean and the variance
+const ZERO_ZSPLIT: i64 = 2;     // give half of the zero ranks to each sum
+
+// The correction of a list of p-values.
+const ADJUST_BONFERRONI: i64 = 0;   // multiply by the count
+const ADJUST_HOLM: i64 = 1;         // the step-down form of Holm
+const ADJUST_BH: i64 = 2;           // the step-up form of Benjamini and Hochberg
+
+// The family of the one-sample Kolmogorov-Smirnov test.
+const FAMILY_NORMAL: i64 = 0;
+const FAMILY_UNIFORM: i64 = 1;
+const FAMILY_EXPONENTIAL: i64 = 2;
+const FAMILY_LOGNORMAL: i64 = 3;
+const FAMILY_WEIBULL: i64 = 4;
+const FAMILY_GAMMA: i64 = 5;
+const FAMILY_BETA: i64 = 6;
+const FAMILY_CHI2: i64 = 7;
+const FAMILY_T: i64 = 8;
+const FAMILY_F: i64 = 9;
+
+// The bounds of the exact forms of the tests.
+const MAX_EXACT_MW: i64 = 8;          // the smaller sample of an exact Mann-Whitney test
+const MAX_MW_CELLS: i64 = 100000;     // cells in the table of the exact Mann-Whitney test
+const MAX_EXACT_WILCOXON: i64 = 50;   // pairs in an exact Wilcoxon test
+const MAX_ENUM_WILCOXON: i64 = 13;    // pairs whose sign patterns the call counts
+const MAX_EXACT_KENDALL: i64 = 33;    // pairs in an exact Kendall test
+const MAX_EXACT_KS: i64 = 10000;      // the size bound of an exact Kolmogorov-Smirnov test
