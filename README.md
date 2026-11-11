@@ -25,7 +25,7 @@ Pure Goose, no C.
 Add this to the root file of the program that uses it:
 
 ```goose
-import statistics from "rekanalar/goose-statistics@v0.4.0";
+import statistics from "rekanalar/goose-statistics@v0.5.0";
 ```
 
 ## API
