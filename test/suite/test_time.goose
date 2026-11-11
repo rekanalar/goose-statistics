@@ -262,6 +262,21 @@ fn run_time_tests() -> i64 {
     t0 = clock();
     let r25, c25 = statistics::chi2_contingency([1e15, 2e15, 3e15, 4e15][..], 2, 2);
     time_check(bad, r25, c25, "chi2_contingency at 1e15 counts", t0);
+    t0 = clock();
+    let r26, c26 = statistics::normaltest(xs[..]);
+    time_check(bad, r26, c26, "normaltest at 200000", t0);
+    t0 = clock();
+    let r27, c27 = statistics::jarque_bera(tx[..]);
+    time_check(bad, r27, c27, "jarque-bera ties at 200000", t0);
+    t0 = clock();
+    let r28, c28 = statistics::anderson_darling(xs[..]);
+    time_check(bad, r28, c28, "anderson-darling at 200000", t0);
+    t0 = clock();
+    let r29, c29 = statistics::skewtest(xs[..], statistics::ALT_GREATER);
+    time_check(bad, r29, c29, "skewtest at 200000", t0);
+    t0 = clock();
+    let r30, c30 = statistics::kurtosistest(tx[..]);
+    time_check(bad, r30, c30, "kurtosistest ties at 200000", t0);
     bad += run_time_ratio(100000);
     // A run at the input bound takes minutes, so the mutation probes skip it.
     var flag: u8[>..] = [];

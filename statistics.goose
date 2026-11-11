@@ -23,6 +23,7 @@ import matrix;
 import special;
 import distributions;
 import tests;
+import normality;
 
 // ---- fault codes ----------------------------------------------------
 const OK: i64 = 0;

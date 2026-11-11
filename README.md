@@ -122,6 +122,11 @@ import statistics from "rekanalar/goose-statistics@v0.5.0";
 | `ks_1samp(xs, family, params, alt)` | the Kolmogorov-Smirnov test against one of the ten families |
 | `ks_2samp(xs, ys, alt)` | the two-sample Kolmogorov-Smirnov test |
 | `shapiro(xs)` | the Shapiro-Wilk test of normality; it needs 3 values |
+| `skewtest(xs, alt)` | the test of the skewness against the normal shape; it needs 8 values |
+| `kurtosistest(xs, alt)` | the test of the kurtosis against the normal shape; it needs 5 values |
+| `normaltest(xs)` | the omnibus K-squared test of D'Agostino and Pearson; it needs 8 values |
+| `jarque_bera(xs)` | the test of Jarque and Bera; it needs 2 values |
+| `anderson_darling(xs)` | the Anderson-Darling test against the fitted normal; it needs 5 values |
 | `pearsonr(xs, ys, alt)` | the Pearson correlation with its p-value |
 | `spearmanr(xs, ys, alt)` | the Spearman correlation with its p-value |
 | `kendalltau(xs, ys, alt)` | the Kendall tau-b with its p-value |
@@ -349,9 +354,44 @@ counts of the discrete quantiles are exact.
 - The package holds no resampling test. SciPy holds `permutation_test`
   and the random permutation form of `wilcoxon`. The Wilcoxon test counts
   all sign patterns for at most 13 pairs and uses the normal form above.
-- The package holds no normality test besides Shapiro-Wilk. SciPy holds
-  `normaltest` and `anderson`. The Shapiro-Wilk p-value is not accurate
+- The Shapiro-Wilk p-value is not accurate
   above 5,000 values, as in SciPy.
+- The normality tests beyond Shapiro-Wilk follow SciPy. The minimum
+  sizes are the sizes of SciPy:
+  `skewtest` needs 8 values.
+  `kurtosistest` needs 5.
+  `normaltest` needs 8.
+  `jarque_bera` needs 2.
+  `anderson_darling` needs 5.
+
+  SciPy returns NaN below its sizes for the first three, and it has no
+  floor for `anderson`. This package faults below the sizes instead. The
+  asymptotic p-value rule holds for 5 values or more.
+- The Anderson-Darling p-value rule is a reference disagreement. SciPy
+  gives no p-value by default and warns. Its `method=interpolate`
+  reads a table of five points and floors the p-value at 0.15. This
+  package follows the asymptotic rule of D'Agostino and Stephens, the
+  rule of Rust `statrs`.
+
+  On the 16 values of the acceptance sample, SciPy gives 0.15.
+  This package gives 0.7595.
+
+  The statistic follows the SciPy formula with the lower and the
+  upper tail logarithms.
+  statrs takes the logarithm of one minus the cumulative function.
+  It loses digits when a tail is small.
+
+  The fit of this package uses exact sums.
+  It differs from the float fit of SciPy by about 1e-11.
+  The cause is that the statistic cancels against the sample size.
+
+  R `nortest::ad.test`
+  documents the same asymptotic family of rules. R was not run; the R
+  rules come from its documentation.
+- The smallest size of `jarque_bera` is a reference disagreement too.
+  SciPy accepts 2 values. The R documentation of
+  `tseries::jarque.bera.test` asks for more. This package follows
+  SciPy.
 - The multiple-testing call holds three methods. R `p.adjust` also holds
   Hochberg, Hommel and Benjamini-Yekutieli.
 - The Mann-Whitney call limits each of its two samples to `MAX_INPUT`
@@ -441,6 +481,19 @@ go beyond the reference libraries.
 - `multipletests` rejects a p-value outside 0 to 1 and clamps each
   adjusted value to 1.
 - `mean_confidence_interval` rejects a confidence outside 0 to 1.
+- The normality tests fault below their minimum sizes. SciPy returns
+  NaN for those inputs. A caller who ignores codes sees no NaN here.
+- The p-value rule of `anderson_darling` holds only to the turn of its
+  top quadratic, at an adjusted statistic of 153.4. Above the turn,
+  the rule of statrs and of R `nortest` rises above 1.
+  A caller reads a reversed verdict. This call gives 0 there.
+- `anderson_darling` rejects a fitted scale of 0. A value past 30
+  standard units of the fit has a tail near the limit of a float.
+  The statistic takes the logarithm of the scaled tail there.
+  The result stays finite and keeps the digits of the tail.
+- statrs takes one minus the cumulative function in the
+  Anderson-Darling test. Its statistic is infinite there.
+  SciPy takes the logarithm of the tail and stays exact.
 - Every call rejects a NaN and an infinity in the sample and in the
   weights. The reference libraries let a NaN reach the result, and some
   of them let an infinity reach it too.

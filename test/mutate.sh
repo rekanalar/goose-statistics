@@ -179,6 +179,32 @@ distributions.goose|if p <= 0.5 {|if p <= 0.0 {|the F quantile uses the upper ta
 @tests.goose|let v = ps[order[k]] * nf / (k + 1);|let v = ps[order[k]] * nf / (k + 2);|the Benjamini-Hochberg divisor
 @tests.goose|for k in 0..n { adj[k] = ps[k] * nf; }|for k in 0..n { adj[k] = ps[k]; }|the Bonferroni multiplier
 @tests.goose|if v > 1.0 { v = 1.0; }|if v > 2.0 { v = 1.0; }|the adjusted p-value clamps to 1
+@normality.goose|return exp(1.2937 - 5.709 * adj + 0.0186 * adj * adj);|return exp(1.2937 - 5.709 * adj + 0.0186 * adj * adj * 1.01);|the top branch of the Anderson-Darling p-value
+@normality.goose|return exp(0.9177 - 4.279 * adj - 1.38 * adj * adj);|return exp(0.9177 - 4.379 * adj - 1.38 * adj * adj);|the middle branch of the Anderson-Darling p-value
+@normality.goose|return 1.0 - exp(-8.318 + 42.796 * adj - 59.938 * adj * adj);|return 1.0 - exp(-8.418 + 42.796 * adj - 59.938 * adj * adj);|the lower middle branch of the Anderson-Darling p-value
+@normality.goose|return 1.0 - exp(-13.436 + 101.14 * adj - 223.73 * adj * adj);|return 1.0 - exp(-13.436 + 101.5 * adj - 223.73 * adj * adj);|the bottom branch of the Anderson-Darling p-value
+@normality.goose|let adj = a2 * (1.0 + 0.75 / n + 2.25 / (n * n));|let adj = a2 * (1.0 + 0.75 / n);|the sample size adjustment of the Anderson-Darling p-value
+@normality.goose|let w2 = -1.0 + sqrt(2.0 * (beta2 - 1.0));|let w2 = -1.0 + sqrt(beta2 - 1.0);|the skewness z transform
+@normality.goose|var y = b1 * sqrt(((n + 1.0) * (n + 3.0)) / (6.0 * (n - 2.0)));|var y = b1 * sqrt(((n + 1.0) * (n + 3.0)) / (5.0 * (n - 2.0)));|the skewness z scaling
+@normality.goose|let sqrtbeta1 = 6.0 * (n * n - 5.0 * n + 2.0) / ((n + 7.0) * (n + 9.0))|let sqrtbeta1 = 6.0 * (n * n - 5.0 * n + 3.0) / ((n + 7.0) * (n + 9.0))|the kurtosis z skewness link
+@normality.goose|let q = (1.0 - 2.0 / a) / denom;|let q = (1.0 - 3.0 / a) / denom;|the kurtosis z cube root term
+@normality.goose|return 2.0 * upper, 0;|return 4.0 * upper, 0;|the two-sided p-value doubles one tail
+@normality.goose|let k2 = zs * zs + zk * zk;|let k2 = zs * zs - zk * zk;|the K-squared statistic adds the squares
+@normality.goose|return chi_result(k2, 2.0);|return chi_result(k2, 3.0);|the K-squared chi-square tail
+@normality.goose|let jb = n / 6.0 * (b1 * b1 + b2 * b2 / 4.0);|let jb = n / 6.0 * (b1 * b1 + b2 * b2 / 3.0);|the Jarque-Bera statistic
+@normality.goose|return chi_result(jb, 2.0);|return chi_result(jb, 3.0);|the Jarque-Bera chi-square tail
+@normality.goose|let scale2, cs = variance_core(xs, 1);|let scale2, cs = variance_core(xs, 0);|the Anderson-Darling scale divides by n minus one
+@normality.goose|let w: f64 = 2 * (i + 1) - 1;|let w: f64 = 2 * (i + 1);|the Anderson-Darling sum weight
+@normality.goose|let c = check_sample(xs, 8);|let c = check_sample(xs, 5);|the skewness test and the omnibus test need 8 values
+@normality.goose|let c = check_sample(xs, 5);|let c = check_sample(xs, 4);|the kurtosis test needs 5 values and the Anderson-Darling test too
+@normality.goose|let c = check_sample(xs, 2);|let c = check_sample(xs, 1);|the Jarque-Bera test needs 2 values
+@normality.goose|if scale2 <= 0.0 { return fault_result(ERR_UNDEFINED); }|if scale2 <= 0.0 { return fault_result(ERR_DOMAIN); }|the Anderson-Darling test faults on a constant sample
+@normality.goose|if y == 0.0 { y = 1.0; }|if y == 0.0 { y = 0.0; }|the skewness z replaces a zero input by one
+@normality.goose|if q < 0.0 { term2 = -term2; }|if q < 0.0 { term2 = term2; }|the kurtosis z restores the sign of the cube root
+@normality.goose|sum += w * (log_tail(z1, false) + log_tail(z2, true));|sum += w * (log_tail(z1, true) + log_tail(z2, true));|the Anderson-Darling lower tail is the lower tail
+@normality.goose|if adj >= 153.4 { return 0.0; }|if adj >= 402.0 { return 0.0; }|the p-value rule clamps above the turn of its quadratic
+@normality.goose|return log(0.5 * scaled_q(a * INV_SQRT2)) - 0.5 * a * a;|return log(0.5 * scaled_q(a * INV_SQRT2)) - 0.4 * a * a;|the logarithm of the scaled far tail
+@normality.goose|if upper != (z > 0.0) { return 0.0; }|if upper == (z > 0.0) { return 0.0; }|the far tail on the other side is one
 
 PROBES
 )

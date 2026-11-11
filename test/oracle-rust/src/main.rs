@@ -11,6 +11,8 @@ use statrs::statistics::{Accumulate, Data, Distribution, OnlineMoments, OrderSta
 use statrs::stats_tests::chisquare::chisquare;
 use statrs::stats_tests::f_oneway::f_oneway;
 use statrs::stats_tests::fisher::fishers_exact_with_odds_ratio;
+use statrs::stats_tests::anderson_darling::anderson_darling;
+use statrs::stats_tests::skewtest::skewtest;
 use statrs::stats_tests::ks_test::{ks_onesample, ks_twosample, KSOneSampleAlternativeMethod, KSTwoSampleAlternativeMethod};
 use statrs::stats_tests::mannwhitneyu::{mannwhitneyu, MannWhitneyUMethod};
 use statrs::stats_tests::ttest_onesample::ttest_onesample;
@@ -218,6 +220,20 @@ fn one_test(name: &str, w: &[f64]) -> (f64, f64) {
             let (x, at) = take(0);
             let (y, _) = take(at);
             ks_twosample(x, y, KSTwoSampleAlternativeMethod::TwoSidedAsymptotic, NaNPolicy::Error).unwrap_or(nan)
+        }
+        // The Anderson-Darling test against a normal fitted with the
+        // mean and the unbiased scale, the way the SciPy oracle fits.
+        "ad" => {
+            let (x, _) = take(0);
+            let n = x.len() as f64;
+            let mean = x.iter().sum::<f64>() / n;
+            let sd = (x.iter().map(|v| (v - mean) * (v - mean)).sum::<f64>() / (n - 1.0)).sqrt();
+            let d = Normal::new(mean, sd).unwrap();
+            anderson_darling(&x, &d).unwrap_or(nan)
+        }
+        "skew" => {
+            let (x, _) = take(0);
+            skewtest(x, Alternative::TwoSided, NaNPolicy::Error).unwrap_or(nan)
         }
         _ => nan,
     }

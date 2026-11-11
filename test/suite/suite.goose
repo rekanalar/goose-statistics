@@ -22,3 +22,5 @@ import test_suite;
 import test_vectors;
 import test_hostile;
 import test_time;
+import normality_vectors;
+import normality_suite;

@@ -151,6 +151,16 @@ fn run_hostile_tests() -> i64 {
         let m, c19 = statistics::multipletests(out, xs[..], opt);
         let ok19 = (c19 == 0 && m == xs.len && out.len == m) || (c19 != 0 && m == 0 && out.len == 0);
         hostile_report(bad, ok19, "multipletests", k, c19);
+        let h1, hc1 = statistics::skewtest(xs[..], alt % 3);
+        hostile_report(bad, sound(h1, hc1), "skewtest", k, hc1);
+        let h2, hc2 = statistics::kurtosistest(xs[..], opt % 3);
+        hostile_report(bad, sound(h2, hc2), "kurtosistest", k, hc2);
+        let h3, hc3 = statistics::normaltest(xs[..]);
+        hostile_report(bad, sound(h3, hc3), "normaltest", k, hc3);
+        let h4, hc4 = statistics::jarque_bera(xs[..]);
+        hostile_report(bad, sound(h4, hc4), "jarque_bera", k, hc4);
+        let h5, hc5 = statistics::anderson_darling(xs[..]);
+        hostile_report(bad, sound(h5, hc5), "anderson_darling", k, hc5);
         let lo, hi, c20 = statistics::mean_confidence_interval(xs[..], hostile_value(st));
         let ok20 = (c20 == 0 && lo <= hi) || (c20 != 0 && is_nan(lo) && is_nan(hi));
         hostile_report(bad, ok20, "mean_confidence_interval", k, c20);

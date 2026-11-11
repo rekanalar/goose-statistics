@@ -17,6 +17,8 @@ fn main() {
     }
     bad += suite::run_accept_tests();
     bad += suite::run_test_vectors();
+    bad += suite::run_normality_vectors();
+    bad += suite::run_normality_tests();
     bad += suite::run_hostile_tests();
     bad += suite::run_time_tests();
     if bad > 0 {
