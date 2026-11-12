@@ -24,3 +24,5 @@ import test_hostile;
 import test_time;
 import normality_vectors;
 import normality_suite;
+import multipletests_vectors;
+import multipletests_suite;

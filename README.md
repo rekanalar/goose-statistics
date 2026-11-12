@@ -131,6 +131,8 @@ import statistics from "rekanalar/goose-statistics@v0.6.0";
 | `spearmanr(xs, ys, alt)` | the Spearman correlation with its p-value |
 | `kendalltau(xs, ys, alt)` | the Kendall tau-b with its p-value |
 | `multipletests(out, ps, method)` | writes the adjusted p-values into `out`; gives the count and the code |
+| `false_discovery_control(out, ps, method)` | the adjusted p-values under the name of SciPy; gives the count and the code |
+| `combine_pvalues(ps, method, weights)` | combines the p-values of independent tests; gives the statistic, the p-value and the code |
 
 The argument `method` is one of the nine `METHOD_` constants. The
 constants `METHOD_EXCLUSIVE` and `METHOD_INCLUSIVE` stand for the two
@@ -186,8 +188,15 @@ The argument `alt` is one of `ALT_TWO_SIDED`, `ALT_LESS` and `ALT_GREATER`.
 Another value gives `ERR_DOMAIN`. The argument `method` of `mannwhitneyu`
 is one of `MW_AUTO`, `MW_EXACT` and `MW_ASYMPTOTIC`. The argument
 `zero_method` is one of `ZERO_WILCOX`, `ZERO_PRATT` and `ZERO_ZSPLIT`. The
-argument `method` of `multipletests` is one of `ADJUST_BONFERRONI`,
-`ADJUST_HOLM` and `ADJUST_BH`.
+argument `method` of `multipletests` is one of the seven `ADJUST_`
+constants. They are `ADJUST_BONFERRONI`, `ADJUST_HOLM`, `ADJUST_BH`,
+`ADJUST_HOCHBERG`, `ADJUST_HOMMEL`, `ADJUST_BY` and `ADJUST_NONE`.
+
+The argument `method` of `false_discovery_control` is one of
+`ADJUST_BH` and `ADJUST_BY`. The argument `method` of `combine_pvalues`
+is one of the three `COMBINE_` constants. They are `COMBINE_FISHER`,
+`COMBINE_STOUFFER` and `COMBINE_TIPPETT`. Only the Stouffer method takes
+the list of weights.
 
 A group call takes one flat buffer of all the values and an array of the
 group sizes. A table call takes the counts row by row. The argument
@@ -392,8 +401,13 @@ counts of the discrete quantiles are exact.
   SciPy accepts 2 values. The R documentation of
   `tseries::jarque.bera.test` asks for more. This package follows
   SciPy.
-- The multiple-testing call holds three methods. R `p.adjust` also holds
-  Hochberg, Hommel and Benjamini-Yekutieli.
+- The multiple-testing call holds seven methods. They are the
+  Bonferroni, Holm, Benjamini-Hochberg, Hochberg, Hommel,
+  Benjamini-Yekutieli and the identity. R `p.adjust` holds the same
+  seven. SciPy 1.18.1 does not hold the call. The values of Hochberg,
+  Hommel and Benjamini-Yekutieli come from the rules of R `p.adjust`.
+  R was not run, so statsmodels 0.15.0 and SciPy 1.18.1 gave the
+  measured values.
 - The Mann-Whitney call limits each of its two samples to `MAX_INPUT`
   values. The call copies both samples into one pool, so the pool can
   hold twice the limit. A sample above the limit gives `ERR_TOO_LONG`.
@@ -480,6 +494,28 @@ go beyond the reference libraries.
   count above 2 to the power 53. `fisher_exact` rejects a fraction too.
 - `multipletests` rejects a p-value outside 0 to 1 and clamps each
   adjusted value to 1.
+- The Hommel form of `multipletests` costs time in the square of the
+  count of the list. A list above 10,000 values gives the fault
+  `ERR_TOO_LONG` before any work. R gives no bound. A caller with a
+  longer list uses another form, or splits the list.
+- `combine_pvalues` gives the fault `ERR_OVERFLOW` when the Fisher or
+  the Stouffer statistic would be infinite. That happens at a p-value
+  of 0, and at a p-value of 1 for Stouffer. SciPy returns an infinite
+  statistic there. A caller who ignores codes sees no infinity here.
+- `combine_pvalues` rejects a negative weight and a weight that is not
+  finite. SciPy accepts a negative weight. A negative weight has no
+  meaning for a combination of evidence.
+- `multipletests` and `false_discovery_control` give `ERR_EMPTY` for an
+  empty list. SciPy returns an empty array. A caller who has no p-values
+  checks the length first.
+- `combine_pvalues` gives `ERR_DOMAIN` for weights with the Fisher or the
+  Tippett method. SciPy ignores them there. A caller who passes weights
+  by mistake sees the fault and not a silent change.
+- `combine_pvalues` rejects a list of weights that holds only zeros.
+  SciPy returns a value that is not a number there.
+- `combine_pvalues` scales the weights by the largest one before it
+  squares them. A weight near 1e-160 keeps its share of the evidence.
+  SciPy loses the digits of such a weight.
 - `mean_confidence_interval` rejects a confidence outside 0 to 1.
 - The normality tests fault below their minimum sizes. SciPy returns
   NaN for those inputs. A caller who ignores codes sees no NaN here.
@@ -679,6 +715,9 @@ script `test/memory.sh` measures the peak of every call at the largest
 input of the package. The worst case is `wilcoxon` at 7.1 times its input.
 The Mann-Whitney test takes 6.1 times its two samples, and the rest take
 less. The exact tables hold at most 100,000 cells.
+
+The multiple-test corrections take 3 times their input.
+`combine_pvalues` takes 1 time.
 
 A zero expected count in `chisquare` is a fault. SciPy gives an infinite
 statistic and p-value 0 when the sums are equal. It raises an error when the

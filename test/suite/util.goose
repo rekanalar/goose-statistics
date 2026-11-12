@@ -21,3 +21,12 @@ fn near_tol(a: f64, e: f64, tol: f64) -> bool {
     if a == e { return true; }
     return abs(a - e) <= tol * abs(e) + 1e-300;
 }
+
+// True when two lists hold the same values within the relative bound tol.
+fn near_list(got: const f64[:], want: const f64[:], tol: f64) -> bool {
+    if got.len != want.len { return false; }
+    for i in 0..got.len {
+        if !near_tol(got[i], want[i], tol) { return false; }
+    }
+    return true;
+}

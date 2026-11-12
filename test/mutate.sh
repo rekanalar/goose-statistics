@@ -150,6 +150,9 @@ distributions.goose|return base + sign * pdf * u.lo;|return base + sign * pdf * 
 distributions.goose|if p == 0.0 { return lo, OK; }|if p == 0.0 { return lo + 1.0, OK; }|the probability 0 gives the smallest count
 distributions.goose|return n * d / m, OK;|return n * n / m, OK;|mean of the hypergeometric
 distributions.goose|if p <= 0.5 {|if p <= 0.0 {|the F quantile uses the upper tail above the middle
+@tests.goose|let v = ps[order[k]] * (nf - k);|let v = ps[order[k]] * nf;|the Holm multiplier
+@tests.goose|let frac = ps[order[k]] * nf / (k + 1) * factor;|let frac = ps[order[k]] * nf / (k + 2) * factor;|the Benjamini-Hochberg divisor
+@tests.goose|for k in 0..n { out[k] = ps[k] * nf; }|for k in 0..n { out[k] = ps[k]; }|the Bonferroni multiplier
 @statistics.goose|const MAX_EXACT_MW: i64 = 8;|const MAX_EXACT_MW: i64 = 7;|the exact Mann-Whitney size bound
 @statistics.goose|const MAX_MW_CELLS: i64 = 100000;|const MAX_MW_CELLS: i64 = 1000;|the cell bound of the Mann-Whitney table
 @statistics.goose|const MAX_EXACT_WILCOXON: i64 = 50;|const MAX_EXACT_WILCOXON: i64 = 49;|the exact Wilcoxon pair bound
@@ -175,10 +178,6 @@ distributions.goose|if p <= 0.5 {|if p <= 0.0 {|the F quantile uses the upper ta
 @tests.goose|if alt == ALT_TWO_SIDED { x = 0.5 * (1.0 - abs(r)); }|if alt == ALT_TWO_SIDED { x = 0.4 * (1.0 - abs(r)); }|the Pearson p-value argument
 @tests.goose|if n == 2 { return good_result(r, 1.0, df, nan()); }|if n == 2 { return good_result(r, 0.5, df, nan()); }|the Pearson test of two points
 @tests.goose|if n <= MAX_EXACT_KENDALL|if n <= 20|the exact Kendall bound in the call
-@tests.goose|let v = ps[order[k]] * (nf - k);|let v = ps[order[k]] * nf;|the Holm multiplier
-@tests.goose|let v = ps[order[k]] * nf / (k + 1);|let v = ps[order[k]] * nf / (k + 2);|the Benjamini-Hochberg divisor
-@tests.goose|for k in 0..n { adj[k] = ps[k] * nf; }|for k in 0..n { adj[k] = ps[k]; }|the Bonferroni multiplier
-@tests.goose|if v > 1.0 { v = 1.0; }|if v > 2.0 { v = 1.0; }|the adjusted p-value clamps to 1
 @normality.goose|return exp(1.2937 - 5.709 * adj + 0.0186 * adj * adj);|return exp(1.2937 - 5.709 * adj + 0.0186 * adj * adj * 1.01);|the top branch of the Anderson-Darling p-value
 @normality.goose|return exp(0.9177 - 4.279 * adj - 1.38 * adj * adj);|return exp(0.9177 - 4.379 * adj - 1.38 * adj * adj);|the middle branch of the Anderson-Darling p-value
 @normality.goose|return 1.0 - exp(-8.318 + 42.796 * adj - 59.938 * adj * adj);|return 1.0 - exp(-8.418 + 42.796 * adj - 59.938 * adj * adj);|the lower middle branch of the Anderson-Darling p-value
@@ -206,6 +205,36 @@ distributions.goose|if p <= 0.5 {|if p <= 0.0 {|the F quantile uses the upper ta
 @normality.goose|return log(0.5 * scaled_q(a * INV_SQRT2)) - 0.5 * a * a;|return log(0.5 * scaled_q(a * INV_SQRT2)) - 0.4 * a * a;|the logarithm of the scaled far tail
 @normality.goose|if upper != (z > 0.0) { return 0.0; }|if upper == (z > 0.0) { return 0.0; }|the far tail on the other side is one
 
+@tests.goose|method > ADJUST_NONE |method > ADJUST_HOMMEL |the bound of the adjustment methods
+@tests.goose|method < 0 { return 0, ERR_DOMAIN; }|method < -1 { return 0, ERR_DOMAIN; }|the lower bound of the adjustment methods
+@tests.goose|if method == ADJUST_HOMMEL && ps.len > HOMMEL_MAX { return 0, ERR_TOO_LONG; }|if method == ADJUST_HOMMEL && ps.len > 100000 { return 0, ERR_TOO_LONG; }|the bound of the Hommel form
+@tests.goose|let lim = ps[order[k]] * (nf - k);|let lim = ps[order[k]] * nf;|the Hochberg multiplier
+@tests.goose|h += 1.0 / i;|h += 1.0 / (i + 1);|the harmonic sum of the Benjamini-Yekutieli form
+@tests.goose|let frac = ps[order[k]] * nf / (k + 1) * factor;|let frac = ps[order[k]] * nf / (k + 1);|the factor of the Benjamini-Yekutieli form
+@tests.goose|for k in 0..n { out[k] = ps[k]; }|for k in 0..n { out[k] = ps[k] * nf; }|the identity method keeps the values
+@tests.goose|if out[k] > 1.0 { out[k] = 1.0; }|if false { out[k] = 1.0; }|the adjusted p-value clamps to 1
+@tests.goose|if m != ADJUST_BH && m != ADJUST_BY { m = -1; }|if m != ADJUST_BH { m = -1; }|the methods of the false discovery control
+@tests.goose|if weights.len != ps.len { return fault_result(ERR_LENGTH); }|if weights.len == 0 { return fault_result(ERR_LENGTH); }|the length of the weights
+@tests.goose|if w < 0.0 { return fault_result(ERR_DOMAIN); }|if w < -1.0 { return fault_result(ERR_DOMAIN); }|a negative weight
+@tests.goose|let u = w / wmax;|let u = w;|the weights are scaled by the largest one
+@tests.goose|sq += u * u;|sq += u;|the sum of squares of the weights
+@tests.goose|if wmax <= 0.0 { return fault_result(ERR_DOMAIN); }|if false { return fault_result(ERR_DOMAIN); }|the weights of zero
+@tests.goose|if method != COMBINE_STOUFFER { return fault_result(ERR_DOMAIN); }|if false { return fault_result(ERR_DOMAIN); }|the weights apply to the Stouffer method only
+@tests.goose|if p == 0.0 { return fault_result(ERR_OVERFLOW); }|if p < 0.0 { return fault_result(ERR_OVERFLOW); }|the Fisher overflow fault
+@tests.goose|if ps[i] == 1.0 { return fault_result(ERR_OVERFLOW); }|if ps[i] < 0.0 { return fault_result(ERR_OVERFLOW); }|the Stouffer overflow fault
+@tests.goose|acc_add(a, log(p));|acc_add(a, p);|the logarithm of the Fisher statistic
+@tests.goose|return chi_result(-2.0 * sum, 2.0 * k);|return chi_result(-2.0 * sum, k);|the degrees of freedom of the Fisher statistic
+@tests.goose|let e, ce = expm1(k * l);|let e, ce = expm1(l);|the Tippett power of the count
+@tests.goose|let e, ce = expm1(k * l);|let e, ce = expm1(k * l * 1.01);|the Tippett factor of the count
+@tests.goose|top -= u * z;|top += u * z;|the sign of the Stouffer sum
+@tests.goose|let zs = top / sqrt(sq);|let zs = top / sq;|the divisor of the Stouffer statistic
+@tests.goose|if lo >= 1.0 { return good_result(lo, 1.0, nan(), nan()); }|if false { return good_result(lo, 1.0, nan(), nan()); }|the Tippett edge of one
+@tests.goose|let v = sp[n - m + 1 + t] * m / (t + 2);|let v = sp[n - m + 1 + t] * m / (t + 1);|the Hommel divisor
+@tests.goose|var v = sp[k] * m;|var v = sp[k];|the Hommel multiplier of the head
+@tests.goose|if q1 < v { v = q1; }|if false { v = q1; }|the Hommel minimum of the head
+@tests.goose|if v > pa[k] { pa[k] = v; }|if v < pa[k] { pa[k] = v; }|the Hommel running maximum
+@tests.goose|if sp[k] > v { v = sp[k]; }|if false { v = sp[k]; }|the Hommel floor of the p-value
+@check.goose|p > 1.0 { return 5; }|p > 2.0 { return 5; }|the range of the p-values
 PROBES
 )
 
@@ -244,6 +273,7 @@ while IFS='|' read -r file from to name; do
     echo "$file|$from|$to|$name" | grep -Eq -- "$MUTATE_ONLY" || continue
   fi
   echo "$file|$from|$to|$name"
+
 done <<< "$probes" > "$work/list.txt"
 
 while IFS='|' read -r file from to name; do

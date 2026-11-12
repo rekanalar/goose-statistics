@@ -104,6 +104,16 @@ const ZERO_ZSPLIT: i64 = 2;     // give half of the zero ranks to each sum
 const ADJUST_BONFERRONI: i64 = 0;   // multiply by the count
 const ADJUST_HOLM: i64 = 1;         // the step-down form of Holm
 const ADJUST_BH: i64 = 2;           // the step-up form of Benjamini and Hochberg
+const ADJUST_HOCHBERG: i64 = 3;     // the step-up form of Holm
+const ADJUST_HOMMEL: i64 = 4;       // the closed form of Hommel, in the square of the count
+const ADJUST_BY: i64 = 5;           // Benjamini and Yekutieli, for any dependence
+const ADJUST_NONE: i64 = 6;         // the values unchanged
+const HOMMEL_MAX: i64 = 10000;      // the longest list of the Hommel form
+
+// The method that combines p-values of independent tests.
+const COMBINE_FISHER: i64 = 0;      // minus twice the sum of the logarithms
+const COMBINE_STOUFFER: i64 = 1;    // the sum of the normal quantiles, with weights
+const COMBINE_TIPPETT: i64 = 2;     // the smallest p-value
 
 // The family of the one-sample Kolmogorov-Smirnov test.
 const FAMILY_NORMAL: i64 = 0;

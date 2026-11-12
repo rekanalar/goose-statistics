@@ -151,6 +151,22 @@ fn run_hostile_tests() -> i64 {
         let m, c19 = statistics::multipletests(out, xs[..], opt);
         let ok19 = (c19 == 0 && m == xs.len && out.len == m) || (c19 != 0 && m == 0 && out.len == 0);
         hostile_report(bad, ok19, "multipletests", k, c19);
+        // A clean list, so the fault comes from the method and not from
+        // the sample.
+        let clean: f64[1] = [0.5];
+        let m2, c23 = statistics::multipletests(out, clean[..], 9);
+        hostile_report(bad, c23 == 5 && m2 == 0 && out.len == 0, "multipletests, an unknown method", k, c23);
+        let m3, c21 = statistics::false_discovery_control(out, xs[..], opt + 2);
+        let ok21 = (c21 == 0 && m3 == xs.len && out.len == m3) || (c21 != 0 && m3 == 0 && out.len == 0);
+        hostile_report(bad, ok21, "false_discovery_control", k, c21);
+        let m4, c22 = statistics::false_discovery_control(out, clean[..], statistics::ADJUST_HOLM);
+        hostile_report(bad, c22 == 5 && m4 == 0 && out.len == 0, "false_discovery_control, another method", k, c22);
+        let v1, vc1 = statistics::combine_pvalues(xs[..], opt % 3);
+        hostile_report(bad, sound(v1, vc1), "combine_pvalues", k, vc1);
+        var wts: f64[>..] = [];
+        for t in 0..xs.len { wts.push(abs(hostile_value(st))); }
+        let v2, vc2 = statistics::combine_pvalues(xs[..], statistics::COMBINE_STOUFFER, wts[..]);
+        hostile_report(bad, sound(v2, vc2), "combine_pvalues with weights", k, vc2);
         let h1, hc1 = statistics::skewtest(xs[..], alt % 3);
         hostile_report(bad, sound(h1, hc1), "skewtest", k, hc1);
         let h2, hc2 = statistics::kurtosistest(xs[..], opt % 3);

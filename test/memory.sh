@@ -42,12 +42,12 @@ half_base=$(peak_of env N=$((max_input / 2)) OP=0 "$bin")
 echo "baseline $full_base bytes, half $half_base bytes"
 
 bad=0
-for op in 1 2 3 4 5 6 7 8 9 10 11 12; do
+for op in 1 2 3 4 5 6 7 8 9 10 11 12 13 14; do
     # The calls that read two samples hold half of the input in each one.
     n=$max_input
     base=$full_base
     case "$op" in
-        2|5|6|7|8|10|11) n=$((max_input / 2)); base=$half_base ;;
+        2|5|6|7|8|10|11|13|14) n=$((max_input / 2)); base=$half_base ;;
     esac
     peak=$(peak_of env N=$n OP=$op "$bin")
     extra=$((peak - base))

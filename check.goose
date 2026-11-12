@@ -20,6 +20,15 @@ fn check_sample(xs: const f64[:], need: i64) -> i64 {
     return 0;
 }
 
+// The check on a list of p-values. A value outside 0 to 1 gives the
+// domain fault.
+fn check_probabilities(ps: const f64[:]) -> i64 {
+    for p in ps {
+        if p < 0.0 || p > 1.0 { return 5; }
+    }
+    return 0;
+}
+
 // The checks on a pair of columns. The order is the length bound, the
 // empty sample, the length match, NaN, infinity and then the length the
 // call needs.

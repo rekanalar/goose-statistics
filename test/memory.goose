@@ -1,5 +1,5 @@
 // The memory probe of the hypothesis tests. It runs one call on the largest
-// input of the package. The variable OP picks the call, from 1 to 12. The
+// input of the package. The variable OP picks the call, from 1 to 14. The
 // call 0 runs no test and gives the baseline. The two samples hold the
 // input of the call, so the peak above the baseline is the memory of the
 // call alone. Build the program and read the peak size:
@@ -58,5 +58,17 @@ fn main() {
         c = cc;
     }
     if op == 12 { let r, cc = statistics::f_oneway(xs[..], sizes[..]); c = cc; }
+    if op == 13 {
+        var ps: f64[>..] = [];
+        for y in ys { ps.push(1.0 / (1.0 + y)); }
+        let r, cc = statistics::combine_pvalues(ps[..], statistics::COMBINE_STOUFFER, xs[..]);
+        c = cc;
+    }
+    if op == 14 {
+        var ps: f64[>..] = [];
+        for y in ys { ps.push(1.0 / (1.0 + y)); }
+        let k, cc = statistics::false_discovery_control(out, ps[..], statistics::ADJUST_BY);
+        c = cc;
+    }
     print(c, "\n");
 }

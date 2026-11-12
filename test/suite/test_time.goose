@@ -10,9 +10,9 @@ import statistics from "../..";
 
 const TIME_LIMIT: f64 = 10.0;
 
-fn time_check(bad: i64&, r: statistics::TestResult, c: i64, name: u8[:], t0: f64) {
+fn time_check(bad: i64&, r: statistics::TestResult, c: i64, name: u8[:], t0: f64, limit: f64 = TIME_LIMIT) {
     let spent = clock() - t0;
-    var ok = spent < TIME_LIMIT;
+    var ok = spent < limit;
     if c == 0 { ok = ok && !is_nan(r.pvalue) && r.pvalue >= 0.0 && r.pvalue <= 1.0; }
     if !ok {
         bad += 1;
@@ -217,9 +217,20 @@ fn run_time_tests() -> i64 {
     let r15, c15 = statistics::f_oneway(xs[..], sizes[..]);
     time_check(bad, r15, c15, "f_oneway at 200000", t0);
     var out: f64[>..] = [];
+    // The adjusted values need probabilities from 0 to 1.
+    var ps: f64[>..] = [];
+    for y in ys { ps.push(1.0 / (1.0 + abs(y))); }
     t0 = clock();
-    let n16, c16 = statistics::multipletests(out, ys[..], statistics::ADJUST_BH);
+    let n16, c16 = statistics::multipletests(out, ps[..], statistics::ADJUST_BH);
     time_check(bad, statistics::TestResult { statistic: 0.0, pvalue: 0.5, df: 0.0, df2: 0.0 }, c16, "multipletests at 200000", t0);
+
+    // The Hommel form costs the square of the count. The list at its
+    // bound of 10,000 values must finish in under two seconds.
+    var hp: f64[>..] = [];
+    for i in 0..10000 { hp.push((i * 37) % 10001 / 10001.0); }
+    t0 = clock();
+    let _hn, hc = statistics::multipletests(out, hp[..], statistics::ADJUST_HOMMEL);
+    time_check(bad, statistics::TestResult { statistic: 0.0, pvalue: 0.5, df: 0.0, df2: 0.0 }, hc, "hommel at 10000", t0, 2.0);
 
     // The edges of the exact bounds.
     let a8 = time_sample(8, false, st);
