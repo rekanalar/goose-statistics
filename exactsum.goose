@@ -113,6 +113,8 @@ fn exact_sum_div(xs: const f64[:], d: f64) -> f64, i64 {
 
 fn nan() -> f64 { return 0.0 / 0.0; }
 
+fn inf() -> f64 { return 1.0 / 0.0; }
+
 // A result that is not finite means the true result does not fit.
 fn finish(r: f64) -> f64, i64 {
     if is_inf(r) || is_nan(r) { return nan(), 8; }

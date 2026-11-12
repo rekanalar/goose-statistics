@@ -22,7 +22,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         tag: [v2026.3, v2026.4]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 90
     defaults:
       run:
         shell: bash
@@ -63,7 +63,7 @@ jobs:
           GOOSE_HOME: ${{ runner.temp }}/goose-home
 
       - name: Run the test suite
-        timeout-minutes: 30
+        timeout-minutes: 50
         run: |
           set -o pipefail
           goose run test/run.goose 2>&1 | tee test-output.txt
@@ -72,6 +72,7 @@ jobs:
 
       - name: Check the memory of the tests
         if: runner.os != 'Windows'
+        timeout-minutes: 30
         run: bash test/memory.sh
         env:
           GOOSE_HOME: ${{ runner.temp }}/goose-home

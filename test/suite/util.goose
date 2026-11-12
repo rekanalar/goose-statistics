@@ -2,6 +2,7 @@
 namespace suite;
 
 import std;
+import statistics from "../..";
 
 // The next number of a seeded generator. The state wraps on purpose.
 fn rnd(st: u64&) -> i64 {
@@ -29,4 +30,20 @@ fn near_list(got: const f64[:], want: const f64[:], tol: f64) -> bool {
         if !near_tol(got[i], want[i], tol) { return false; }
     }
     return true;
+}
+
+// The mean of a list, or NaN for an empty list. The resampling rows use it
+// as their statistic.
+fn mean_of(xs: const f64[:]) -> f64 {
+    if xs.len == 0 { return 0.0 / 0.0; }
+    var t: f64 = 0.0;
+    for v in xs { t += v; }
+    return t / xs.len;
+}
+
+// A faulted result has the code and NaN in every field.
+fn fault_is(bad: i64&, name: u8[:], r: statistics::TestResult, c: i64, want: i64) {
+    if c == want && is_nan(r.statistic) && is_nan(r.pvalue) && is_nan(r.df) && is_nan(r.df2) { return; }
+    bad += 1;
+    print("FAIL ", name, " code ", c, " want ", want, "\n");
 }

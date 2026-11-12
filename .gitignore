@@ -17,3 +17,6 @@ tmp/
 
 # The captured output of the CI test step
 test-output.txt
+
+# The compiled files of the Python generators
+__pycache__/

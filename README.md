@@ -133,10 +133,70 @@ import statistics from "rekanalar/goose-statistics@v0.7.0";
 | `multipletests(out, ps, method)` | writes the adjusted p-values into `out`; gives the count and the code |
 | `false_discovery_control(out, ps, method)` | the adjusted p-values under the name of SciPy; gives the count and the code |
 | `combine_pvalues(ps, method, weights)` | combines the p-values of independent tests; gives the statistic, the p-value and the code |
+| `levene(groups, sizes, center, trim)` | the Levene test of equal variance; `center` is a `CENTER_` constant |
+| `fligner(groups, sizes, center, trim)` | the Fligner-Killeen test of equal variance |
+| `bartlett(groups, sizes)` | the Bartlett test of equal variance |
+| `alexandergovern(groups, sizes)` | the Alexander-Govern test of equal variance |
+| `ranksums(xs, ys, alt)` | the Wilcoxon rank-sum test of two samples |
+| `mood(xs, ys, alt)` | the Mood test of median equality |
+| `brunnermunzel(xs, ys, alt, use_t)` | the Brunner-Munzel test; `use_t` picks the t form |
+| `ansari(xs, ys, alt, method)` | the Ansari-Bradley test of equal dispersion |
+| `friedmanchisquare(data, columns)` | the Friedman test of k samples; `data` holds the blocks row by row |
+| `median_test(out, groups, sizes, ties, correction)` | the median test; writes the 2 by k table into `out` |
+| `quantile_test(out, xs, q, p, alt, level)` | the test of a quantile; writes the bounds into `out` |
+| `ttest_ind_from_stats(mean1, sd1, n1, mean2, sd2, n2, equal_var, alt)` | the two-sample t-test from the summary values |
+| `boxcox_llf(lambda, xs)` | the log-likelihood of the Box-Cox transform |
+| `yeojohnson_llf(lambda, xs)` | the log-likelihood of the Yeo-Johnson transform |
+| `boxcox(out, xs, lambda)` | the Box-Cox transform; writes the values into `out` |
+| `yeojohnson(out, xs, lambda)` | the Yeo-Johnson transform; writes the values into `out` |
+| `boxcox_fit(out, xs)` | the Box-Cox transform with the lambda of the maximum likelihood |
+| `yeojohnson_fit(out, xs)` | the Yeo-Johnson transform with the lambda of the maximum likelihood |
+| `boxcox_normmax(xs, method)` | the lambda of the best fit; `method` is a `NORMMAX_` constant |
+| `yeojohnson_normmax(xs)` | the lambda of the best fit |
+| `boxcox_interval(xs, alpha)` | the low and the high lambda of the confidence interval |
+| `boxcox_normplot(out, xs, la, lb, n)` | writes n rows of lambda and r into `out` |
+| `yeojohnson_normplot(out, xs, la, lb, n)` | writes n rows of lambda and r into `out` |
+| `bootstrap(out, data, sizes, method, level, alt, rng)` | the bootstrap interval and its standard error; writes the null list into `out` |
+| `permutation_test(out, data, sizes, method, alt, rng)` | the permutation test; writes the null list into `out` |
+| `monte_carlo_test(out, xs, family, params, method, alt, rng)` | the Monte Carlo test against a family |
+| `power(family, params, n, level, resamples, rng)` | the power of the test at a sample size |
+| `sobol_indices(first, total, d, n, rng)` | the first-order and total Sobol indices; writes the two lists |
+| `sobol_from_evaluations(first, total, f_a, f_b, f_ab, d)` | the same indices from three lists of evaluations that the caller made |
+| `ResampleMethod` | the struct that holds the method of the resampling calls |
+| `Interval` | the struct of a low and a high bound |
+| `BootstrapResult` | the struct of the interval and the standard error that `bootstrap` returns |
+| `CensoredData` | the struct of four lists: uncensored, left, right and interval times |
+| `MvsResult` | the struct of the three intervals that `bayes_mvs` returns |
+| `MvsDist` | the struct of the three posterior distributions that `mvsdist` returns |
+| `logrank(x, y, alt)` | the log-rank test of two groups of `CensoredData` |
+| `goodness_of_fit(out, xs, family, statistic, resamples, rng)` | the goodness-of-fit test; writes the fitted parameters into `out` |
+| `barnard_exact(a, b, c, d, alt, pooled, grid)` | the Barnard exact test of a 2 by 2 table |
+| `boschloo_exact(a, b, c, d, alt, grid)` | the Boschloo exact test of a 2 by 2 table |
+| `kstest(out, xs, family, params, alt)` | the one-sample Kolmogorov-Smirnov test; writes the location and the sign into `out` |
+| `kstest_2samp(out, xs, ys, alt)` | the two-sample Kolmogorov-Smirnov test; writes the location and the sign into `out` |
+| `cramervonmises(xs, family, params)` | the Cramer-von Mises test against a family |
+| `cramervonmises_2samp(xs, ys, method)` | the two-sample Cramer-von Mises test |
+| `epps_singleton_2samp(xs, ys, t)` | the Epps-Singleton test of two samples |
+| `bws_test(xs, ys, rng, alt, resamples)` | the BWS test of two samples |
+| `anderson_ksamp(out, groups, sizes, variant)` | the Anderson-Darling test of k samples; writes the critical values into `out` |
+| `poisson_means_test(k1, n1, k2, n2, diff, alt)` | the test of two Poisson means |
+| `page_trend_test(data, columns, ranked, predicted, method)` | the Page trend test of k samples |
+| `tukey_hsd(out, groups, sizes, level, equal_var)` | the Tukey intervals of every pair; writes the tables into `out` |
+| `dunnett(out, groups, sizes, control, alt, level)` | the Dunnett intervals of every group against the control |
+| `bayes_mvs(xs, level)` | the Bayesian intervals of the mean, the variance and the deviation |
+| `mvsdist(xs)` | the parameters of the three posterior distributions |
 
 The argument `method` is one of the nine `METHOD_` constants. The
 constants `METHOD_EXCLUSIVE` and `METHOD_INCLUSIVE` stand for the two
 methods of Python.
+
+The struct `ResampleMethod` holds the method of a resampling call. Its
+fields are `kind`, `resamples`, `interval` and `permutation`. The field
+`kind` is one of `RESAMPLE_BOOTSTRAP`, `RESAMPLE_PERMUTATION` and
+`RESAMPLE_MONTE_CARLO`. The field `interval` is one of
+`INTERVAL_PERCENTILE`, `INTERVAL_BASIC` and `INTERVAL_BCA`. The field
+`permutation` is one of `PERMUTE_INDEPENDENT`, `PERMUTE_SAMPLES` and
+`PERMUTE_PAIRINGS`. The seed comes from the `rng` argument.
 
 The argument `form` is one of `WEIGHT_POPULATION`, `WEIGHT_FREQUENCY` and
 `WEIGHT_RELIABILITY`.
@@ -247,6 +307,7 @@ gives NaN as the result and one of these codes.
 | `ERR_UNDEFINED` | the result has no defined value |
 | `ERR_OVERFLOW` | the true result does not fit in a 64 bit float |
 | `ERR_TOO_LONG` | the sample has more than `MAX_INPUT` values |
+| `ERR_FIT` | a fit or a search did not end, or it gave a scale that is not usable |
 
 The order of the checks never changes. The order is the length bound, the
 empty sample, a NaN and an infinity. The arguments and the length of the
@@ -309,6 +370,59 @@ counts of the discrete quantiles are exact.
 
 ## Limits
 
+- The `levene` and `fligner` calls take a center of the mean, the median
+  or the trimmed mean. SciPy takes the same three. The trimmed mean of
+  SciPy uses the partition of NumPy, which can end one rounding step
+  off the exact mean. The two centers then break a tie of the deviations
+  differently. The package keeps the exact mean.
+- The `ansari` call counts the exact distribution with exact sums. The
+  table of SciPy holds single-precision floats. Its exact p-value loses
+  about 1e-9 of its digits on a large sample.
+- The `boxcox` and `yeojohnson` calls refuse a value that the form does
+  not take. SciPy gives NaN or an infinity there. A sample of fewer than
+  two values gives `ERR_TOO_SHORT`.
+- The `boxcox_normmax` and `yeojohnson_normmax` calls give a lambda that
+  differs from SciPy by about 1e-7 relative. The search of SciPy follows
+  another path through its Brent minimizer. The difference of the
+  mle lambda of SciPy is about 1.6e-7. The difference of the pearsonr
+  lambda is about 2.5e-7.
+- The `boxcox_normmax` call refuses data that needs the Lambert W guard
+  of SciPy. It gives `ERR_OVERFLOW` there. SciPy swaps in a smaller
+  lambda.
+- The `tukey_hsd` call computes the upper tail of the studentized range
+  directly. SciPy computes one minus the cumulative function, so its
+  p-value loses its digits below about 1e-12.
+- The `dunnett` call computes its probability with a deterministic
+  integral. SciPy uses a randomized quasi Monte Carlo with no fixed
+  seed. Its result errs by about 1.5e-4 and it changes between calls.
+  The one-sided critical value of SciPy searches a noisy objective with
+  a tolerance of 1e-3.
+- The `bayes_mvs` and `mvsdist` calls need at least four values. The
+  variance posterior of SciPy has no mean below that. SciPy gives an
+  infinity or a NaN there.
+- The `sobol_indices` call uses pseudo-random matrices from the given
+  generator. SciPy uses a scrambled Sobol sequence. SciPy converges
+  faster for the same count of points.
+- The `goodness_of_fit` call fits the normal, exponential, uniform and
+  lognormal families. The package holds no fit routine for the gamma,
+  beta, Weibull and other families. SciPy calls its optimizer for them.
+  This gap stays open until the package holds a fit routine.
+- The `cramervonmises` call stops its series at an absolute term size of
+  1e-7, as SciPy does. Its p-value then differs from SciPy by about
+  1e-5 on a random sample. The statistic differs by about 1e-9.
+- The `epps_singleton_2samp` call gives a p-value that differs from
+  SciPy by about 1e-6 on a random sample. Its pseudo-inverse of the
+  covariance matrix loses digits.
+- The `poisson_means_test` call differs from SciPy by about 2e-9 of its
+  digits. The boundary of the Poisson quantile differs slightly.
+- The `kstest` and `kstest_2samp` calls give the dispatcher result of
+  the package `ks_1samp` and `ks_2samp`. A tie inside a sample uses the
+  asymptotic form, where SciPy would try the exact form.
+- The `bws_test` call above 9999 splits draws from the given generator.
+  SciPy draws without a seed, so the two cannot match. The call below
+  that bound counts exactly.
+- The `anderson_ksamp` call gives the statistic of SciPy to 1e-9. Its
+  p-value differs by about 1e-9.
 - The package holds no confidence interval of a correlation. SciPy holds
   `pearsonr`, `spearmanr` and `kendalltau` with these values.
 - The package holds no confidence slope of the Theil-Sen estimate. SciPy
@@ -360,9 +474,9 @@ counts of the discrete quantiles are exact.
 - The quantile of a discrete family is the smallest count whose
   cumulative function reaches the probability. The references agree on
   this rule.
-- The package holds no resampling test. SciPy holds `permutation_test`
-  and the random permutation form of `wilcoxon`. The Wilcoxon test counts
-  all sign patterns for at most 13 pairs and uses the normal form above.
+- The Wilcoxon test counts all sign patterns for at most 13 pairs and
+  uses the normal form above. The random permutation form of SciPy is
+  not built. The call `permutation_test` covers it.
 - The Shapiro-Wilk p-value is not accurate
   above 5,000 values, as in SciPy.
 - The normality tests beyond Shapiro-Wilk follow SciPy. The minimum
@@ -431,8 +545,17 @@ counts of the discrete quantiles are exact.
 - The `simple-statistics` function `tTest` divides by the population
   deviation, so its statistic differs from SciPy by the factor
   `sqrt(n / (n - 1))`. This package follows SciPy and R.
-- The package holds no resampling call. SciPy holds `bootstrap` and
-  `permutation_test`.
+- The `sobol_indices` call uses pseudo-random matrices from the given
+  generator. SciPy uses a scrambled Sobol sequence. SciPy converges
+  faster for the same count of points.
+- The `bootstrap` call with the BCa interval refuses more than one
+  sample. The jackknife of several samples is not built.
+- The draws of the resampling calls come from the given generator. The
+  seed of SciPy uses another stream. A seeded run agrees with SciPy only
+  within the error of the Monte Carlo.
+- The `rand_int` of the standard library gives another stream on v2026.3
+  and on v2026.4. The package draws its own counts, so one seed gives
+  one answer on both releases.
 - The package holds no histogram and no density estimate. NumPy holds
   `histogram`. SciPy holds `gaussian_kde`.
 - The package holds no entropy. gonum holds `Entropy`. SciPy holds
@@ -511,6 +634,41 @@ go beyond the reference libraries.
 - `combine_pvalues` gives `ERR_DOMAIN` for weights with the Fisher or the
   Tippett method. SciPy ignores them there. A caller who passes weights
   by mistake sees the fault and not a silent change.
+- The resampling calls bound their work before any draw. A count of
+  resamples above 1,000,000 gives `ERR_TOO_LONG`. A product of the
+  resamples and the sample size above 500,000,000 gives the same code.
+  SciPy has no such bound. A caller with a larger job splits it.
+- `goodness_of_fit` refits and sorts every resample. The product of the
+  resamples and the sample size stops at 2,000,000, or the call gives
+  `ERR_TOO_LONG`. The other resampling calls stop at 500,000,000.
+- The resampling calls draw from a generator that the caller passes.
+  The package never makes its own seed. One seed gives one answer on
+  every run and on both Goose releases.
+- A block that returns NaN or an infinity gives `ERR_NAN` or
+  `ERR_INFINITY`. The call never turns such a value into a p-value.
+- A confidence level outside 0 to 1 gives `ERR_DOMAIN`. SciPy does not
+  check it in the resampling calls.
+- `sobol_indices` refuses more than 32 dimensions and more than
+  1,048,576 points with `ERR_TOO_LONG`.
+- Each exact test has a bound. The table total is at most 400. The
+  nuisance grid holds at most 1,024 points. The Page test takes at most
+  12 columns. The Ansari table holds at most 400,000 cells.
+  A larger input gives `ERR_TOO_LONG` or `ERR_OVERFLOW`.
+- SciPy enumerates the exact tests without a bound. A caller with a
+  larger table uses the asymptotic form.
+
+- `tukey_hsd` and `dunnett` refuse more than 64 groups with
+  `ERR_TOO_LONG`. A group of one value gives `ERR_TOO_SHORT`.
+- A search that does not end gives `ERR_FIT`. The fits stop after 200
+  steps, and the interval search of `boxcox_interval` stops after 500.
+- A result of any new call that would be NaN or infinite gives a fault
+  code. A caller who ignores the code never sees an invalid value with
+  the code `OK`. SciPy returns NaN or an infinity there.
+- `bws_test` does not copy the unseeded Monte Carlo of SciPy. The
+  caller passes the generator. The call draws the split with its own
+  draw, which rejects the low values of the word. The shuffle of the
+  standard library draws the low values more often on the release
+  v2026.3. The two releases would give different answers for one seed.
 - `combine_pvalues` rejects a list of weights that holds only zeros.
   SciPy returns a value that is not a number there.
 - `combine_pvalues` scales the weights by the largest one before it
@@ -630,6 +788,12 @@ goose run examples/ranks.goose
 goose run examples/special.goose
 goose run examples/distributions.goose
 goose run examples/tests.goose
+goose run examples/variance_tests.goose
+goose run examples/transforms.goose
+goose run examples/exact_tests.goose
+goose run examples/resampling.goose
+goose run examples/comparisons.goose
+goose run examples/survival.goose
 ```
 
 The scripts `test/make_vectors.py`, `test/make_assoc_vectors.py`,
@@ -667,6 +831,22 @@ percent. The script leaves it out of the gamma comparison.
 The script `test/mutate.sh` flips one rule of the code at a time in a copy
 of the package. Each flip must make the test program fail. The last line
 reads `N probes, 0 failures`.
+
+The environment variable `STATISTICS_SUITES` names one group of the test
+suites. The groups follow the files of the package. The older calls have
+the groups `vectors`, `assoc`, `accept`, `hostile`, `special` and
+`distributions`. The newer calls have the groups `hypothesis`,
+`normality`, `multipletests`, `variance`, `transform`, `exact`,
+`resample`, `multicomp`, `fitting` and `time`. The name `tests` runs the
+whole set of the newer ones. Without the variable every suite runs.
+
+The script `test/mutate.sh` names the group that covers the file of each
+probe. A probe then costs only that group. A probe that no group of its
+list catches runs the full suite as a fallback. The script reports such a
+probe as a failure, so a wrong group never hides a missing test.
+
+A change can make a call loop forever, so the script stops each probe
+after ten minutes. A probe that stops counts as caught.
 
 The environment variable `STATISTICS_HOSTILE_N` sets the count of the
 seeded inputs of the hostile suite. The default is 100000. The script

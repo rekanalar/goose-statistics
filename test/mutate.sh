@@ -11,6 +11,9 @@ export STATISTICS_HOSTILE_N="${STATISTICS_HOSTILE_N:-2000}"
 # The round trip of the quantiles costs an inverse per point. The probes
 # run it on fewer points than the test program does.
 export STATISTICS_ROUND_N="${STATISTICS_ROUND_N:-200}"
+# A change can make a call loop forever. The probe gives up after this
+# many seconds, and a probe that stops still counts as caught.
+PROBE_TIMEOUT="${PROBE_TIMEOUT:-600}"
 rm -rf "$work"
 mkdir -p "$work"
 
@@ -50,7 +53,7 @@ weighted.goose|if x >= lower \&\& x <= upper|if x > lower \&\& x <= upper|limits
 weighted.goose|let denom = total - 1.0;|let denom = total;|frequency weight divisor
 weighted.goose|let denom = wsum - w2sum / wsum;|let denom = wsum;|reliability weight divisor
 weighted.goose|if p.w > 0.0 \&\& cum >= half|if p.w > 0.0 \&\& cum > half|weighted median at the half way weight
-check.goose|if xs.len > 4194304 { return 9; }|if xs.len > 4194305 { return 9; }|input length bound
+check.goose|if xs.len > MAX_INPUT { return 9; }|if xs.len > MAX_INPUT + 1 { return 9; }|input length bound
 check.goose|if xs.len < need { return 2; }|if xs.len < 0 { return 2; }|sample too short
 check.goose|if w < 0.0 { return 5; }|if w < -1.0 { return 5; }|negative weight
 check.goose|if ws.len != n { return 6; }|if false { return 6; }|weight length
@@ -235,29 +238,105 @@ distributions.goose|if p <= 0.5 {|if p <= 0.0 {|the F quantile uses the upper ta
 @tests.goose|if v > pa[k] { pa[k] = v; }|if v < pa[k] { pa[k] = v; }|the Hommel running maximum
 @tests.goose|if sp[k] > v { v = sp[k]; }|if false { v = sp[k]; }|the Hommel floor of the p-value
 @check.goose|p > 1.0 { return 5; }|p > 2.0 { return 5; }|the range of the p-values
+@variance.goose|let dfn = (k - 1) as f64;|let dfn = k as f64;|the degrees of freedom of the Levene test
+@variance.goose|return vr_finish_chi(stat, k - 1);|return vr_finish_chi(stat, k);|the degrees of freedom of the Bartlett test
+@variance.goose|acc_add(pooled, (n - 1) * v);|acc_add(pooled, n * v);|the pooled variance uses the sample divisor
+@variance.goose|acc_add(recips, 1.0 / (n - 1));|acc_add(recips, 1.0 / n);|the reciprocal sum of the Bartlett test
+@variance.goose|for k in 1..tot { if idx[k].v == idx[k - 1].v { tied = true; } }|for k in 1..tot { if idx[k].v == idx[k - 1].v { tied = false; } }|the tie correction of the Mood test
+@variance.goose|let z = (acc_total(s) - expected) / sqrt(n1 * n2 * (n1 + n2 + 1.0) / 12.0);|let z = (acc_total(s) + expected) / sqrt(n1 * n2 * (n1 + n2 + 1.0) / 12.0);|the rank sum difference of the rank-sum test
+@variance.goose|let expected = n1 * (n1 + n2 + 1.0) / 2.0;|let expected = n1 * (n1 + n2) / 2.0;|the expected rank sum of the rank-sum test
+@variance.goose|if method == MW_EXACT {|if false {|the exact form of the Ansari test
+@transform.goose|if x <= 0.0 { return nan(), ERR_DOMAIN; }|if x < 0.0 { return nan(), ERR_DOMAIN; }|the Box-Cox form needs a positive value
+@transform.goose|if abs(l) < 1e-19 { return g; }|if abs(l) < 1e-9 { return g; }|the Box-Cox form at a near zero lambda
+@transform.goose|if method != NORMMAX_PEARSONR \&\& method != NORMMAX_MLE { return nan(), ERR_DOMAIN; }|if method != NORMMAX_PEARSONR \&\& method != NORMMAX_MLE { return nan(), ERR_UNDEFINED; }|an unknown method of the best fit
+@transform.goose|la >= lb|la > lb|the bounds of the probability plot
+@numeric.goose|if fa * fb > 0.0 { return nan(), ERR_DOMAIN; }|if fa * fb > 1.0 { return nan(), ERR_DOMAIN; }|the root finder needs a sign change
+@resample.goose|INTERVAL_BCA { return rs_boot_fault(ERR_DOMAIN); }|INTERVAL_BCA { return rs_boot_fault(ERR_UNDEFINED); }|an unknown interval gives the domain fault
+@resample.goose|if method.kind != RESAMPLE_BOOTSTRAP { return rs_boot_fault(ERR_DOMAIN); }|if method.kind != RESAMPLE_MONTE_CARLO { return rs_boot_fault(ERR_DOMAIN); }|the kind of the resampling method
+@resample.goose|if method.interval == INTERVAL_BCA && sizes.len > 1 { return rs_boot_fault(ERR_DOMAIN); }|if false { return rs_boot_fault(ERR_DOMAIN); }|the BCa form refuses several samples
+@fitting.goose|if !(m > 0.0) { return nan(), nan(), ERR_FIT; }|if !(m < 0.0) { return nan(), nan(), ERR_FIT; }|a fit needs a positive scale
+@fitting.goose|if c != OK { return fault_result(c); }|if c != OK { return fault_result(ERR_FIT); }|a censored data fault keeps its own code
+exact.goose|if grid < 1 { return ERR_DOMAIN; }|if grid < 1 { return ERR_UNDEFINED; }|the least count of the grid
+exact.goose|if params.len != family_arity(family) { return fault_result(ERR_LENGTH); }|if params.len != family_arity(family) { return fault_result(ERR_DOMAIN); }|the arity of the family
+exact.goose|if total < 4 { return fault_result(ERR_TOO_SHORT); }|if total < 4 { return fault_result(ERR_DOMAIN); }|the least count of the k-sample test
+exact.goose|if columns < 3 { return fault_result(ERR_TOO_SHORT); }|if columns < 3 { return fault_result(ERR_DOMAIN); }|the least count of the columns of the Page test
+exact.goose|if data.len % columns != 0 { return fault_result(ERR_LENGTH); }|if data.len % columns != 0 { return fault_result(ERR_DOMAIN); }|the length of the data of the Page test
+multicomp.goose|if s < 2 { return ERR_TOO_SHORT; }|if s < 2 { return ERR_DOMAIN; }|the least count of a group
+multicomp.goose|control >= k { return 0, ERR_DOMAIN; }|control >= k { return 0, ERR_UNDEFINED; }|the index of the control group
 PROBES
 )
+
+# The groups of the suites that cover one file. A probe runs the groups in
+# order and stops at the first group that catches the change. The fallback
+# group runs when no group of the list catches it. A probe then never
+# survives on a wrong guess about the group.
+groups_for() {
+  case "$1" in
+    distributions.goose) echo "distributions" ;;
+    special.goose) echo "special distributions" ;;
+    exactsum.goose) echo "accept distributions" ;;
+    spread.goose) echo "accept vectors" ;;
+    order.goose) echo "accept vectors" ;;
+    shape.goose) echo "accept" ;;
+    weighted.goose) echo "assoc accept vectors" ;;
+    cross.goose) echo "assoc accept" ;;
+    ranks.goose) echo "assoc accept" ;;
+    line.goose) echo "assoc accept" ;;
+    matrix.goose) echo "assoc accept" ;;
+    tests.goose) echo "hypothesis multipletests" ;;
+    statistics.goose) echo "hypothesis" ;;
+    check.goose) echo "hypothesis vectors assoc hostile" ;;
+    variance.goose) echo "variance" ;;
+    transform.goose) echo "transform" ;;
+    exact.goose) echo "exact" ;;
+    resample.goose) echo "resample" ;;
+    multicomp.goose) echo "multicomp" ;;
+    fitting.goose) echo "fitting" ;;
+    numeric.goose) echo "transform fitting" ;;
+    *) echo "" ;;
+  esac
+}
 
 # One probe of the list. The helper writes its verdict into the work
 # directory, because a parallel run cannot share a counter.
 run_probe() {
   local n="$1" file="$2" from="$3" to="$4" name="$5"
   dir="$work/p$n"
-  # A file name with a leading @ runs the suites of the hypothesis tests only.
-  local only=""
-  case "$file" in @*) only="tests"; file="${file#@}" ;; esac
+  # A file name with a leading @ holds a call of the hypothesis tests.
+  case "$file" in @*) file="${file#@}" ;; esac
+  local only
+  only="$(groups_for "$file")"
+  if [ -z "$only" ]; then only="full"; fi
   mkdir -p "$dir"
-  (cd "$here" && tar cf - --exclude=.git --exclude=mutate-work .) | (cd "$dir" && tar xf -)
+  (cd "$here" && tar cf - --exclude=.git --exclude=mutate-work --exclude=tmp --exclude=test/oracle-rust/target --exclude=test/oracle-node/node_modules .) | (cd "$dir" && tar xf -)
   python3 "$here/test/mutate_one.py" "$dir/$file" "$from" "$to" || {
     echo "BROKEN PROBE $n: $name"
     echo broken > "$work/verdict$n"
     rm -rf "$dir"
     return
   }
-  if (cd "$dir" && STATISTICS_SUITES="$only" goose run test/run.goose >"$dir/out.txt" 2>&1); then
-    echo "SURVIVED $n: $name"
-    echo survived > "$work/verdict$n"
+  local g
+  for g in $only; do
+    # The word full names every suite of the package.
+    local pick="$g"
+    if [ "$g" = "full" ]; then pick=""; fi
+    if ! (cd "$dir" && STATISTICS_SUITES="$pick" timeout "$PROBE_TIMEOUT" goose run test/run.goose >"$dir/out.txt" 2>&1); then
+      # The group caught the change.
+      rm -rf "$dir"
+      return
+    fi
+  done
+  if [ "$only" != "full" ]; then
+    # The groups did not catch the change. The full suite may still catch it.
+    if ! (cd "$dir" && STATISTICS_SUITES="" timeout "$PROBE_TIMEOUT" goose run test/run.goose >"$dir/full.txt" 2>&1); then
+      echo "NEEDS THE FULL SUITE $n: $name"
+      echo full > "$work/verdict$n"
+      rm -rf "$dir"
+      return
+    fi
   fi
+  echo "SURVIVED $n: $name"
+  echo survived > "$work/verdict$n"
   rm -rf "$dir"
 }
 

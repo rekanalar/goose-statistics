@@ -24,6 +24,13 @@ import special;
 import distributions;
 import tests;
 import normality;
+import numeric;
+import variance;
+import transform;
+import exact;
+import resample;
+import multicomp;
+import fitting;
 
 // ---- fault codes ----------------------------------------------------
 const OK: i64 = 0;
@@ -36,9 +43,17 @@ const ERR_LENGTH: i64 = 6;      // the list of weights has another length than t
 const ERR_UNDEFINED: i64 = 7;   // the result has no defined value
 const ERR_OVERFLOW: i64 = 8;    // the true result does not fit in a 64 bit float
 const ERR_TOO_LONG: i64 = 9;    // the sample has more than MAX_INPUT values
+const ERR_FIT: i64 = 10;        // a search or a fit does not end within its step bound
 
 // ---- bounds ---------------------------------------------------------
 const MAX_INPUT: i64 = 4194304;  // values in a sample
+
+// The difference between 1 and the next float above it. The searches
+// and the tests compare against it.
+const EPS: f64 = 2.220446049250313e-16;
+
+// The relative bound of a root search.
+const BRENT_RTOL: f64 = 8.881784197001252e-16;
 const MAX_ORDER: i64 = 8;        // the largest moment order
 const MAX_THEIL: i64 = 4096;     // points in a Theil-Sen estimate
 const MAX_COLUMNS: i64 = 1024;   // columns in a matrix
@@ -134,3 +149,40 @@ const MAX_EXACT_WILCOXON: i64 = 50;   // pairs in an exact Wilcoxon test
 const MAX_ENUM_WILCOXON: i64 = 13;    // pairs whose sign patterns the call counts
 const MAX_EXACT_KENDALL: i64 = 33;    // pairs in an exact Kendall test
 const MAX_EXACT_KS: i64 = 10000;      // the size bound of an exact Kolmogorov-Smirnov test
+
+// The center of the Levene and Fligner-Killeen tests.
+const CENTER_MEAN: i64 = 0;       // the mean of each group
+const CENTER_MEDIAN: i64 = 1;     // the median of each group
+const CENTER_TRIMMED: i64 = 2;    // the trimmed mean of each group
+
+// The kind of a resampling method.
+const RESAMPLE_BOOTSTRAP: i64 = 0;
+const RESAMPLE_PERMUTATION: i64 = 1;
+const RESAMPLE_MONTE_CARLO: i64 = 2;
+
+// The interval of a bootstrap.
+const INTERVAL_PERCENTILE: i64 = 0;   // the quantiles of the bootstrap values
+const INTERVAL_BASIC: i64 = 1;        // the quantiles reflected about the estimate
+const INTERVAL_BCA: i64 = 2;          // the bias-corrected and accelerated form
+
+// The permutation type of a permutation test.
+const PERMUTE_INDEPENDENT: i64 = 0;   // the samples swap their values
+const PERMUTE_SAMPLES: i64 = 1;       // the values swap within each pair
+const PERMUTE_PAIRINGS: i64 = 2;      // each sample is shuffled on its own
+
+// The statistic of a goodness-of-fit test.
+const GOF_ANDERSON: i64 = 0;
+const GOF_KOLMOGOROV: i64 = 1;
+const GOF_CRAMER: i64 = 2;
+
+// The bounds of resampling, of the exact forms and of the fits.
+const MAX_RESAMPLES: i64 = 1000000;          // resamples in one call
+const MAX_RESAMPLE_WORK: i64 = 500000000;    // resamples times the sample size
+const MAX_FIT_WORK: i64 = 2000000;            // resamples times the sample size of a goodness-of-fit test
+const MAX_SOBOL_POINTS: i64 = 1048576;       // base points of a Sobol estimate
+const MAX_SOBOL_DIMS: i64 = 32;              // input variables of a Sobol estimate
+const MAX_EXACT_TABLE: i64 = 400;            // the total of a table in an exact 2 by 2 test
+const MAX_NUISANCE_GRID: i64 = 1024;         // grid points of the nuisance parameter
+const MAX_PAGE_COLUMNS: i64 = 12;            // columns of an exact Page test
+const MAX_EXACT_CELLS: i64 = 100000;         // cells of an exact count table
+const MAX_FIT_STEPS: i64 = 200;              // steps of a search or a fit

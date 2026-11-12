@@ -1,5 +1,5 @@
 // The memory probe of the hypothesis tests. It runs one call on the largest
-// input of the package. The variable OP picks the call, from 1 to 14. The
+// input of the package. The variable OP picks the call, from 1 to 27. The
 // call 0 runs no test and gives the baseline. The two samples hold the
 // input of the call, so the peak above the baseline is the memory of the
 // call alone. Build the program and read the peak size:
@@ -9,6 +9,14 @@
 import std;
 import os;
 import statistics from "..";
+
+// The mean of a list. The resampling calls take this as their statistic.
+fn mem_mean(xs: const f64[:]) -> f64 {
+    if xs.len == 0 { return statistics::nan(); }
+    var t: f64 = 0.0;
+    for v in xs { t += v; }
+    return t / xs.len;
+}
 
 fn main() {
     var arg: u8[>..] = [];
@@ -70,5 +78,47 @@ fn main() {
         let k, cc = statistics::false_discovery_control(out, ps[..], statistics::ADJUST_BY);
         c = cc;
     }
+    // The new calls of the variance tests, the transforms, the resampling
+    // calls and the survival test.
+    if op == 15 { let r, cc = statistics::levene(xs[..], sizes[..]); c = cc; }
+    if op == 16 { let r, cc = statistics::fligner(xs[..], sizes[..]); c = cc; }
+    if op == 17 { let r, cc = statistics::ranksums(xs[..], ys[..]); c = cc; }
+    if op == 18 { let r, cc = statistics::mood(xs[..], ys[..]); c = cc; }
+    if op == 19 { let r, cc = statistics::brunnermunzel(xs[..], ys[..]); c = cc; }
+    if op == 20 { let r, cc = statistics::ansari(xs[..], ys[..]); c = cc; }
+    if op == 21 { let r, cc = statistics::friedmanchisquare(xs[..], 2); c = cc; }
+    if op == 22 {
+        // The transform needs positive values for the Box-Cox form.
+        var pos: f64[>..] = [];
+        for v in xs { pos.push(v + 1.0); }
+        let r, cc = statistics::boxcox(out, pos[..], 0.5);
+        c = cc;
+    }
+    if op == 23 {
+        var pos: f64[>..] = [];
+        for v in xs { pos.push(v + 1.0); }
+        let r, cc = statistics::boxcox_fit(out, pos[..]);
+        c = cc;
+    }
+    if op == 24 {
+        // The bootstrap draws one resample at a time, so the null list
+        // holds the statistic of each resample.
+        var gen = rng { s: 7 };
+        let m = statistics::ResampleMethod { kind: statistics::RESAMPLE_BOOTSTRAP, resamples: 200, .. };
+        let r, cc = statistics::bootstrap(out, xs[..], sizes[..], m, 0.95, statistics::ALT_TWO_SIDED, gen) { s => mem_mean(s) };
+        c = cc;
+    }
+    if op == 25 {
+        var gen = rng { s: 7 };
+        let m = statistics::ResampleMethod { kind: statistics::RESAMPLE_PERMUTATION, resamples: 200, .. };
+        let r, cc = statistics::permutation_test(out, xs[..], sizes[..], m, statistics::ALT_TWO_SIDED, gen) { s => mem_mean(s) };
+        c = cc;
+    }
+    if op == 26 {
+        var gen = rng { s: 7 };
+        let r, cc = statistics::goodness_of_fit(out, xs[0..1000000], statistics::FAMILY_NORMAL, statistics::GOF_KOLMOGOROV, 1, gen);
+        c = cc;
+    }
+    if op == 27 { let r, cc = statistics::epps_singleton_2samp(xs[..], ys[..]); c = cc; }
     print(c, "\n");
 }

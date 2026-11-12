@@ -288,6 +288,89 @@ fn run_time_tests() -> i64 {
     t0 = clock();
     let r30, c30 = statistics::kurtosistest(tx[..]);
     time_check(bad, r30, c30, "kurtosistest ties at 200000", t0);
+    // The new calls of the variance tests, the transforms, the exact
+    // tests, the resampling calls, the comparisons and the survival test.
+    var gsizes: i64[>..] = [big / 2, big / 2];
+    t0 = clock();
+    let v1, vc1 = statistics::levene(xs[..], gsizes[..]);
+    time_check(bad, v1, vc1, "levene at 200000", t0);
+    t0 = clock();
+    let v2, vc2 = statistics::fligner(xs[..], gsizes[..]);
+    time_check(bad, v2, vc2, "fligner at 200000", t0);
+    t0 = clock();
+    let v3, vc3 = statistics::ranksums(xs[..], ys[..]);
+    time_check(bad, v3, vc3, "ranksums at 200000", t0);
+    t0 = clock();
+    let v4, vc4 = statistics::mood(xs[..], ys[..]);
+    time_check(bad, v4, vc4, "mood at 200000", t0);
+    t0 = clock();
+    let v5, vc5 = statistics::brunnermunzel(xs[..], ys[..]);
+    time_check(bad, v5, vc5, "brunnermunzel at 200000", t0);
+    t0 = clock();
+    let v6, vc6 = statistics::ansari(xs[..], ys[..]);
+    time_check(bad, v6, vc6, "ansari at 200000", t0);
+    t0 = clock();
+    let v7, vc7 = statistics::friedmanchisquare(xs[..], 2);
+    time_check(bad, v7, vc7, "friedmanchisquare at 200000", t0);
+    // The transform needs positive values for the Box-Cox form.
+    var pos: f64[>..] = [];
+    for v in xs { pos.push(v + 1.0); }
+    var tout: f64[>..] = [];
+    t0 = clock();
+    let v8, vc8 = statistics::boxcox(tout, pos[..], 0.5);
+    time_check(bad, statistics::TestResult { statistic: 0.0, pvalue: 0.5, df: 0.0, df2: 0.0 }, vc8, "boxcox at 200000", t0);
+    t0 = clock();
+    let v9, vc9 = statistics::boxcox_fit(tout, pos[..]);
+    time_check(bad, statistics::TestResult { statistic: 0.0, pvalue: 0.5, df: 0.0, df2: 0.0 }, vc9, "boxcox_fit at 200000", t0);
+    t0 = clock();
+    let v10, vc10 = statistics::yeojohnson_fit(tout, xs[..]);
+    time_check(bad, statistics::TestResult { statistic: 0.0, pvalue: 0.5, df: 0.0, df2: 0.0 }, vc10, "yeojohnson_fit at 200000", t0);
+    // The exact and distance tests.
+    var kout: f64[>..] = [];
+    t0 = clock();
+    let v11, vc11 = statistics::kstest(kout, xs[..], statistics::FAMILY_NORMAL, [500.0, 300.0][..]);
+    time_check(bad, v11, vc11, "kstest at 200000", t0);
+    t0 = clock();
+    let v12, vc12 = statistics::kstest_2samp(kout, xs[..], ys[..]);
+    time_check(bad, v12, vc12, "kstest_2samp at 200000", t0);
+    t0 = clock();
+    let v13, vc13 = statistics::cramervonmises(xs[..], statistics::FAMILY_NORMAL, [500.0, 300.0][..]);
+    time_check(bad, v13, vc13, "cramervonmises at 200000", t0);
+    t0 = clock();
+    let v14, vc14 = statistics::cramervonmises_2samp(xs[..], ys[..]);
+    time_check(bad, v14, vc14, "cramervonmises_2samp at 200000", t0);
+    t0 = clock();
+    let v15, vc15 = statistics::epps_singleton_2samp(xs[..], ys[..]);
+    time_check(bad, v15, vc15, "epps_singleton_2samp at 200000", t0);
+    // The comparisons.
+    var hout: f64[>..] = [];
+    t0 = clock();
+    let v16, vc16 = statistics::tukey_hsd(hout, xs[..], gsizes[..]);
+    time_check(bad, statistics::TestResult { statistic: 0.0, pvalue: 0.5, df: 0.0, df2: 0.0 }, vc16, "tukey_hsd at 200000", t0);
+    t0 = clock();
+    let v17, vc17 = statistics::dunnett(hout, xs[..], gsizes[..], 0);
+    time_check(bad, statistics::TestResult { statistic: 0.0, pvalue: 0.5, df: 0.0, df2: 0.0 }, vc17, "dunnett at 200000", t0);
+    t0 = clock();
+    let v18, vc18 = statistics::bayes_mvs(xs[..]);
+    time_check(bad, statistics::TestResult { statistic: 0.0, pvalue: 0.5, df: 0.0, df2: 0.0 }, vc18, "bayes_mvs at 200000", t0);
+    // The resampling calls, with a small count of resamples.
+    var onesize: i64[>..] = [big];
+    var gen = rng { s: 31 };
+    let rm = statistics::ResampleMethod { resamples: 100, interval: statistics::INTERVAL_PERCENTILE, .. };
+    var bout: f64[>..] = [];
+    t0 = clock();
+    let v19, vc19 = statistics::bootstrap(bout, xs[..], onesize[..], rm, 0.95, statistics::ALT_TWO_SIDED, gen) { s => mean_of(s) };
+    time_check(bad, statistics::TestResult { statistic: 0.0, pvalue: 0.5, df: 0.0, df2: 0.0 }, vc19, "bootstrap at 200000", t0);
+    var gen2 = rng { s: 37 };
+    var pout: f64[>..] = [];
+    t0 = clock();
+    let v20, vc20 = statistics::permutation_test(pout, xs[..], gsizes[..], rm, statistics::ALT_TWO_SIDED, gen2) { s => mean_of(s) };
+    time_check(bad, v20, vc20, "permutation_test at 200000", t0);
+    var gen3 = rng { s: 41 };
+    var gout: f64[>..] = [];
+    t0 = clock();
+    let v21, vc21 = statistics::goodness_of_fit(gout, xs[..], statistics::FAMILY_NORMAL, statistics::GOF_KOLMOGOROV, 10, gen3);
+    time_check(bad, v21, vc21, "goodness_of_fit at 200000", t0);
     bad += run_time_ratio(100000);
     // A run at the input bound takes minutes, so the mutation probes skip it.
     var flag: u8[>..] = [];

@@ -157,18 +157,7 @@ fn ttest_rel(xs: const f64[:], ys: const f64[:], alt: i64 = ALT_TWO_SIDED) -> Te
 // The check of a set of groups in one buffer. The sizes array gives the
 // length of each group. The call returns the code.
 fn check_groups(groups: const f64[:], sizes: const i64[:]) -> i64 {
-    let c = check_sample(groups, 1);
-    if c != 0 { return c; }
-    if sizes.len < 2 { return ERR_TOO_SHORT; }
-    var total: i64 = 0;
-    for s in sizes {
-        if s < 0 { return ERR_DOMAIN; }
-        if s == 0 { return ERR_TOO_SHORT; }
-        total += s;
-        if total > groups.len { return ERR_LENGTH; }
-    }
-    if total != groups.len { return ERR_LENGTH; }
-    return 0;
+    return check_groups_n(groups, sizes, 2, 1);
 }
 
 // The one-way analysis of variance of two or more groups. The groups
@@ -217,9 +206,8 @@ fn f_oneway(groups: const f64[:], sizes: const i64[:]) -> TestResult, i64 {
 fn mean_confidence_interval(xs: const f64[:], confidence: f64 = 0.95) -> f64, f64, i64 {
     var c = check_sample(xs, 2);
     if c != 0 { return nan(), nan(), c; }
-    c = check_scalar(confidence);
+    c = check_level(confidence);
     if c != 0 { return nan(), nan(), c; }
-    if confidence <= 0.0 || confidence >= 1.0 { return nan(), nan(), 5; }
     let m, cm = mean(xs);
     if cm != 0 { return nan(), nan(), cm; }
     let se, cs = sem(xs);
@@ -1153,34 +1141,46 @@ fn ks_2samp(xs: const f64[:], ys: const f64[:], alt: i64 = ALT_TWO_SIDED) -> Tes
     return good_result(d, p, nan(), nan());
 }
 
-// The Kolmogorov-Smirnov test of one sample against a family. The family
-// is one of the FAMILY_ constants. The buffer holds the parameters of
-// that family.
-fn ks_1samp(xs: const f64[:], family: i64, params: const f64[:], alt: i64 = ALT_TWO_SIDED) -> TestResult, i64 {
+// The sweep of one sample against a family. It gives the two deviations,
+// the location of the larger one and its sign. The call checks the
+// sample, the family and the parameters first.
+fn ks_1samp_sweep(xs: const f64[:], family: i64, params: const f64[:], alt: i64) -> f64, f64, f64, f64, i64 {
     var c = check_sample(xs, 1);
-    if c != 0 { return fault_result(c); }
-    if check_alt(alt) != 0 { return fault_result(ERR_DOMAIN); }
-    if family < 0 || family > FAMILY_F { return fault_result(ERR_DOMAIN); }
+    if c != 0 { return nan(), nan(), nan(), nan(), c; }
+    if check_alt(alt) != 0 { return nan(), nan(), nan(), nan(), ERR_DOMAIN; }
+    if family < 0 || family > FAMILY_F { return nan(), nan(), nan(), nan(), ERR_DOMAIN; }
     let need = family_arity(family);
-    if params.len != need { return fault_result(ERR_LENGTH); }
+    if params.len != need { return nan(), nan(), nan(), nan(), ERR_LENGTH; }
     for p in params {
         let cp = check_scalar(p);
-        if cp != 0 { return fault_result(cp); }
+        if cp != 0 { return nan(), nan(), nan(), nan(), cp; }
     }
     let s = sort_copy(xs);
     let n = s.len;
     var dplus: f64 = 0.0;
     var dminus: f64 = 0.0;
+    var lplus: f64 = s[0];
+    var lminus: f64 = s[0];
     var k: i64 = 0;
     while k < n {
         let f, cf = family_cdf(family, s[k], params);
-        if cf != 0 { return fault_result(cf); }
+        if cf != 0 { return nan(), nan(), nan(), nan(), cf; }
         let up = (k + 1) as f64 / n - f;
         let down = f - k as f64 / n;
-        if up > dplus { dplus = up; }
-        if down > dminus { dminus = down; }
+        if up > dplus { dplus = up; lplus = s[k]; }
+        if down > dminus { dminus = down; lminus = s[k]; }
         k += 1;
     }
+    return dplus, dminus, lplus, lminus, 0;
+}
+
+// The Kolmogorov-Smirnov test of one sample against a family. The family
+// is one of the FAMILY_ constants. The buffer holds the parameters of
+// that family.
+fn ks_1samp(xs: const f64[:], family: i64, params: const f64[:], alt: i64 = ALT_TWO_SIDED) -> TestResult, i64 {
+    let dplus, dminus, _lp, _lm, c = ks_1samp_sweep(xs, family, params, alt);
+    if c != 0 { return fault_result(c); }
+    let n = xs.len;
     var d = max(dplus, dminus);
     if alt == ALT_GREATER { d = dplus; }
     if alt == ALT_LESS { d = dminus; }
