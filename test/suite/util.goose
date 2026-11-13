@@ -41,9 +41,44 @@ fn mean_of(xs: const f64[:]) -> f64 {
     return t / xs.len;
 }
 
+// The sum of a list. The binned rows use it as the statistic of a bin.
+fn sum_of(xs: const f64[:]) -> f64 {
+    var t: f64 = 0.0;
+    for v in xs { t += v; }
+    return t;
+}
+
 // A faulted result has the code and NaN in every field.
 fn fault_is(bad: i64&, name: u8[:], r: statistics::TestResult, c: i64, want: i64) {
     if c == want && is_nan(r.statistic) && is_nan(r.pvalue) && is_nan(r.df) && is_nan(r.df2) { return; }
+    bad += 1;
+    print("FAIL ", name, " code ", c, " want ", want, "\n");
+}
+
+// A value result against the row of the reference.
+fn chk_val(bad: i64&, name: u8[:], got: f64, c: i64, want: f64, tol: f64) {
+    if c == 0 && near_tol(got, want, tol) { return; }
+    bad += 1;
+    print("FAIL ", name, " got ", got, " code ", c, " want ", want, "\n");
+}
+
+// A list result against the row of the reference. A NaN want matches a NaN.
+fn chk_list(bad: i64&, name: u8[:], got: const f64[:], c: i64, want: const f64[:], tol: f64) {
+    var ok = c == 0 && got.len == want.len;
+    if ok {
+        for i in 0..got.len {
+            if is_nan(want[i]) { if !is_nan(got[i]) { ok = false; } }
+            else if !near_tol(got[i], want[i], tol) { ok = false; }
+        }
+    }
+    if ok { return; }
+    bad += 1;
+    print("FAIL ", name, " got ", got, " code ", c, " want ", want, "\n");
+}
+
+// A fault code against the code that the contract names.
+fn chk_code(bad: i64&, name: u8[:], c: i64, want: i64) {
+    if c == want { return; }
     bad += 1;
     print("FAIL ", name, " code ", c, " want ", want, "\n");
 }

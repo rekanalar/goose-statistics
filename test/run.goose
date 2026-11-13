@@ -52,6 +52,12 @@ fn run_hypothesis() -> i64 {
     bad += run_group("resample");
     bad += run_group("multicomp");
     bad += run_group("fitting");
+    bad += run_group("descriptive");
+    bad += run_group("frequency");
+    bad += run_group("entropy");
+    bad += run_group("trimmed");
+    bad += run_group("circular");
+    bad += run_group("binned");
     bad += run_group("time");
     return bad;
 }
@@ -120,8 +126,44 @@ fn run_group(name: u8[:]) -> i64 {
         bad += suite::run_fitting_vectors();
         bad += suite::run_fitting_tests();
     }
+    if is_word(name, "descriptive") {
+        bad += suite::run_descriptive_vectors();
+        bad += suite::run_descriptive_tests();
+        bad += suite::run_descriptive_hostile();
+    }
+    if is_word(name, "frequency") {
+        bad += suite::run_frequency_vectors();
+        bad += suite::run_frequency_tests();
+        bad += suite::run_frequency_hostile();
+    }
+    if is_word(name, "entropy") {
+        bad += suite::run_entropy_vectors();
+        bad += suite::run_entropy_tests();
+        bad += suite::run_entropy_hostile();
+    }
+    if is_word(name, "trimmed") {
+        bad += suite::run_trimmed_vectors();
+        bad += suite::run_trimmed_tests();
+        bad += suite::run_trimmed_hostile();
+    }
+    if is_word(name, "circular") {
+        bad += suite::run_circular_vectors();
+        bad += suite::run_circular_tests();
+        bad += suite::run_circular_hostile();
+    }
+    if is_word(name, "binned") {
+        bad += suite::run_binned_vectors();
+        bad += suite::run_binned_tests();
+        bad += suite::run_binned_hostile();
+    }
     if is_word(name, "time") {
         bad += suite::run_time_tests();
+        bad += suite::run_time_descriptive(200000);
+        bad += suite::run_time_entropy(200000);
+        bad += suite::run_time_frequency(200000);
+        bad += suite::run_time_trimmed(200000);
+        bad += suite::run_time_circular(200000);
+        bad += suite::run_time_binned(200000);
     }
     return bad;
 }

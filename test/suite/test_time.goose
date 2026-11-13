@@ -377,3 +377,15 @@ fn run_time_tests() -> i64 {
     if !env("STATISTICS_HOSTILE_N", flag) { bad += run_time_max(); }
     return bad;
 }
+
+// One timed call of the descriptive and shape calls. The call must end
+// within the time limit, and a value must not be NaN.
+fn time_shape(bad: i64&, v: f64, c: i64, name: u8[:], t0: f64) {
+    let spent = clock() - t0;
+    let ok = spent < TIME_LIMIT && c == 0 && !is_nan(v);
+    if !ok {
+        bad += 1;
+        print("FAIL ", name, " took ", spent, " seconds, code ", c, "\n");
+    }
+    print("time ", name, " ", spent, "\n");
+}

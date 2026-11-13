@@ -144,3 +144,22 @@ fn check_level(level: f64) -> i64 {
     if level <= 0.0 || level >= 1.0 { return 5; }
     return 0;
 }
+
+// The check of a bin count. A count below 1 gives the domain fault and
+// a count above MAX_BINS gives the too long fault.
+fn check_bins(nbins: i64) -> i64 {
+    if nbins < 1 { return ERR_DOMAIN; }
+    if nbins > MAX_BINS { return ERR_TOO_LONG; }
+    return OK;
+}
+
+// The check of a pair of limits. A low end above the high end gives the
+// domain fault.
+fn check_limits(low: f64, high: f64) -> i64 {
+    if is_nan(low) { return ERR_NAN; }
+    if is_nan(high) { return ERR_NAN; }
+    if is_inf(low) { return ERR_INFINITY; }
+    if is_inf(high) { return ERR_INFINITY; }
+    if low > high { return ERR_DOMAIN; }
+    return OK;
+}

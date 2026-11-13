@@ -48,6 +48,10 @@ fn main() {
     var c: i64 = 0;
     var sizes: i64[>..] = [n1 / 2, n1 - n1 / 2];
     var out: f64[>..] = [];
+    var out2: f64[>..] = [];
+    var out3: f64[>..] = [];
+    var out4: f64[>..] = [];
+    var out5: f64[>..] = [];
     if op == 1 { let r, cc = statistics::wilcoxon(xs[..]); c = cc; }
     if op == 2 { let r, cc = statistics::wilcoxon_paired(xs[..], ys[..]); c = cc; }
     if op == 3 { let r, cc = statistics::kruskal(xs[..], sizes[..]); c = cc; }
@@ -120,5 +124,18 @@ fn main() {
         c = cc;
     }
     if op == 27 { let r, cc = statistics::epps_singleton_2samp(xs[..], ys[..]); c = cc; }
+    if op == 28 { let r, cc = statistics::describe(xs[..], 1, false); c = cc; }
+    if op == 29 { let r, cc = statistics::lmoment(out, xs[..], 4, true); c = cc; }
+    if op == 30 { let r, cc = statistics::expectile(xs[..], 0.3); c = cc; }
+    if op == 31 { let r, cc = statistics::kstat(xs[..], 4); c = cc; }
+    if op == 32 { let r, cc = statistics::differential_entropy(xs[..], statistics::ENTROPY_VASICEK, 0, 0.0); c = cc; }
+    if op == 33 { let r, cc = statistics::estimated_cdf(xs[..], 0.1, statistics::CDF_LINEAR); c = cc; }
+    if op == 34 { let r, cc = statistics::ecdf(out, out2, xs[..]); c = cc; }
+    if op == 35 { let r, cc = statistics::ecdf_interval(out, out2, xs[..], 0.95); c = cc; }
+    if op == 36 { let r, cc = statistics::ecdf_censored(out, out2, xs[..], ys[..]); c = cc; }
+    if op == 37 { let r, cc = statistics::cumfreq(out, xs[..], 1000); c = cc; }
+    if op == 38 { let r, cc = statistics::trimboth(out, xs[..], 0.1); c = cc; }
+    if op == 39 { let r, cc = statistics::circmean(xs[..], 0.0, 6.283185307179586); c = cc; }
+    if op == 40 { let r, cc = statistics::binned_statistic(out, out2, out3, out4, out5, xs[..], ys[..], statistics::STAT_MEDIAN, 1000); c = cc; }
     print(c, "\n");
 }

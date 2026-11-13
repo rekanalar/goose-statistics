@@ -31,6 +31,30 @@ import exact;
 import resample;
 import multicomp;
 import fitting;
+import descriptive;
+import frequency;
+import entropy;
+import trimmed;
+import binned;
+import circular;
+import transform_yeo;
+import variance_multi;
+import resample_sobol;
+import resample_permutation;
+import exact_page;
+import exact_goodness;
+import exact_cvm;
+import tests_multiplicity;
+import tests_correlation;
+import tests_ks;
+import tests_wilcoxon;
+import special_inverse;
+import special_incomplete;
+import special_gamma;
+import special_erf;
+import distributions_discrete;
+import distributions_t;
+import distributions_shape;
 
 // ---- fault codes ----------------------------------------------------
 const OK: i64 = 0;
@@ -186,3 +210,87 @@ const MAX_NUISANCE_GRID: i64 = 1024;         // grid points of the nuisance para
 const MAX_PAGE_COLUMNS: i64 = 12;            // columns of an exact Page test
 const MAX_EXACT_CELLS: i64 = 100000;         // cells of an exact count table
 const MAX_FIT_STEPS: i64 = 200;              // steps of a search or a fit
+
+// ---- bounds of the descriptive and shape calls ----------------------
+const MAX_BINS: i64 = 1048576;         // bins of a binned statistic
+const MAX_CELLS: i64 = 4194304;        // cells of a binned table
+const MAX_DIMS: i64 = 16;              // dimensions of a binned table
+const MAX_LORDER: i64 = 16;            // the largest L-moment order
+const MAX_EXPECTILE_STEPS: i64 = 200;  // steps of the search of an expectile
+
+// ---- kinds of the percentile calls ---------------------------------
+const PCT_RANK: i64 = 0;      // the mean rank of the tied values
+const PCT_WEAK: i64 = 1;      // the share of the values at or below the score
+const PCT_STRICT: i64 = 2;    // the share of the values below the score
+const PCT_MEAN: i64 = 3;      // the mean of the weak and the strict share
+
+// The methods of the percentile of a score.
+const INTERP_FRACTION: i64 = 0;  // the linear interpolation
+const INTERP_LOWER: i64 = 1;     // the lower value
+const INTERP_HIGHER: i64 = 2;    // the higher value
+
+// The methods of the estimated distribution function.
+const CDF_INTERPOLATED: i64 = 0;      // the interpolated inverted function
+const CDF_HAZEN: i64 = 1;             // the Hazen function
+const CDF_WEIBULL: i64 = 2;           // the Weibull function
+const CDF_LINEAR: i64 = 3;            // the linear function
+const CDF_MEDIAN_UNBIASED: i64 = 4;   // the median unbiased function
+const CDF_NORMAL_UNBIASED: i64 = 5;   // the normal unbiased function
+const CDF_INVERTED: i64 = 6;          // the inverted function
+const CDF_AVERAGED_INVERTED: i64 = 7; // the averaged inverted function
+const CDF_CLOSEST: i64 = 8;           // the closest observation
+
+// The estimators of the differential entropy.
+const ENTROPY_AUTO: i64 = 0;       // the estimator of the size of the sample
+const ENTROPY_VASICEK: i64 = 1;    // the Vasicek estimator
+const ENTROPY_VAN_ES: i64 = 2;     // the van Es estimator
+const ENTROPY_EBRAHIMI: i64 = 3;   // the Ebrahimi estimator
+const ENTROPY_CORREA: i64 = 4;     // the Correa estimator
+const ENTROPY_SMALL: i64 = 10;     // the largest sample that ENTROPY_AUTO gives to van Es
+const ENTROPY_MEDIUM: i64 = 1000;  // the largest sample that ENTROPY_AUTO gives to Ebrahimi
+
+// The statistics of a binned table.
+const STAT_MEAN: i64 = 0;      // the mean of the values of the bin
+const STAT_STD: i64 = 1;       // the deviation of the values of the bin
+const STAT_MEDIAN: i64 = 2;    // the median of the values of the bin
+const STAT_COUNT: i64 = 3;     // the number of the values of the bin
+const STAT_SUM: i64 = 4;       // the sum of the values of the bin
+const STAT_MIN: i64 = 5;       // the lowest value of the bin
+const STAT_MAX: i64 = 6;       // the highest value of the bin
+
+// The tail that a trim call cuts.
+const TAIL_LEFT: i64 = 0;      // the lower tail
+const TAIL_RIGHT: i64 = 1;     // the upper tail
+
+// ---- structs of the descriptive and shape calls ---------------------
+// The summary of a sample. The count is at least 1. The variance is
+// for the given ddof. The skewness and the kurtosis are for the given
+// bias. The kurtosis is the Fisher form.
+struct Summary {
+    n: i64,
+    min: f64,
+    max: f64,
+    mean: f64,
+    variance: f64,
+    skewness: f64,
+    kurtosis: f64,
+}
+
+// The counts of a histogram. The lower limit is the low edge of the
+// first bin. The bin size is above 0. The extra points count the
+// values outside the real limits.
+struct Frequencies {
+    lowerlimit: f64,
+    binsize: f64,
+    extrapoints: i64,
+}
+
+// The sizes of a binned table. The dims is the number of dimensions.
+// The cells is the number of bins in all. The points is the number of
+// the values of the caller.
+struct BinnedTable {
+    dims: i64,
+    cells: i64,
+    points: i64,
+}
+

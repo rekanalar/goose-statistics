@@ -185,10 +185,97 @@ import statistics from "rekanalar/goose-statistics@v0.8.0";
 | `dunnett(out, groups, sizes, control, alt, level)` | the Dunnett intervals of every group against the control |
 | `bayes_mvs(xs, level)` | the Bayesian intervals of the mean, the variance and the deviation |
 | `mvsdist(xs)` | the parameters of the three posterior distributions |
+| `describe(xs, ddof, bias)` | the summary of a sample; gives a `Summary` and the code |
+| `scoreatpercentile(xs, per)` | the value at a percentile; `per` outside 0 to 100 gives `ERR_DOMAIN` |
+| `scoreatpercentile_method(xs, per, method)` | the same value with a method of the interpolation |
+| `scoreatpercentile_limit(xs, per, low, high)` | the value at a percentile of the values inside the limits |
+| `scoreatpercentile_limit_method(xs, per, low, high, method)` | the same value with a method of the interpolation |
+| `percentileofscore(xs, score, kind)` | the share of the sample at or below a score |
+| `median_abs_deviation(xs, scale, use_mean)` | the median of the absolute distance to the median or the mean |
+| `median_abs_deviation_normal(xs)` | the same value with the scale of the normal distribution |
+| `pmean(xs, p)` | the power mean of a sample of positive values |
+| `pmean_weighted(xs, ws, p)` | the power mean of a sample with weights |
+| `gstd(xs, ddof)` | the geometric deviation of a sample of positive values |
+| `gzscore(out, xs, ddof)` | the z-scores of the logarithms of a sample; writes them into `out` |
+| `zmap(out, scores, compare, ddof)` | the z-scores of a sample against a reference sample |
+| `lmoment(out, xs, max_order, standardize)` | the L-moments of a sample; writes them into `out` |
+| `expectile(xs, alpha)` | the expectile of a sample at a level from 0 to 1 |
+| `expectile_weighted(xs, ws, alpha)` | the expectile of a sample with weights |
+| `entropy(pk, base)` | the Shannon entropy of a set of probabilities |
+| `relative_entropy(pk, qk, base)` | the entropy of one set of probabilities against another |
+| `kstat(xs, order)` | the k-statistic of a sample, for the orders 1 to 4 |
+| `kstatvar(xs, order)` | the variance of the k-statistic, for the orders 1 and 2 |
+| `differential_entropy(xs, method, window, base)` | the differential entropy of a sample |
+| `tiecorrect(ranks)` | the tie correction of a rank test |
+| `ecdf(quantiles, probs, xs)` | the empirical distribution function of a sample |
+| `ecdf_value(xs, x)` | the share of the values of a sample at or below a point |
+| `ecdf_censored(quantiles, survival, uncensored, right)` | the Kaplan-Meier curve of a censored sample |
+| `ecdf_censored_interval(low, high, uncensored, right, level)` | the Greenwood band of that curve |
+| `ecdf_interval(low, high, xs, level)` | the Greenwood band of the empirical distribution function |
+| `estimated_cdf(xs, y, method)` | the estimated distribution function at a point |
+| `cumfreq(counts, xs, numbins)` | the cumulative frequencies of a sample; gives a `Frequencies` and the code |
+| `cumfreq_limits(counts, xs, numbins, low, high)` | the same counts over a range of the values |
+| `cumfreq_weighted(counts, xs, ws, numbins)` | the same counts with weights |
+| `relfreq(freqs, xs, numbins)` | the relative frequencies of a sample |
+| `relfreq_limits(freqs, xs, numbins, low, high)` | the same shares over a range of the values |
+| `relfreq_weighted(freqs, xs, ws, numbins)` | the same shares with weights |
+| `tmin(xs, low, inclusive)` | the smallest value of a sample at or above a limit |
+| `tmax(xs, high, inclusive)` | the largest value of a sample at or below a limit |
+| `tvar(xs, low, high, use_low, use_high, lo_inc, hi_inc, ddof)` | the variance of the values inside the limits |
+| `tstd(xs, low, high, use_low, use_high, lo_inc, hi_inc, ddof)` | the deviation of those values |
+| `tsem(xs, low, high, use_low, use_high, lo_inc, hi_inc, ddof)` | the standard error of the mean of those values |
+| `trimboth(out, xs, proportion)` | the sample without a share of the values at each end |
+| `trim1(out, xs, proportion, tail)` | the sample without a share of the values at one end |
+| `circmean(xs, low, high)` | the circular mean of a sample of angles |
+| `circvar(xs, low, high)` | the circular variance of a sample of angles |
+| `circstd(xs, low, high, normalize)` | the circular deviation of a sample of angles |
+| `directional_stats(dir, xs, dims, normalize)` | the mean direction of a set of vectors and its resultant length |
+| `binned_statistic(stats, edges, shape, binnumber, empty, xs, values, stat, nbins)` | the statistic of the values of each bin of one dimension |
+| `binned_statistic_edges(stats, edges, shape, binnumber, empty, xs, values, stat, given)` | the same statistic with the edges of the caller |
+| `binned_statistic_with(stats, edges, shape, binnumber, empty, xs, values, nbins)` | the same statistic, where the caller gives the statistic |
+| `binned_statistic_2d(stats, edges, shape, binnumber, empty, xs, ys, values, stat, nx, ny)` | the statistic of the values of each bin of two dimensions |
+| `binned_statistic_2d_with(stats, edges, shape, binnumber, empty, xs, ys, values, nx, ny)` | the same statistic, where the caller gives the statistic |
+| `binned_statistic_dd(stats, edges, shape, binnumber, empty, sample, dims, values, stat, nbins)` | the statistic of the values of each bin of many dimensions |
+| `binned_statistic_dd_with(stats, edges, shape, binnumber, empty, sample, dims, values, nbins)` | the same statistic, where the caller gives the statistic |
 
 The argument `method` is one of the nine `METHOD_` constants. The
 constants `METHOD_EXCLUSIVE` and `METHOD_INCLUSIVE` stand for the two
 methods of Python.
+
+The struct `Summary` holds the summary of a sample. Its fields are `n`,
+`min`, `max`, `mean`, `variance`, `skewness` and `kurtosis`. The struct
+`Frequencies` holds the limits of a histogram. Its fields are
+`lowerlimit`, `binsize` and `extrapoints`. The struct `BinnedTable` holds
+the sizes of a table of bins. Its fields are `dims`, `cells` and
+`points`.
+
+The argument `kind` of `percentileofscore` is one of the four `PCT_`
+constants. They are `PCT_RANK`, `PCT_WEAK`, `PCT_STRICT` and `PCT_MEAN`.
+
+The argument `method` of `scoreatpercentile_method` is one of the three
+`INTERP_` constants. They are `INTERP_FRACTION`, `INTERP_LOWER` and
+`INTERP_HIGHER`.
+
+The argument `method` of `estimated_cdf` is one of the nine `CDF_`
+constants, from `CDF_INTERPOLATED` to `CDF_CLOSEST`.
+
+The argument `method` of `differential_entropy` is one of the five
+`ENTROPY_` constants, from `ENTROPY_AUTO` to `ENTROPY_CORREA`.
+
+The argument `stat` of the binned calls is one of the seven `STAT_`
+constants. They are `STAT_MEAN`, `STAT_STD`, `STAT_MEDIAN`, `STAT_COUNT`,
+`STAT_SUM`, `STAT_MIN` and `STAT_MAX`. The argument `tail` of `trim1` is
+`TAIL_LEFT` or `TAIL_RIGHT`.
+
+The binned calls fill five output lists. The caller passes them in this
+order: `stats`, `edges`, `shape`, `binnumber` and `empty`. The list
+`stats` holds one value for each cell, in the row-major order. The list
+`edges` holds the edges of each dimension, one dimension after the other.
+The list `shape` holds the count of the edges of each dimension.
+
+The list `binnumber` holds one bin number for each point of the caller.
+The list `empty` holds 1 for each empty cell and 0 for the others. An
+empty cell holds the value 0 in the list `stats`.
 
 The struct `ResampleMethod` holds the method of a resampling call. Its
 fields are `kind`, `resamples`, `interval` and `permutation`. The field
@@ -595,6 +682,46 @@ counts of the discrete quantiles are exact.
   test. It did not check the asymptotic branches of the one-sample
   Kolmogorov-Smirnov test. A wrong value in those places stays.
 
+- The `scoreatpercentile` call has the three methods of the
+  interpolation of SciPy: `fraction`, `lower` and `higher`. SciPy has
+  five more, which use a midpoint and an inverted function.
+- The `percentileofscore` call has the four kinds of SciPy: `rank`,
+  `weak`, `strict` and `mean`.
+- The `kstat` call has the orders 1 to 4. The `kstatvar` call has the
+  orders 1 and 2. SciPy has the same orders.
+- The `lmoment` call writes the orders 1 to `max_order`. SciPy gives
+  one order at a time. The constant `MAX_LORDER` of 16 is the largest
+  order of the call.
+- The `expectile` call solves the equation of SciPy by bisection. It
+  ends with a tolerance of 1e-14 relative. The value of SciPy differs
+  by about 1e-9.
+- The `pmean` call uses the linearized form of SciPy for an exponent
+  with an absolute size of at most 2e-6. The value of SciPy uses the
+  same form. The other exponents use the power mean directly. A zero
+  value gives `ERR_UNDEFINED` in that band, as SciPy gives NaN. The
+  exponent 0 gives the geometric mean, as in SciPy.
+- The `differential_entropy` call has the four estimators of SciPy and
+  the choice of the size of the sample. The window must satisfy
+  `2 * window < n`. A tie gives `ERR_UNDEFINED`, as SciPy gives NaN.
+- The `ecdf_interval` and the `ecdf_censored_interval` calls use the
+  Greenwood formula of SciPy. The formula has no value at the last
+  observation, so the band holds NaN there. The bounds are clipped to
+  0 and 1.
+- The `ecdf_censored` call takes uncensored and right-censored values.
+  SciPy also takes left-censored and interval-censored values. This
+  package gives `ERR_DOMAIN` for them.
+- The `cumfreq` and the `relfreq` calls take the range of the sample
+  when the caller gives no limits. SciPy widens that range by a half
+  step of a bin on each side. The package widens it the same way.
+- The `trimboth` and the `trim1` calls write the kept values in
+  ascending order. SciPy leaves them in the order of the sample. The
+  package sorts every result that it gives as a list.
+- The `binned_statistic` calls number the bins in the row-major order
+  over `nbins + 2` slots per dimension. SciPy numbers them the same
+  way. The value that rounds to the last edge stays in the last bin.
+- The `directional_stats` call gives the mean resultant length as its
+  result. SciPy gives it as a field of a struct.
+
 ## Security
 
 The package reads a sample from people we do not know. These protections
@@ -775,6 +902,43 @@ These risks stay.
 - The tests compare the values with the reference libraries within a
   tolerance in units in the last place. A tolerance of 8 units in the
   last place is not an exact match.
+
+- The binned calls bound their work before any table is built. A bin
+  count above `MAX_BINS` of 1,048,576 gives `ERR_TOO_LONG`. A count of
+  cells above `MAX_CELLS` of 4,194,304 gives the same code. A count of
+  dimensions above `MAX_DIMS` of 16 gives the same code. The check
+  comes before the allocation of the cells.
+- The `ecdf_censored` and the `ecdf_censored_interval` calls sort the
+  times of the events and of the censored values. The sort is the sort
+  of the standard library, so the work grows with n log n. A sample
+  above `MAX_INPUT` gives `ERR_TOO_LONG` before the sort.
+- The `expectile` call searches on the range of the sample. The search
+  takes at most `MAX_EXPECTILE_STEPS` of 200 steps. A search that does
+  not end gives `ERR_FIT`. A caller with a hard bound checks the level
+  before the call.
+- The `entropy` call rejects a negative probability with
+  `ERR_DOMAIN`. SciPy gives -inf there. A probability of zero is
+  allowed, as in SciPy.
+- The `relative_entropy` call gives `ERR_UNDEFINED` when a positive
+  probability has no match in the second set. SciPy gives inf there. The call also gives `ERR_LENGTH` for vectors
+  with another length. SciPy uses the shorter length and gives a silent
+  value.
+- The `differential_entropy` call gives `ERR_UNDEFINED` for a sample
+  with ties. SciPy gives NaN or an infinity there.
+- The `tmin` and the `tmax` calls give `ERR_UNDEFINED` when no value
+  of the sample lies inside the limits. SciPy raises there.
+- The `trimboth` and the `trim1` calls give `ERR_DOMAIN` for a
+  proportion that SciPy refuses. The cut count is the count of the
+  values at each end. A caller cannot lose more than the share that the
+  proportion names.
+- The `circmean` call gives `ERR_UNDEFINED` when the resultant of the
+  sample is zero. SciPy gives NaN there.
+- The `directional_stats` call gives `ERR_UNDEFINED` for a row of
+  length zero and for a mean of length zero. SciPy gives NaN there.
+- The `describe`, `gzscore`, `zmap` and `lmoment` calls give a fault
+  code where SciPy gives NaN. A sample that is too short, a constant
+  sample and a zero scale each give `ERR_TOO_SHORT` or `ERR_UNDEFINED`.
+  The result never holds a silent NaN.
 
 ## Test
 
