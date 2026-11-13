@@ -163,3 +163,42 @@ fn check_limits(low: f64, high: f64) -> i64 {
     if low > high { return ERR_DOMAIN; }
     return OK;
 }
+
+// The check of a flat contingency table. The table holds rows times cols
+// counts. A count is finite and not negative. A table above the limits
+// gives the too long fault, and a row or a column with no count gives the
+// domain fault.
+fn check_table(table: const f64[:], rows: i64, cols: i64) -> i64 {
+    if rows < 1 || cols < 1 { return ERR_DOMAIN; }
+    if rows > MAX_TABLE_SIDE || cols > MAX_TABLE_SIDE { return ERR_TOO_LONG; }
+    if rows * cols > MAX_TABLE_CELLS { return ERR_TOO_LONG; }
+    if table.len > MAX_TABLE_CELLS { return ERR_TOO_LONG; }
+    if table.len == 0 { return ERR_EMPTY; }
+    for v in table {
+        if is_nan(v) { return ERR_NAN; }
+    }
+    for v in table {
+        if is_inf(v) { return ERR_INFINITY; }
+    }
+    if table.len != rows * cols { return ERR_LENGTH; }
+    for v in table {
+        if v < 0.0 || v > MAX_COUNT { return ERR_DOMAIN; }
+    }
+    var i: i64 = 0;
+    while i < rows {
+        var s: f64 = 0.0;
+        var j: i64 = 0;
+        while j < cols { s += table[i * cols + j]; j += 1; }
+        if s == 0.0 { return ERR_DOMAIN; }
+        i += 1;
+    }
+    var j: i64 = 0;
+    while j < cols {
+        var s: f64 = 0.0;
+        var k: i64 = 0;
+        while k < rows { s += table[k * cols + j]; k += 1; }
+        if s == 0.0 { return ERR_DOMAIN; }
+        j += 1;
+    }
+    return OK;
+}

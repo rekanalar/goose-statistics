@@ -10,10 +10,10 @@ a sample of 64 bit floats. It gives the trimmed forms and the weighted
 forms too. The sum is exact, so the mean and the variance keep their
 digits.
 
-The package gives fifteen probability families too. Ten are continuous
-and five are discrete. Each family has its density or mass, its
-cumulative function, its survival function, its quantile and its four
-moments.
+The package gives twenty probability families too. Fifteen are
+continuous and five are discrete. Each family has its density or mass,
+its cumulative function, its survival function, its quantile and its
+four moments.
 
 Every call returns the result first and a fault code second. A fault gives
 NaN as the result. A call never changes the data of the caller.
@@ -25,7 +25,7 @@ Pure Goose, no C.
 Add this to the root file of the program that uses it:
 
 ```goose
-import statistics from "rekanalar/goose-statistics@v0.8.0";
+import statistics from "rekanalar/goose-statistics@v0.10.0";
 ```
 
 ## API
@@ -237,6 +237,53 @@ import statistics from "rekanalar/goose-statistics@v0.8.0";
 | `binned_statistic_2d_with(stats, edges, shape, binnumber, empty, xs, ys, values, nx, ny)` | the same statistic, where the caller gives the statistic |
 | `binned_statistic_dd(stats, edges, shape, binnumber, empty, sample, dims, values, stat, nbins)` | the statistic of the values of each bin of many dimensions |
 | `binned_statistic_dd_with(stats, edges, shape, binnumber, empty, sample, dims, values, nbins)` | the same statistic, where the caller gives the statistic |
+| `spearmanrho(xs, ys, alt)` | the Spearman rank correlation, with its p-value |
+| `pointbiserialr(xs, ys, alt)` | the point-biserial correlation; `xs` holds two values |
+| `chatterjeexi(xs, ys, y_continuous)` | the xi correlation of Chatterjee, with its asymptotic p-value |
+| `weightedtau(xs, ys, additive)` | the weighted tau of Vigna, with the hyperbolic weigher |
+| `weightedtau_ranked(xs, ys, ranks, additive)` | the weighted tau with the ranks of the caller |
+| `somersd(xs, ys, alt)` | Somers' D of two coded samples, with its p-value |
+| `somersd_table(table, rows, cols, alt)` | Somers' D of a contingency table |
+| `sigmaclip(out, xs, low, high)` | the iterative clip by standard deviations; writes the kept values into `out` |
+| `power_divergence(obs, expected, lam, ddof)` | the power divergence statistic; `lam` 1 is Pearson and 0 is the G test |
+| `power_divergence_uniform(obs, lam, ddof)` | the same, against equal expected counts |
+| `margins(out, table, shape, axis)` | the sums of a table over the axes that `axis` names |
+| `expected_freq(out, table, shape)` | the expected counts of a table under independence |
+| `association(table, rows, cols, method, correction, lam)` | Cramer's V, Tschuprow's T or the contingency coefficient |
+| `odds_ratio(table, kind, alt, level)` | the sample or conditional odds ratio of a 2 by 2 table, with its interval |
+| `relative_risk(exposed_cases, exposed_total, control_cases, control_total, level)` | the relative risk with the Katz interval |
+| `wasserstein_distance_nd(u, v, dims)` | the exact first Wasserstein distance of two sets of points, with the Euclidean cost |
+| `wasserstein_distance_nd_weighted(u, v, dims, uw, vw)` | the same, with a weight for each point |
+| `multiscale_graphcorr(map, xs, ys, xdims, ydims, reps, r)` | the multiscale graph correlation of two samples of points; writes the map of local correlations into `map` |
+| `multiscale_graphcorr_dist(map, dx, dy, reps, r)` | the same, from two distance tables of n by n values |
+| `multiscale_graphcorr_twosample(map, u, v, dims, reps, r)` | the test of two samples of points of the same width |
+| `wasserstein_distance(u, v)` | the first Wasserstein distance of two samples |
+| `wasserstein_distance_weighted(u, v, uw, vw)` | the same, with weights |
+| `energy_distance(u, v)` | the energy distance of two samples |
+| `energy_distance_weighted(u, v, uw, vw)` | the same, with weights |
+| `obrientransform(out, groups, sizes)` | the transform of O'Brien for a test of equal variances |
+| `siegelslopes(ys, xs, method)` | the repeated median line; gives the slope and the intercept |
+| `probplot(osm, osr, xs, family, shape)` | the quantile plot of a sample; the fit line and the correlation |
+| `ppcc_plot(out, xs, a, b, n, family)` | the correlation of a quantile plot over a range of shapes |
+| `ppcc_max(xs, family, lo, hi)` | the shape with the best correlation |
+| `anderson_exponential(crit, level, params, xs)` | the Anderson-Darling test of the exponential family |
+| `anderson_logistic(crit, level, params, xs)` | the Anderson-Darling test of the logistic family |
+| `anderson_gumbel_r(crit, level, params, xs)` | the Anderson-Darling test of the right Gumbel family |
+| `anderson_gumbel_l(crit, level, params, xs)` | the Anderson-Darling test of the left Gumbel family |
+| `anderson_weibull(crit, level, params, xs)` | the Anderson-Darling test of the Weibull family |
+| `cauchy_pdf`, `cauchy_cdf`, `cauchy_sf`, `cauchy_ppf` | the Cauchy law with `loc` and `scale`; also `cauchy_mean`, `cauchy_var`, `cauchy_skew`, `cauchy_kurt` |
+| `laplace_pdf`, `laplace_cdf`, `laplace_sf`, `laplace_ppf` | the Laplace law; the same moment calls |
+| `rayleigh_pdf`, `rayleigh_cdf`, `rayleigh_sf`, `rayleigh_ppf` | the Rayleigh law; the same moment calls |
+| `gumbel_r_pdf`, `gumbel_r_cdf`, `gumbel_r_sf`, `gumbel_r_ppf` | the right Gumbel law; the same moment calls |
+| `gumbel_l_pdf`, `gumbel_l_cdf`, `gumbel_l_sf`, `gumbel_l_ppf` | the left Gumbel law; the same moment calls |
+| `truncate_pdf`, `truncate_cdf`, `truncate_ppf`, `truncate_mean`, `truncate_var` | a law truncated to `lb` and `ub` |
+| `order_statistic_pdf`, `order_statistic_cdf`, `order_statistic_ppf`, `order_statistic_mean`, `order_statistic_var` | the r-th of n draws from a law |
+| `dirichlet_multinomial_logpmf(x, alpha, n)` | the log mass; also `dirichlet_multinomial_pmf`, `_mean`, `_var`, `_cov` |
+| `kde_fit(data, dims, weights, bw, factor)` | a Gaussian kernel estimate; `bw` is `KDE_SCOTT`, `KDE_SILVERMAN` or `KDE_SCALAR` |
+| `kde_pdf(k, out, xs)` | the density of the estimate; `kde_logpdf` gives the logarithm |
+| `kde_covariance(k, out)` | the covariance of the estimate, with the bandwidth in it |
+| `kde_integrate_box_1d(k, low, high)` | the share of a one-dimensional estimate between two bounds |
+| `kde_resample(k, out, size, r)` | draws points from the estimate with a seeded stream |
 
 The argument `method` is one of the nine `METHOD_` constants. The
 constants `METHOD_EXCLUSIVE` and `METHOD_INCLUSIVE` stand for the two
@@ -344,6 +391,23 @@ The argument `method` of `false_discovery_control` is one of
 is one of the three `COMBINE_` constants. They are `COMBINE_FISHER`,
 `COMBINE_STOUFFER` and `COMBINE_TIPPETT`. Only the Stouffer method takes
 the list of weights.
+
+The calls `truncate_pdf`, `truncate_cdf`, `truncate_ppf`,
+`truncate_mean`, `truncate_var` and the calls `order_statistic_pdf`,
+`order_statistic_cdf`, `order_statistic_ppf`, `order_statistic_mean`,
+`order_statistic_var` take a family number. The numbers are the
+`LAW_` constants. They are `LAW_NORMAL`, `LAW_UNIFORM`, `LAW_LOGISTIC`,
+`LAW_CAUCHY`, `LAW_LAPLACE`, `LAW_RAYLEIGH`, `LAW_GUMBEL_R` and
+`LAW_GUMBEL_L`. The first two take a location and a scale. The logistic
+law takes them too. The Cauchy, the Laplace, the Rayleigh and the two
+Gumbel laws take them.
+
+The calls `probplot`, `ppcc_plot` and `ppcc_max` take a family number.
+The numbers are the `PLOT_` constants. They are `PLOT_NORMAL`,
+`PLOT_EXPON`, `PLOT_UNIFORM`, `PLOT_TUKEY`, `PLOT_LOGISTIC`,
+`PLOT_LAPLACE`, `PLOT_CAUCHY`, `PLOT_GUMBEL_R`, `PLOT_GUMBEL_L`,
+`PLOT_RAYLEIGH` and `PLOT_WEIBULL`. The Tukey and the Weibull forms take
+a shape. The other forms take no shape.
 
 A group call takes one flat buffer of all the values and an array of the
 group sizes. A table call takes the counts row by row. The argument
@@ -490,10 +554,14 @@ counts of the discrete quantiles are exact.
 - The `sobol_indices` call uses pseudo-random matrices from the given
   generator. SciPy uses a scrambled Sobol sequence. SciPy converges
   faster for the same count of points.
-- The `goodness_of_fit` call fits the normal, exponential, uniform and
-  lognormal families. The package holds no fit routine for the gamma,
-  beta, Weibull and other families. SciPy calls its optimizer for them.
-  This gap stays open until the package holds a fit routine.
+- The `goodness_of_fit` call fits the normal, exponential, uniform,
+  lognormal, Weibull, gamma and beta families. The fit of the Weibull,
+  gamma and beta families uses a Newton search with a fixed step bound.
+  SciPy calls its optimizer for them. The fitted parameters differ from
+  the ones of SciPy. The gamma family differs by about 1e-6.
+  The Weibull family differs by about 1e-4.
+- The beta family of `goodness_of_fit` differs from SciPy by about
+  2e-3. Its fit searches two parameters at once.
 - The `cramervonmises` call stops its series at an absolute term size of
   1e-7, as SciPy does. Its p-value then differs from SciPy by about
   1e-5 on a random sample. The statistic differs by about 1e-9.
@@ -721,6 +789,32 @@ counts of the discrete quantiles are exact.
   way. The value that rounds to the last edge stays in the last bin.
 - The `directional_stats` call gives the mean resultant length as its
   result. SciPy gives it as a field of a struct.
+- `wasserstein_distance_nd` solves the transport problem exactly with
+  the method of the shortest augmenting path. SciPy solves it with a
+  linear program. Each set holds at most `MAX_NDW_POINTS` of 256 points
+  and `MAX_NDW_DIMS` of 16 dimensions. A mass below 1e-14 of the total
+  counts as used up.
+- `multiscale_graphcorr` gives the statistic and the scale of SciPy to
+  1e-12. The p-value uses the seeded stream of the caller, so it matches
+  SciPy within the sampling error. A `reps` of 0 gives the p-value 1, as
+  SciPy does. A sample holds at most `MAX_MGC_PAIRS` of 1,024 points and
+  a call at most `MAX_MGC_REPS` of 10,000 repetitions. Its pairs squared
+  times one plus the repetitions stay under `MAX_MGC_WORK` of 8,000,000.
+- When every distance of a sample is equal, SciPy gives the scale as one
+  number. This package gives the pair of counts.
+- `weightedtau` holds the hyperbolic weigher and the rank list of the
+  caller. A weigher that is a function of the caller is not possible,
+  because Goose cannot store a block.
+- `odds_ratio` gives the conditional estimate as the root of the mean of
+  the noncentral hypergeometric law. A table with a zero row sum or a
+  zero column sum gives `ERR_UNDEFINED`.
+- The `kde` calls keep one point per row. SciPy keeps one point per
+  column. The evaluation points use the same layout as the data.
+- The `anderson` calls of the new families read the p-value from the
+  critical values by linear interpolation. They clamp it to the first
+  and the last level.
+- The logistic fit of `anderson_logistic` agrees with SciPy to about
+  1e-5, because SciPy stops its own solver at that tolerance.
 
 ## Security
 
@@ -939,6 +1033,36 @@ These risks stay.
   code where SciPy gives NaN. A sample that is too short, a constant
   sample and a zero scale each give `ERR_TOO_SHORT` or `ERR_UNDEFINED`.
   The result never holds a silent NaN.
+- The association and density calls cap their work against a hostile
+  input. A table holds at most `MAX_TABLE_CELLS` of 1,048,576
+  cells and `MAX_TABLE_SIDE` of 1,024 rows or columns. A density holds at
+  most `MAX_KDE_POINTS` of 65,536 points and `MAX_KDE_DIMS` of 16
+  dimensions. Its sample points times its evaluation points stay under
+  `MAX_KDE_WORK` of 67,108,864. A Siegel estimate holds at most
+  `MAX_SIEGEL_POINTS` of 2,048 points. A larger input gives
+  `ERR_TOO_LONG` before any work starts.
+- SciPy has no such caps.
+- A multiscale graph correlation holds its pairs squared times one plus
+  its repetitions under `MAX_MGC_WORK`. SciPy sets no such bound.
+- A kernel density of a sample with a singular covariance gives
+  `ERR_DOMAIN`. SciPy raises an error from the linear algebra there.
+- A result that would overflow gives `ERR_OVERFLOW`. It never gives a
+  wrong number with `OK`. This holds for weighted distances, for
+  Dirichlet parameters, for a kernel density and for a contingency
+  table. SciPy returns a wrong value or NaN there.
+- A table count above 2^53 gives `ERR_DOMAIN`, because a larger count is
+  not exact. A conditional odds ratio with more than 1,048,576 counts in
+  its support gives `ERR_TOO_LONG`.
+- `weightedtau_ranked` checks its ranks for NaN and infinity.
+- A draw from a kernel estimate carries the noise of the band width. A
+  draw without the noise would repeat the sample points.
+- A multiscale graph correlation divides by the two roots of the
+  variances. A tiny scale and a large scale keep the statistic.
+- A `goodness_of_fit` call holds at most `MAX_GOF_REPS` of 100,000
+  Monte Carlo draws. The draws times the sample size stay under
+  `MAX_FIT_WORK` of 2,000,000. A `kde_resample` call holds at most
+  `MAX_KDE_POINTS` draws.
+  The seeded stream is the one of the caller, so a run repeats.
 
 ## Test
 

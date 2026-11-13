@@ -55,6 +55,22 @@ import special_erf;
 import distributions_discrete;
 import distributions_t;
 import distributions_shape;
+import distributions_location;
+import contingency;
+import divergence;
+import clip;
+import assoc_rank;
+import distance;
+import line_siegel;
+import laws;
+import probplot;
+import anderson_families;
+import fitting_mle;
+import assoc_somers;
+import contingency_risk;
+import kde;
+import distance_nd;
+import assoc_mgc;
 
 // ---- fault codes ----------------------------------------------------
 const OK: i64 = 0;
@@ -203,6 +219,7 @@ const GOF_CRAMER: i64 = 2;
 const MAX_RESAMPLES: i64 = 1000000;          // resamples in one call
 const MAX_RESAMPLE_WORK: i64 = 500000000;    // resamples times the sample size
 const MAX_FIT_WORK: i64 = 2000000;            // resamples times the sample size of a goodness-of-fit test
+const MAX_GOF_REPS: i64 = 100000;         // Monte Carlo draws of a goodness-of-fit test
 const MAX_SOBOL_POINTS: i64 = 1048576;       // base points of a Sobol estimate
 const MAX_SOBOL_DIMS: i64 = 32;              // input variables of a Sobol estimate
 const MAX_EXACT_TABLE: i64 = 400;            // the total of a table in an exact 2 by 2 test
@@ -292,5 +309,137 @@ struct BinnedTable {
     dims: i64,
     cells: i64,
     points: i64,
+}
+
+// ---- bounds of the association, distance and distribution calls -------
+const MAX_TABLE_CELLS: i64 = 1048576;   // cells of a contingency table
+const MAX_TABLE_SIDE: i64 = 1024;       // rows or columns of a contingency table
+const MAX_MGC_PAIRS: i64 = 1024;        // pairs of a multiscale graph correlation
+const MAX_MGC_REPS: i64 = 10000;        // permutations of a multiscale graph correlation
+const MAX_MGC_WORK: i64 = 8000000;      // cells of all the maps of a multiscale graph correlation
+const MAX_NDW_POINTS: i64 = 256;        // points of a set of an n-dimensional distance
+const MAX_NDW_DIMS: i64 = 16;           // dimensions of an n-dimensional distance
+const MAX_KDE_POINTS: i64 = 65536;      // sample points of a kernel density
+const MAX_KDE_DIMS: i64 = 16;           // dimensions of a kernel density
+const MAX_KDE_WORK: i64 = 67108864;     // sample points times evaluation points
+const MAX_PPCC_GRID: i64 = 4096;        // grid points of a probability plot correlation
+const MAX_PPCC_POINTS: i64 = 65536;     // sample values of a probability plot search
+const MAX_DIRMULT_K: i64 = 4096;        // categories of a Dirichlet multinomial
+const MAX_ORDER_N: i64 = 1048576;       // size of an order statistic
+const MAX_SIEGEL_POINTS: i64 = 2048;      // points of a Siegel estimate
+
+// The methods of the association of a contingency table.
+const ASSOC_CRAMER: i64 = 0;
+const ASSOC_TSCHUPROW: i64 = 1;
+const ASSOC_PEARSON: i64 = 2;
+
+// The kinds of an odds ratio.
+const ODDS_CONDITIONAL: i64 = 0;   // the maximum likelihood estimate of the conditional law
+const ODDS_SAMPLE: i64 = 1;        // the ratio of the cross products
+
+// The rules of the bandwidth of a kernel density.
+const KDE_SCOTT: i64 = 0;
+const KDE_SILVERMAN: i64 = 1;
+const KDE_SCALAR: i64 = 2;          // the caller gives the factor
+
+// The families that truncate and order_statistic take. Every family reads
+// a location and a scale, and the uniform family reads its two ends.
+const LAW_NORMAL: i64 = 0;
+const LAW_UNIFORM: i64 = 1;
+const LAW_LOGISTIC: i64 = 2;
+const LAW_CAUCHY: i64 = 3;
+const LAW_LAPLACE: i64 = 4;
+const LAW_RAYLEIGH: i64 = 5;
+const LAW_GUMBEL_R: i64 = 6;
+const LAW_GUMBEL_L: i64 = 7;
+
+// The families of a probability plot. The Tukey lambda family and the
+// Weibull family read a shape.
+const PLOT_NORMAL: i64 = 0;
+const PLOT_EXPON: i64 = 1;
+const PLOT_UNIFORM: i64 = 2;
+const PLOT_TUKEY: i64 = 3;
+const PLOT_LOGISTIC: i64 = 4;
+const PLOT_LAPLACE: i64 = 5;
+const PLOT_CAUCHY: i64 = 6;
+const PLOT_GUMBEL_R: i64 = 7;
+const PLOT_GUMBEL_L: i64 = 8;
+const PLOT_RAYLEIGH: i64 = 9;
+const PLOT_WEIBULL: i64 = 10;
+
+// The methods of the Siegel slopes.
+const SIEGEL_HIERARCHICAL: i64 = 0;
+const SIEGEL_SEPARATE: i64 = 1;
+
+// The families of the Anderson-Darling test.
+const ANDERSON_EXPON: i64 = 1;
+const ANDERSON_LOGISTIC: i64 = 2;
+const ANDERSON_GUMBEL: i64 = 3;
+const ANDERSON_GUMBEL_L: i64 = 4;
+const ANDERSON_GUMBEL_R: i64 = 5;
+const ANDERSON_EXTREME1: i64 = 6;
+const ANDERSON_WEIBULL: i64 = 7;
+
+// The rank rule of the weighted tau.
+
+// ---- structs of the association, distance and distribution calls -----
+// The statistic and the p-value of a correlation or a dependence test.
+struct CorrelationResult {
+    statistic: f64,
+    pvalue: f64,
+}
+
+// A correlation result with a fault code. Every field is NaN.
+fn corr_fault(code: i64) -> CorrelationResult {
+    return CorrelationResult { statistic: nan(), pvalue: nan() };
+}
+
+// The estimate and the confidence interval of a risk measure.
+struct IntervalResult {
+    statistic: f64,
+    low: f64,
+    high: f64,
+}
+
+// An interval result with a fault code. Every field is NaN.
+fn interval_fault(code: i64) -> IntervalResult {
+    return IntervalResult { statistic: nan(), low: nan(), high: nan() };
+}
+
+// A correlation result with a statistic and a p-value.
+fn corr_good(statistic: f64, pvalue: f64, df: f64) -> CorrelationResult {
+    return CorrelationResult { statistic: statistic, pvalue: pvalue };
+}
+
+// The p-value of a correlation of n points. The p-value comes from the
+// beta law of the distribution of the correlation.
+fn corr_beta_p(r: f64, n: i64, alt: i64) -> f64, i64 {
+    let ab = n / 2.0 - 1.0;
+    var x: f64 = 0.0;
+    if alt == ALT_TWO_SIDED { x = 0.5 * (1.0 - abs(r)); }
+    if alt == ALT_LESS { x = 0.5 * (1.0 + r); }
+    if alt == ALT_GREATER { x = 0.5 * (1.0 - r); }
+    if x < 0.0 { x = 0.0; }
+    if x > 1.0 { x = 1.0; }
+    let q, cb = betainc(ab, ab, x);
+    if cb != OK { return nan(), cb; }
+    var p = q;
+    if alt == ALT_TWO_SIDED { p = 2.0 * q; }
+    return p, OK;
+}
+
+// The result of a probability plot: the line of the ordered data on the
+// ordered medians.
+struct ProbabilityPlot {
+    slope: f64,
+    intercept: f64,
+    r: f64,
+}
+
+// The bounds of the last pass of a sigma clip, and the kept count.
+struct ClipResult {
+    low: f64,
+    high: f64,
+    kept: i64,
 }
 

@@ -118,17 +118,8 @@ fn pearsonr(xs: const f64[:], ys: const f64[:], alt: i64 = ALT_TWO_SIDED) -> Tes
     let n = xs.len;
     let df: f64 = n - 2;
     if n == 2 { return good_result(r, 1.0, df, nan()); }
-    let ab = n / 2.0 - 1.0;
-    var x: f64 = 0.0;
-    if alt == ALT_TWO_SIDED { x = 0.5 * (1.0 - abs(r)); }
-    if alt == ALT_LESS { x = 0.5 * (1.0 + r); }
-    if alt == ALT_GREATER { x = 0.5 * (1.0 - r); }
-    if x < 0.0 { x = 0.0; }
-    if x > 1.0 { x = 1.0; }
-    let q, cb = betainc(ab, ab, x);
+    let p, cb = corr_beta_p(r, n, alt);
     if cb != 0 { return fault_result(cb); }
-    var p = q;
-    if alt == ALT_TWO_SIDED { p = 2.0 * q; }
     return good_result(r, p, df, nan());
 }
 

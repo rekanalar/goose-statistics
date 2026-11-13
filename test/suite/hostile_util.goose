@@ -63,3 +63,22 @@ fn sound_table(t: statistics::BinnedTable, c: i64) -> bool {
     if c < 1 || c > 10 { return false; }
     return t.cells == 0 && t.points == 0;
 }
+
+// True when a correlation answer holds numbers or is a clean fault.
+fn sound_corr(r: statistics::CorrelationResult, c: i64) -> bool {
+    if c == 0 {
+        if is_nan(r.statistic) || is_nan(r.pvalue) { return false; }
+        if r.statistic < -1.0 || r.statistic > 1.0 { return false; }
+        if r.pvalue < 0.0 || r.pvalue > 1.0 { return false; }
+        return true;
+    }
+    if c < 1 || c > 10 { return false; }
+    return is_nan(r.statistic) && is_nan(r.pvalue);
+}
+
+// True when a value answer is a finite number or a clean fault.
+fn sound_finite(v: f64, c: i64) -> bool {
+    if c == 0 { return !is_nan(v) && !is_inf(v); }
+    if c < 1 || c > 10 { return false; }
+    return is_nan(v);
+}

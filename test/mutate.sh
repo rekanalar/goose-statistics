@@ -178,7 +178,7 @@ distributions_t.goose|if p <= 0.5 {|if p <= 0.0 {|the F quantile uses the upper 
 @tests_ks.goose|if alt == ALT_GREATER { d = dplus; }|if alt == ALT_GREATER { d = dminus; }|the one-sided two-sample statistic
 @tests_correlation.goose|a.push(sqrt(0.5));|a.push(sqrt(0.4));|the Shapiro-Wilk coefficient of three values
 @tests_correlation.goose|norm_std_ppf((i - 0.375) / an25)|norm_std_ppf((i - 0.4) / an25)|the Shapiro-Wilk normal scores
-@tests_correlation.goose|if alt == ALT_TWO_SIDED { x = 0.5 * (1.0 - abs(r)); }|if alt == ALT_TWO_SIDED { x = 0.4 * (1.0 - abs(r)); }|the Pearson p-value argument
+@statistics.goose|if alt == ALT_TWO_SIDED { x = 0.5 * (1.0 - abs(r)); }|if alt == ALT_TWO_SIDED { x = 0.4 * (1.0 - abs(r)); }|the Pearson p-value argument
 @tests_correlation.goose|if n == 2 { return good_result(r, 1.0, df, nan()); }|if n == 2 { return good_result(r, 0.5, df, nan()); }|the Pearson test of two points
 @tests_correlation.goose|if n <= MAX_EXACT_KENDALL|if n <= 20|the exact Kendall bound in the call
 @normality.goose|return exp(1.2937 - 5.709 * adj + 0.0186 * adj * adj);|return exp(1.2937 - 5.709 * adj + 0.0186 * adj * adj * 1.01);|the top branch of the Anderson-Darling p-value
@@ -311,6 +311,227 @@ binned.goose|if counts[d] == 0 {|if counts[d] == 1 {|the value of an empty cell
 binned.goose|if stat == STAT_MEAN {|if stat == STAT_STD {|the statistic of the values of a bin
 binned.goose|if dims > MAX_DIMS { return t, ERR_TOO_LONG; }|if dims > MAX_DIMS + 1 { return t, ERR_TOO_LONG; }|the bound of the dimensions
 binned.goose|if total > MAX_CELLS { return t, ERR_TOO_LONG; }|if total > MAX_CELLS { return t, ERR_DOMAIN; }|the bound of the cells
+distributions_location.goose|if z < -1.0 { return atan(-1.0 / z) / PI; }|if false { return atan(-1.0 / z) / PI; }|the Cauchy lower tail keeps its digits
+distributions_location.goose|q = -1.0 / tan(PI * p);|q = -2.0 / tan(PI * p);|the Cauchy quantile of a low probability
+distributions_location.goose|if z < 0.0 { return 0.5 * exp(z); }|if z < 0.0 { return 1.0 - 0.5 * exp(-z); }|the Laplace tail below the location
+distributions_location.goose|if p < 0.5 { q = log(2.0 * p); }|if p < 0.5 { q = log(p); }|the Laplace quantile below the median
+distributions_location.goose|let l, c2 = log1p(-p);\n    return loc_result(loc + scale * sqrt(-2.0 * l));|let l = log(1.0 - p); let c2 = 0;\n    return loc_result(loc + scale * sqrt(-2.0 * l));|the Rayleigh quantile of a tiny probability keeps its digits
+distributions_location.goose|return 2.0 * SQRT_PI * (PI - 3.0) / (d * sqrt(d)), OK;|return 2.0 * SQRT_PI * (PI - 2.0) / (d * sqrt(d)), OK;|the Rayleigh skewness
+distributions_location.goose|return 12.0 * sqrt(6.0) * ZETA3 / (PI * PI * PI), OK;|return 12.0 * sqrt(5.0) * ZETA3 / (PI * PI * PI), OK;|the Gumbel skewness
+distributions_location.goose|return 2.4, OK;|return 2.0, OK;|the Gumbel excess kurtosis
+distributions_location.goose|return -v, c;|return v, c;|the left Gumbel skewness changes sign
+distributions_location.goose|if scale <= 0.0 { return ERR_DOMAIN; }|if scale < 0.0 { return ERR_DOMAIN; }|a scale of 0 is a domain fault
+distributions_location.goose|fn loc_result(v: f64) -> f64, i64 {\n    if is_nan(v) { return nan(), ERR_UNDEFINED; }\n    if is_inf(v) { return nan(), ERR_OVERFLOW; }|fn loc_result(v: f64) -> f64, i64 {\n    if is_nan(v) { return nan(), ERR_UNDEFINED; }|an overflowing result is a fault
+distributions_location.goose|if z <= 0.0 { return 0.0, OK; }\n    if is_inf(z) { return 0.0, OK; }|if z <= 0.0 { return 0.0, OK; }|the Rayleigh density at an infinite score
+distributions_location.goose|if z < 0.0 { return nan(), ERR_UNDEFINED; }|if z < 0.0 { return 0.0, OK; }|the right Gumbel density has no value at an overflowed score
+distributions_location.goose|if z > 0.0 { return nan(), ERR_UNDEFINED; }|if z > 0.0 { return 0.0, OK; }|the left Gumbel density has no value at an overflowed score
+contingency.goose|while d < shape.len { s *= shape[d]; d += 1; }|while d < shape.len - 1 { s *= shape[d]; d += 1; }|the stride of an axis
+contingency.goose|e *= shares[offsets[d] + idx];|e *= shares[offsets[d]];|the expected count uses the index of each axis
+contingency.goose|if total == 0.0 { return ERR_UNDEFINED; }|if total == 0.0 { return OK; }|an empty table has no expected counts
+contingency.goose|let yates = correction \&\& (rows - 1) * (cols - 1) == 1;|let yates = correction;|the continuity correction of a 2 by 2 table only
+contingency.goose|let mag = min(0.5, abs(diff));|let mag = abs(diff);|the correction moves a count by at most one half
+contingency.goose|value = phi2 / (min(rows, cols) - 1);|value = phi2 / (max(rows, cols) - 1);|the Cramer divisor
+contingency.goose|value = phi2 / sqrt(((rows - 1) * (cols - 1)) as f64);|value = phi2 / ((rows - 1) * (cols - 1));|the Tschuprow divisor
+contingency.goose|else { value = phi2 / (1.0 + phi2); }|else { value = phi2; }|the Pearson coefficient
+contingency.goose|if v != floor(v) { return nan(), ERR_DOMAIN; }|if false { return nan(), ERR_DOMAIN; }|association needs whole counts
+contingency.goose|if shape.len > MAX_DIMS { return ERR_TOO_LONG; }|if shape.len > MAX_DIMS + 5 { return ERR_TOO_LONG; }|the dimension bound
+divergence.goose|if lam == 0.0 { return 2.0 * xlogy_term(o, o / e); }|if lam == 0.0 { return 2.0 * xlogy_term(e, o / e); }|the log-likelihood term
+divergence.goose|if lam == -1.0 { return 2.0 * xlogy_term(e, e / o); }|if lam == -1.0 { return 2.0 * xlogy_term(o, e / o); }|the modified log-likelihood term
+divergence.goose|/ (lam * (lam + 1.0));|/ (lam * lam + 1.0);|the general term divisor
+divergence.goose|if x == 0.0 \&\& !is_nan(y) { return 0.0; }|if false { return 0.0; }|a zero count times a log is 0
+divergence.goose|return chi_result(s, (k - 1 - ddof));|return chi_result(s, (k - 1));|the degrees of freedom
+divergence.goose|if abs(sum_obs - sum_exp) > 1e-8 * max(sum_obs, sum_exp) { return fault_result(ERR_DOMAIN); }|if false { return fault_result(ERR_DOMAIN); }|the sums of the two lists agree
+divergence.goose|if is_nan(lam) { return fault_result(ERR_NAN); }|if false { return fault_result(ERR_NAN); }|a NaN power
+divergence.goose|if is_inf(lam) { return fault_result(ERR_INFINITY); }|if false { return fault_result(ERR_INFINITY); }|an infinite power
+clip.goose|lo = m - sd * low;|lo = m - sd * high;|the low bound uses the low factor
+clip.goose|hi = m + sd * high;|hi = m + sd * low;|the high bound uses the high factor
+clip.goose|if x >= lo \&\& x <= hi { cur[kept] = x; kept += 1; }|if x > lo \&\& x < hi { cur[kept] = x; kept += 1; }|the bounds are inclusive
+clip.goose|if dropped == 0 { break; }|break;|the passes repeat until nothing drops
+clip.goose|let sd, cs = stdev_core(cur[..], 0);|let sd, cs = stdev_core(cur[..], 1);|the deviation divides by n
+contingency.goose|if s > MAX_TABLE_SIDE|if s > MAX_TABLE_SIDE + 1000|the table side bound
+contingency.goose|if rows < 2 |if rows < 1 |association needs two rows
+contingency.goose|cols < 2 { return nan(), ERR_TOO_SHORT; }|cols < 1 { return nan(), ERR_TOO_SHORT; }|association needs two columns
+contingency.goose|v > MAX_COUNT { return ERR_DOMAIN; }|v > MAX_COUNT * 1e10 { return ERR_DOMAIN; }|a count above the exact limit
+divergence.goose|if is_nan(t)|if false|a NaN term gives the undefined fault
+divergence.goose|is_inf(t) { return nan(), ERR_UNDEFINED; }|is_inf(t) { return nan(), ERR_OVERFLOW; }|an infinite term gives the undefined fault
+divergence.goose|ddof < 0 |ddof < -9 |the lower bound of ddof
+clip.goose|if low < 0.0 |if low < -9.0 |a negative low factor
+clip.goose|high < 0.0 { return fault, ERR_DOMAIN; }|high < -9.0 { return fault, ERR_DOMAIN; }|a negative high factor
+assoc_rank.goose|return 1.0 / (1.0 + rank);|return 1.0 / (2.0 + rank);|the weigher is the hyperbolic one
+assoc_rank.goose|out[perm[k]] = n - 1 - k;|out[perm[k]] = k;|the rank counts down from the top
+assoc_rank.goose|if additive { return s * (count - 1.0); }|if additive { return s * count; }|the additive group weight
+assoc_rank.goose|out[k] = out[k] - 1.0;|out[k] = out[k] - 0.5;|the dense ranks start at zero
+assoc_rank.goose|if w.ys[perm[offset + j]] <= w.ys[perm[middle + k]] {|if w.ys[perm[offset + j]] < w.ys[perm[middle + k]] {|a tie in the merge is not discordant
+assoc_rank.goose|w.exchanges += wr * left;|w.exchanges += left;|the product form multiplies the weights
+assoc_rank.goose|if w.additive { w.exchanges += wr * (length0 - j) + left; }|if w.additive { w.exchanges += wr * (length0 - j); }|the additive form adds the left weight
+assoc_rank.goose|return (a + b) / 2.0, OK;|return a, OK;|the two directions are averaged
+assoc_rank.goose|let r, c3 = correlation(rx[..], ry[..]);|let r, c3 = correlation(xs, ys);|the Spearman rho correlates the ranks
+assoc_rank.goose|if yb <= ya { up += 1.0; }|if yb < ya { up += 1.0; }|the upper rank counts ties
+assoc_rank.goose|if yb >= ya { down += 1.0; }|if yb > ya { down += 1.0; }|the lower rank counts ties
+assoc_rank.goose|stat = 1.0 - 3.0 * num / (n * n - 1);|stat = 1.0 - 3.0 * num / (n * n);|the continuous xi normaliser
+assoc_rank.goose|stat = 1.0 - n * num / den;|stat = 1.0 - num / den;|the tied xi uses n
+assoc_rank.goose|den *= 2.0;|den *= 1.0;|the tied xi denominator doubles
+assoc_rank.goose|return sqrt(0.4) / sqrt(nf);|return sqrt(0.5) / sqrt(nf);|the continuous xi deviation
+assoc_rank.goose|let c = 2.0 * nf - 2.0 * i + 1.0;|let c = 2.0 * nf - 2.0 * i;|the xi weight of rank i
+assoc_rank.goose|an /= nf * nf * nf * nf;|an /= nf * nf * nf;|the an scale of the xi deviation
+distance.goose|if p == 1 { sum += abs(d) * gap; }|if p == 1 { sum += d * gap; }|the Wasserstein gap uses the absolute value
+distance.goose|else { sum += d * d * gap; }|else { sum += d * gap; }|the energy gap uses the square
+distance.goose|let d = cu / tu - cv / tv;|let d = cu / tv - cv / tu;|the gap is the difference of the shares
+distance.goose|let gap = x2 - x;|let gap = x2 + x;|the length of the interval
+distance.goose|while i < u.len && u[i].x == x { cu += u[i].w; i += 1; }|while i < u.len && u[i].x == x { cu += 1.0; i += 1; }|the sweep adds the weight of the value
+distance.goose|if cw != OK { return nan(), cw; }|if false { return nan(), cw; }|the weight check of the first list
+distance.goose|let r = ((nf - 1.5) * nf * d * d - 0.5 * s2) / den;|let r = ((nf - 1.5) * nf * d * d + 0.5 * s2) / den;|the transform subtracts the spread
+distance.goose|let den = (nf - 1.0) * (nf - 2.0);|let den = (nf - 1.0) * nf;|the denominator of the transform
+distance_nd.goose|s += d * d;|s += d;|the cost is the Euclidean distance
+distance_nd.goose|let r = sqrt(s);|let r = s;|the root of the squared distance
+distance_nd.goose|dist[n + j] < bt { bt|dist[n + j] > bt { bt|the closest sink with demand
+distance_nd.goose|if f < amt { amt = f; }|if false { amt = f; }|a reverse arc caps the move
+distance_nd.goose|for w in uw { sup.push(w / su); }|for w in uw { sup.push(w); }|the supplies sum to 1
+distance_nd.goose|v.len % dims != 0 { return ERR_LENGTH; }|false { return ERR_LENGTH; }|the length check of the second set
+distance_nd.goose|if dims > MAX_NDW_DIMS { return ERR_TOO_LONG; }|if dims > MAX_NDW_DIMS + 1 { return ERR_TOO_LONG; }|the bound of the dimensions
+distance_nd.goose|if is_inf(r) { return ERR_OVERFLOW; }|if false { return ERR_OVERFLOW; }|a distance that overflows
+distance_nd.goose|total += cost[k] * flow[k];|total += cost[k] * flow[k] * 2.0;|the total cost of the flow
+assoc_mgc.goose|let nm = (n - 1) as f64;|let nm = n as f64;|the divisor of the column centering
+assoc_mgc.goose|col[t].v != col[t - 1].v { rank += 1; }|col[t].v == col[t - 1].v { rank += 1; }|equal distances share a rank
+assoc_mgc.goose|if i != j { a[i * n + j] = d[i * n + j] - mean; }|a[i * n + j] = d[i * n + j] - mean;|the diagonal of a centered table is 0
+assoc_mgc.goose|let at = ord[j] * n + ord[i];|let at = ord[i] * n + ord[j];|the second table is read transposed
+assoc_mgc.goose|ex[k] * ey[l] / nn|ex[k] * ey[l] / n as f64|the mean term divides by n squared
+assoc_mgc.goose|if vx[k] <= 0.0 |if vx[k] < 0.0 |a variance of 0 gives a correlation of 0
+assoc_mgc.goose|let t = s * (s - 3.0) / 4.0 - 0.5;|let t = s * (s - 3.0) / 4.0;|the shape of the beta threshold
+assoc_mgc.goose|1.0 - 0.02 / s|1.0 - 0.05 / s|the level of the beta threshold
+assoc_mgc.goose|if size as f64 < big { return global, nx, ny; }|if false { return global, nx, ny; }|a small region keeps the global scale
+assoc_mgc.goose|if l < ny - 1 && lab[c + 1] == 0 && map[c + 1] > thr { lab[c + 1] = label; stack.push(c + 1); }|if false { stack.push(c + 1); }|the region joins its right neighbor
+assoc_mgc.goose|if ps >= stat { count += 1; }|if ps > stat { count += 1; }|an equal statistic counts as extreme
+assoc_mgc.goose|let p = (1 + count) as f64 / (1 + reps) as f64;|let p = count as f64 / (1 + reps) as f64;|the p-value adds one to the count
+assoc_mgc.goose|if nu < 5 |if nu < 4 |each sample of the pooled test needs 5 points
+assoc_mgc.goose|if ys.len / ydims != n { return mgc_fault(), ERR_LENGTH; }|if false { return mgc_fault(), ERR_LENGTH; }|the samples need the same number of points
+assoc_mgc.goose|if reps > MAX_MGC_REPS |if reps > MAX_MGC_REPS + 1 |the bound of the repetitions
+assoc_mgc.goose|if n * n * (1 + reps) > MAX_MGC_WORK { return ERR_TOO_LONG; }|if false { return ERR_TOO_LONG; }|the bound of the work
+assoc_mgc.goose|if reps < 0 { return ERR_DOMAIN; }|if false { return ERR_DOMAIN; }|a negative count of repetitions
+line_siegel.goose|if dx == 0.0 { continue; }|if dx == 0.0 { }|a pair with the same x gives no slope
+line_siegel.goose|let s = (ys[i] - ys[j]) / dx;|let s = (ys[j] - ys[i]) / dx;|the slope of a pair
+line_siegel.goose|inter.push(ys[i] - s * xs[i]);|inter.push(ys[i] + s * xs[i]);|the intercept of a pair
+line_siegel.goose|res.push(ys[i] - slope * xs[i]);|res.push(ys[i] + slope * xs[i]);|the hierarchical residual
+line_siegel.goose|if slopes.len == 0 { return nan(), nan(), ERR_UNDEFINED; }|if false { return nan(), nan(), ERR_UNDEFINED; }|no slope at a point is undefined
+line_siegel.goose|if xs.len > MAX_SIEGEL_POINTS { return nan(), nan(), ERR_TOO_LONG; }|if false { return nan(), nan(), ERR_TOO_LONG; }|the point bound
+laws.goose|if fa > 0.5 { mass = sfa - sfb; } else { mass = fb - fa; }|if fa > 0.5 { mass = sfa - sfb; } else { mass = fb + fa; }|the mass of the range
+laws.goose|x >= ub { return 0.0, OK; }|x > ub { return 0.0, OK; }|the density at the high bound is zero
+laws.goose|if lb >= ub { return ERR_DOMAIN; }|if lb > ub { return ERR_DOMAIN; }|equal bounds give the domain fault
+laws.goose|if !(mass > 0.0) { return ERR_UNDEFINED; }|if !(mass >= 0.0) { return ERR_UNDEFINED; }|a range with no mass is undefined
+laws.goose|if x >= ub { return 1.0, OK; }|if x >= ub { return 0.0, OK; }|the cdf at the high bound
+laws.goose|v = (sfa - s) / mass;|v = (sfa + s) / mass;|the cdf of an upper range
+laws.goose|fam == LAW_CAUCHY && (is_inf(lb)|fam == LAW_CAUCHY && (is_nan(lb)|a Cauchy bound that is infinite
+laws.goose|t += (p1 - 1.0) * log(lo);|t += p1 * log(lo);|the lower power of the order density
+laws.goose|t += (p2 - p1) * log(hi);|t += (p2 - p1 + 1.0) * log(hi);|the upper power of the order density
+laws.goose|return betainc(r, n - r + 1, f);|return betainc(r, n - r, f);|the cdf of an order statistic
+laws.goose|let q, cq = betaincinv(r, n - r + 1, p);|let q, cq = betaincinv(r, n - r, p);|the quantile of an order statistic
+laws.goose|r > n { return ERR_DOMAIN; }|r >= n { return ERR_DOMAIN; }|the rank may equal n
+laws.goose|if n > MAX_ORDER_N { return ERR_TOO_LONG; }|if false { return ERR_TOO_LONG; }|the size bound
+laws.goose|if need_counts && x.len != alpha.len { return ERR_LENGTH; }|if false { return ERR_LENGTH; }|the length check
+laws.goose|if total != n { return ERR_DOMAIN; }|if false { return ERR_DOMAIN; }|the counts sum to n
+laws.goose|v != floor(v) { return ERR_DOMAIN; }|false { return ERR_DOMAIN; }|the counts are whole numbers
+laws.goose|for v in alpha { if v <= 0.0 { return ERR_DOMAIN; } }|for v in alpha { if v < 0.0 { return ERR_DOMAIN; } }|alpha is positive
+laws.goose|s -= log(x[i]) + t;|s -= t;|the log of a count
+laws.goose|var s = log(n as f64) + head;|var s = head;|the log of n
+laws.goose|if n == 0 { return 0.0, OK; }|if n == 0 { return 1.0, OK; }|no draws give log 1
+laws.goose|else { out.push(-n * alpha[i] * alpha[j] * k); }|else { out.push(n * alpha[i] * alpha[j] * k); }|the sign of the covariance
+laws.goose|for v in alpha { out.push(n * v * (a0 - v) * k); }|for v in alpha { out.push(n * v * (a0 + v) * k); }|the variance of a category
+laws.goose|        lo = cut;|        lo = lb;|an infinite low bound is cut at the tail
+fitting_mle.goose|let sd = log(mean) - mlog;|let sd = log(mean) + mlog;|the gamma equation constant
+fitting_mle.goose|return log(a) - d - sd;|return log(a) + d - sd;|the gamma equation sign
+fitting_mle.goose|let scale = mean / a;|let scale = mean * a;|the gamma scale
+fitting_mle.goose|return d1 - d2 - mlog1;|return d1 - d2 - mlog;|the inner beta equation
+fitting_mle.goose|let scale = exp(lmax + log(sp / s.len) / m);|let scale = exp(lmax + log(sp) / m);|the Weibull scale
+fitting_mle.goose|if family == FAMILY_BETA { return betadist_cdf(x, a, b); }|if family == FAMILY_BETA { return betadist_sf(x, a, b); }|the beta cdf
+fitting_mle.goose|if family == FAMILY_GAMMA { return gammadist_sf(x, a, b); }|if family == FAMILY_GAMMA { return gammadist_cdf(x, a, b); }|the gamma survival
+fitting_mle.goose|else { v, c = weibull_ppf(u, a, b); }|else { v, c = weibull_ppf(u, b, a); }|the Weibull draw
+fitting.goose|if family >= FAMILY_WEIBULL { return mle_cdf(family, x, a, b); }|if family > FAMILY_WEIBULL { return mle_cdf(family, x, a, b); }|the Weibull cdf is routed
+fitting.goose|else if family == FAMILY_BETA { out.push(a); out.push(b); out.push(0.0); out.push(1.0); }|else if family == FAMILY_BETA { out.push(a); out.push(b); out.push(0.0); out.push(0.0); }|the beta parameters list
+fitting.goose|for x in xs { if !(x < 1.0) { return fault_result(ERR_DOMAIN); } }|for x in xs { if !(x < 2.0) { return fault_result(ERR_DOMAIN); } }|the beta values are below one
+fitting.goose|sum += (2.0 * (i + 1) - 1.0) / nf * (lo[i] + hi[n - 1 - i]);|sum += (2.0 * (i + 1) - 1.0) / nf * (lo[i] + hi[i]);|the statistic pairs the lower and the upper tail
+anderson_families.goose|return -nf - ad_sum(lo[..], hi[..]);|return -nf + ad_sum(lo[..], hi[..]);|the sign of the statistic
+anderson_families.goose|hi = log_one_minus_exp_neg(e);|hi = -e;|the Gumbel right survival
+anderson_families.goose|lo = log_one_minus_exp_neg(e);|lo = -e;|the Gumbel left cdf
+anderson_families.goose|hi = logistic_log_cdf(-z);|hi = logistic_log_cdf(z);|the logistic survival
+anderson_families.goose|if z >= 0.0 { return -log(1.0 + exp(-z)); }|if z >= 0.0 { return -log(1.0 + exp(z)); }|the logistic cdf
+anderson_families.goose|if a2 <= crit[0] { return level[0]; }|if a2 <= crit[0] { return level[1]; }|the p-value below the table
+anderson_families.goose|let t = (a2 - crit[i - 1]) / (crit[i] - crit[i - 1]);|let t = (a2 - crit[i]) / (crit[i] - crit[i - 1]);|the interpolation weight
+anderson_families.goose|return level[crit.len - 1];|return level[0];|the p-value above the table
+anderson_families.goose|loc = mn - s * log(w / n);|loc = mn + s * log(w / n);|the Gumbel location
+anderson_families.goose|return s - mean + num / den;|return s + mean + num / den;|the Gumbel scale equation
+anderson_families.goose|if f == ANDERSON_GUMBEL_L { p1 = -p1; }|if f == ANDERSON_GUMBEL_R { p1 = -p1; }|the Gumbel left location
+anderson_families.goose|round3(v / (1.0 + 0.6 / n))|round3(v / (1.0 + 0.5 / n))|the exponential critical scale
+anderson_families.goose|round3(v / (1.0 + 0.25 / n))|round3(v / (1.0 + 0.2 / n))|the logistic critical scale
+anderson_families.goose|round3(v / (1.0 + 0.2 / sqrt(n)))|round3(v / (1.0 + 0.2 / n))|the Gumbel critical scale
+anderson_families.goose|round3(v + 0.0005)|round3(v)|the Weibull critical value rounds up
+anderson_families.goose|else if d == 0.5 && (f - 2.0 * floor(f / 2.0)) != 0.0 { r = f + 1.0; }|else if d == 0.5 { r = f + 1.0; }|a tie rounds to even
+anderson_families.goose|if pos > 10.0 { pos = 10.0; }|if pos > 9.0 { pos = 9.0; }|the last Weibull row
+anderson_families.goose|var d = 1e-7 * range;|var d = 1e-3 * range;|the scan starts near the minimum
+anderson_families.goose|if c != OK { return fault_result(c); }|if false { return fault_result(c); }|the sample check
+anderson_families.goose|if f != ANDERSON_EXPON &&|if f == 99 &&|the family check
+probplot.goose|out[0] = 1.0 - last;|out[0] = last;|the first median
+probplot.goose|let last = pow(0.5, 1.0 / nf);|let last = pow(0.5, 1.0 / (nf + 1.0));|the last median
+probplot.goose|out[k] = ((k + 1) - 0.3175) / (nf + 0.365);|out[k] = ((k + 1) - 0.3) / (nf + 0.4);|the inner medians
+probplot.goose|if lam == 0.0 { return log(p) - log(1.0 - p); }|if lam == 0.0 { return 0.0; }|the Tukey lambda of zero
+probplot.goose|return (pow(p, lam) - pow(1.0 - p, lam)) / lam;|return (pow(p, lam) + pow(1.0 - p, lam)) / lam;|the Tukey lambda quantile
+probplot.goose|if family == PLOT_RAYLEIGH { return rayleigh_ppf(p); }|if family == PLOT_RAYLEIGH { return expon_ppf(p); }|the Rayleigh quantile
+probplot.goose|if family == PLOT_GUMBEL_L { return gumbel_l_ppf(p); }|if family == PLOT_GUMBEL_L { return gumbel_r_ppf(p); }|the Gumbel left quantile
+probplot.goose|if family == PLOT_WEIBULL { return weibull_ppf(p, shape); }|if family == PLOT_WEIBULL { return weibull_ppf(p, 1.0); }|the Weibull shape
+probplot.goose|if n < 1 || !(b > a) { return ERR_DOMAIN; }|if n < 1 || !(b >= a) { return ERR_DOMAIN; }|equal ends of the grid
+probplot.goose|if n > 1 { s = a + (b - a) * k / (n - 1); }|if n > 1 { s = a + (b - a) * k / n; }|the grid step
+probplot.goose|return 1.0 - r;|return 1.0 + r;|the loss is one minus r
+probplot.goose|if xs.len > MAX_PPCC_POINTS { return nan(), ERR_TOO_LONG; }|if false { return nan(), ERR_TOO_LONG; }|the sample bound of the search
+probplot.goose|if cl != OK { osm.resize(0); osr.resize(0); return none, cl; }|if cl != OK { return none, cl; }|a fault leaves the plot empty
+probplot.goose|n > MAX_PPCC_GRID { return ERR_TOO_LONG; }|false { return ERR_TOO_LONG; }|the grid bound
+laws.goose|if alpha.len > MAX_DIRMULT_K { return ERR_TOO_LONG; }|if false { return ERR_TOO_LONG; }|the category bound
+laws.goose|if fam == LAW_LOGISTIC { return logi_pdf(x, a, b); }|if fam == LAW_LOGISTIC { return logi_cdf(x, a, b); }|the logistic density
+laws.goose|let e = exp(-abs((x - a) / b));|let e = exp(-((x - a) / b));|the logistic density is even
+laws.goose|if a > lo && a < hi { cuts.push(a); }|if false { cuts.push(a); }|the location splits the range
+
+assoc_somers.goose|let d = (p - q) / den;|let d = (p + q) / den;|the sign of the statistic
+assoc_somers.goose|let den = n * n - sri2;|let den = n * n;|the denominator of the statistic
+assoc_somers.goose|p += a * conc;|p += a * disc;|the concordant count
+assoc_somers.goose|q += a * disc;|q += a * conc;|the discordant count
+assoc_somers.goose|s += a * (conc - disc) * (conc - disc);|s += a * (conc - disc);|the sum of the squares
+assoc_somers.goose|let var_s = s - (p - q) * (p - q) / n;|let var_s = s + (p - q) * (p - q) / n;|the null variance
+assoc_somers.goose|let z = (p - q) / sqrt(4.0 * var_s);|let z = (p - q) / sqrt(2.0 * var_s);|the test statistic
+assoc_somers.goose|if alt == ALT_LESS { pv = lower; }|if alt == ALT_LESS { pv = upper; }|the lower alternative
+assoc_somers.goose|else if alt == ALT_GREATER { pv = upper; }|else if alt == ALT_GREATER { pv = lower; }|the upper alternative
+assoc_somers.goose|else { pv = 2.0 * min(lower, upper); }|else { pv = min(lower, upper); }|the two-sided p-value
+assoc_somers.goose|if nonzero < 2 { return corr_fault(ERR_DOMAIN), ERR_DOMAIN; }|if nonzero < 1 { return corr_fault(ERR_DOMAIN), ERR_DOMAIN; }|one nonzero cell
+assoc_somers.goose|if rows < 2 || cols < 2 { return corr_fault(ERR_UNDEFINED), ERR_UNDEFINED; }|if rows < 2 || cols < 2 { return corr_fault(ERR_DOMAIN), ERR_DOMAIN; }|a single row has no order
+assoc_somers.goose|if p == q { return corr_fault(ERR_UNDEFINED), ERR_UNDEFINED; }|if false { return corr_fault(ERR_UNDEFINED), ERR_UNDEFINED; }|a zero variance
+assoc_somers.goose|if lx.len * ly.len > MAX_TABLE_CELLS { return corr_fault(ERR_TOO_LONG), ERR_TOO_LONG; }|if lx.len * ly.len > MAX_TABLE_CELLS * 2 { return corr_fault(ERR_TOO_LONG), ERR_TOO_LONG; }|the table bound
+assoc_somers.goose|if out.len == 0 || out[out.len - 1] != v { out.push(v); }|if out.len == 0 { out.push(v); }|the distinct levels
+assoc_somers.goose|for v in table { if v != floor(v) { return corr_fault(ERR_DOMAIN), ERR_DOMAIN; } }|for v in table { if false { return corr_fault(ERR_DOMAIN), ERR_DOMAIN; } }|the counts are whole numbers
+contingency.goose|if cells != table.len { return ERR_LENGTH; }|if false { return ERR_LENGTH; }|the length of the table
+contingency_risk.goose|let or = a * d / (b * cc);|let or = a * cc / (b * d);|the ratio of the diagonals
+contingency_risk.goose|let se = sqrt(1.0 / a + 1.0 / b + 1.0 / cc + 1.0 / d);|let se = sqrt(1.0 / a + 1.0 / b + 1.0 / cc);|the standard error of the log ratio
+contingency_risk.goose|let z, c = norm_ppf(0.5 * level + 0.5);|let z, c = norm_ppf(level);|the z value of the two-sided interval
+contingency_risk.goose|let l = log(or) - z * se;|let l = log(or) + z * se;|the lower end of the interval
+contingency_risk.goose|let h = log(or) + z * se;|let h = log(or) - z * se;|the upper end of the interval
+contingency_risk.goose|if alt == ALT_LESS { return 0.0; }|if alt == ALT_GREATER { return 0.0; }|the lower end of the less interval
+contingency_risk.goose|if alt == ALT_GREATER { return 1.0 / 0.0; }|if alt == ALT_LESS { return 1.0 / 0.0; }|the upper end of the greater interval
+contingency_risk.goose|if x == lo { return odds_ratio_conditional_at(x, 0.0, draws, type1, pop, alt, level, logs[..]); }|if x == lo { return odds_ratio_conditional_at(x, 1.0, draws, type1, pop, alt, level, logs[..]); }|the ratio at the low end of the support
+contingency_risk.goose|if x == hi { return interval_fault(ERR_OVERFLOW), ERR_OVERFLOW; }|if false { return interval_fault(ERR_OVERFLOW), ERR_OVERFLOW; }|the ratio at the high end of the support
+contingency_risk.goose|let t, c = nchyp_tilt_mean(x, logs[..], lo);|let t, c = nchyp_tilt_mean(x + 1.0, logs[..], lo);|the mean equation of the tilt
+contingency_risk.goose|num += (lo + j) * e;|num += e;|the mean counts the support
+contingency_risk.goose|if lo + j <= k { num += e; }|if lo + j < k { num += e; }|the share of the count
+contingency_risk.goose|let se = sqrt(1.0 / exposed_cases - 1.0 / exposed_total + 1.0 / control_cases - 1.0 / control_total);|let se = sqrt(1.0 / exposed_cases + 1.0 / exposed_total + 1.0 / control_cases + 1.0 / control_total);|the standard error of the log risk
+contingency_risk.goose|if exposed_cases == 0.0 && control_cases == 0.0 {|if false {|the risk of two empty groups
+contingency_risk.goose|if table.len != 4 { return ERR_LENGTH; }|if false { return ERR_LENGTH; }|the length of the table
+kde.goose|if bw == KDE_SCOTT { f = pow(neff, -1.0 / (dd + 4.0)); }|if bw == KDE_SCOTT { f = pow(neff, -1.0 / (dd + 3.0)); }|the factor of Scott
+kde.goose|else if bw == KDE_SILVERMAN { f = pow(neff * (dd + 2.0) / 4.0, -1.0 / (dd + 4.0)); }|else if bw == KDE_SILVERMAN { f = pow(neff * (dd + 3.0) / 4.0, -1.0 / (dd + 4.0)); }|the factor of Silverman
+kde.goose|cov[a * dims + b] = cov[a * dims + b] + w[i] * da * db;|cov[a * dims + b] = cov[a * dims + b] + w[i] * da;|the covariance of the points
+kde.goose|let denom = 1.0 - ss;|let denom = 1.0;|the correction of the weights
+kde.goose|for s in sums { out.push(s / norm); }|for s in sums { out.push(s * norm); }|the normalization of the density
+kde.goose|else { out.push(log(s) - norm); }|else { out.push(log(s) + norm); }|the logarithm of the density
+kde.goose|value = value + kde_weight(k, i) * (hi - lo);|value = value + (hi - lo);|the weights of the box
+kde.goose|let stdev = kde_cho(k, 0, 0);|let stdev = kde_cho(k, 0, 0) * 2.0;|the band width of the kernel
+kde.goose|for i in 0..j + 1 { v = v + kde_cho(k, j, i) * z[i]; }|for i in 0..j { v = v + kde_cho(k, j, i) * z[i]; }|the diagonal of the noise
+kde.goose|acc = acc + kde_weight(k, i);|acc = acc + 1.0 / k.n as f64;|the draw of the index
+kde.goose|sum = sum + exp(-0.5 * q) * kde_weight(k, i);|sum = sum + exp(-0.5 * q);|the weights of the density
+kde.goose|if !(s > 0.0) { return ERR_DOMAIN; }|if false { return ERR_DOMAIN; }|the check of the matrix
 PROBES
 )
 
@@ -339,7 +560,7 @@ groups_for() {
     exact.goose) echo "exact" ;;
     resample.goose) echo "resample" ;;
     multicomp.goose) echo "multicomp" ;;
-    fitting.goose) echo "fitting" ;;
+    fitting.goose) echo "fitting fitting_mle" ;;
     numeric.goose) echo "transform fitting" ;;
     descriptive.goose) echo "descriptive" ;;
     frequency.goose) echo "frequency" ;;
@@ -347,6 +568,22 @@ groups_for() {
     trimmed.goose) echo "trimmed" ;;
     circular.goose) echo "circular" ;;
     binned.goose) echo "binned" ;;
+    distributions_location.goose) echo "distributions_location" ;;
+    clip.goose) echo "clip" ;;
+    assoc_rank.goose) echo "assoc_rank" ;;
+    distance.goose) echo "distance" ;;
+    distance_nd.goose) echo "distance_nd" ;;
+    assoc_mgc.goose) echo "assoc_mgc" ;;
+    line_siegel.goose) echo "line_siegel" ;;
+    laws.goose) echo "laws" ;;
+    probplot.goose) echo "probplot" ;;
+    anderson_families.goose) echo "anderson_families" ;;
+    assoc_somers.goose) echo "assoc_somers" ;;
+    contingency_risk.goose) echo "contingency_risk" ;;
+    kde.goose) echo "kde" ;;
+    fitting_mle.goose) echo "fitting_mle" ;;
+    divergence.goose) echo "divergence" ;;
+    contingency.goose) echo "contingency" ;;
     distributions_discrete.goose) echo "distributions" ;;
     distributions_shape.goose) echo "distributions" ;;
     distributions_t.goose) echo "distributions" ;;

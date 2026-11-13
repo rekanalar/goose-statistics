@@ -161,6 +161,7 @@ fn ft_cdf(family: i64, x: f64, a: f64, b: f64) -> f64, i64 {
     if family == FAMILY_NORMAL { return norm_cdf(x, a, b); }
     if family == FAMILY_UNIFORM { return unif_cdf(x, a, b); }
     if family == FAMILY_EXPONENTIAL { return expon_cdf(x, a); }
+    if family >= FAMILY_WEIBULL { return mle_cdf(family, x, a, b); }
     return lognorm_cdf(x, a, b);
 }
 
@@ -168,6 +169,7 @@ fn ft_sf(family: i64, x: f64, a: f64, b: f64) -> f64, i64 {
     if family == FAMILY_NORMAL { return norm_sf(x, a, b); }
     if family == FAMILY_UNIFORM { return unif_sf(x, a, b); }
     if family == FAMILY_EXPONENTIAL { return expon_sf(x, a); }
+    if family >= FAMILY_WEIBULL { return mle_sf(family, x, a, b); }
     return lognorm_sf(x, a, b);
 }
 
@@ -179,6 +181,9 @@ fn ft_sf(family: i64, x: f64, a: f64, b: f64) -> f64, i64 {
 // gives a scale that is not positive and finite gives ERR_FIT.
 fn ft_fit(s: const f64[:], family: i64) -> f64, f64, i64 {
     let n = s.len as f64;
+    if family == FAMILY_WEIBULL { return mle_weibull(s); }
+    if family == FAMILY_GAMMA { return mle_gamma(s); }
+    if family == FAMILY_BETA { return mle_beta(s); }
     if family == FAMILY_UNIFORM {
         let lo = s[0];
         let hi = s[s.len - 1];
@@ -210,6 +215,19 @@ fn ft_fit(s: const f64[:], family: i64) -> f64, f64, i64 {
     return m, sigma, OK;
 }
 
+// The Anderson sum of a sorted sample. The lower tail holds the log of
+// the cumulative function of every value and the upper tail the log of
+// the survival function of every value.
+fn ad_sum(lo: const f64[:], hi: const f64[:]) -> f64 {
+    let n = lo.len;
+    let nf = n as f64;
+    var sum: f64 = 0.0;
+    for i in 0..n {
+        sum += (2.0 * (i + 1) - 1.0) / nf * (lo[i] + hi[n - 1 - i]);
+    }
+    return sum;
+}
+
 // The statistic of a sorted sample against a fitted family.
 fn ft_statistic(s: const f64[:], family: i64, a: f64, b: f64, stat: i64) -> f64, i64 {
     let n = s.len;
@@ -217,17 +235,24 @@ fn ft_statistic(s: const f64[:], family: i64, a: f64, b: f64, stat: i64) -> f64,
     var acc: f64 = 0.0;
     var dplus: f64 = 0.0;
     var dminus: f64 = 0.0;
-    for i in 0..n {
-        let fi = i as f64;
-        if stat == GOF_ANDERSON {
-            let lc, c1 = ft_cdf(family, s[i], a, b);
-            let ls, c2 = ft_sf(family, s[n - 1 - i], a, b);
+    if stat == GOF_ANDERSON {
+        var lo: f64[>..] = [];
+        var hi: f64[>..] = [];
+        for k in 0..n {
+            let lc, c1 = ft_cdf(family, s[k], a, b);
+            let ls, c2 = ft_sf(family, s[k], a, b);
             if c1 != OK { return nan(), c1; }
             if c2 != OK { return nan(), c2; }
             // A zero probability makes the statistic infinite.
             if !(lc > 0.0) || !(ls > 0.0) { return nan(), ERR_UNDEFINED; }
-            acc += (2.0 * fi + 1.0) / nf * (log(lc) + log(ls));
-        } else {
+            lo.push(log(lc));
+            hi.push(log(ls));
+        }
+        acc = ad_sum(lo[..], hi[..]);
+    }
+    for i in 0..n {
+        let fi = i as f64;
+        if stat != GOF_ANDERSON {
             let f, c1 = ft_cdf(family, s[i], a, b);
             if c1 != OK { return nan(), c1; }
             if stat == GOF_KOLMOGOROV {
@@ -266,11 +291,12 @@ fn ft_draw(family: i64, a: f64, b: f64, r: rng&) -> f64 {
     if family == FAMILY_NORMAL { return a + b * ft_gaussian(r); }
     if family == FAMILY_UNIFORM { return a + (b - a) * rand_flt(r); }
     if family == FAMILY_EXPONENTIAL { return -log(1.0 - rand_flt(r)) / a; }
+    if family >= FAMILY_WEIBULL { return mle_draw(family, a, b, rand_flt(r)); }
     return exp(a + b * ft_gaussian(r));
 }
 
 // The goodness-of-fit test of a sample against the normal, uniform,
-// exponential or lognormal family, with the parameters fitted to the
+// exponential, lognormal, Weibull, gamma or beta family, with the parameters fitted to the
 // sample (the same fits as SciPy). `statistic` is GOF_ANDERSON,
 // GOF_KOLMOGOROV or GOF_CRAMER. The p-value is the Monte Carlo rule of
 // SciPy: each of `resamples` samples comes from the fitted family, is
@@ -289,13 +315,15 @@ fn goodness_of_fit(out: f64[>..]&, xs: const f64[:], family: i64, statistic: i64
     out.resize(0);
     let c = check_sample(xs, 2);
     if c != OK { return fault_result(c); }
-    if family != FAMILY_NORMAL && family != FAMILY_UNIFORM && family != FAMILY_EXPONENTIAL
-        && family != FAMILY_LOGNORMAL { return fault_result(ERR_DOMAIN); }
+    if family < FAMILY_NORMAL || family > FAMILY_BETA { return fault_result(ERR_DOMAIN); }
     if statistic < GOF_ANDERSON || statistic > GOF_CRAMER { return fault_result(ERR_DOMAIN); }
     if resamples < 1 { return fault_result(ERR_DOMAIN); }
-    if resamples > MAX_RESAMPLES || resamples > MAX_FIT_WORK / xs.len { return fault_result(ERR_TOO_LONG); }
-    if family == FAMILY_EXPONENTIAL || family == FAMILY_LOGNORMAL {
+    if resamples > MAX_GOF_REPS || resamples > MAX_FIT_WORK / xs.len { return fault_result(ERR_TOO_LONG); }
+    if family >= FAMILY_EXPONENTIAL {
         for x in xs { if !(x > 0.0) { return fault_result(ERR_DOMAIN); } }
+    }
+    if family == FAMILY_BETA {
+        for x in xs { if !(x < 1.0) { return fault_result(ERR_DOMAIN); } }
     }
     let s = sort_copy(xs);
     if s[0] == s[s.len - 1] { return fault_result(ERR_UNDEFINED); }
@@ -333,6 +361,8 @@ fn goodness_of_fit(out: f64[>..]&, xs: const f64[:], family: i64, statistic: i64
     if family == FAMILY_NORMAL { out.push(a); out.push(b); }
     else if family == FAMILY_UNIFORM { out.push(a); out.push(b - a); }
     else if family == FAMILY_EXPONENTIAL { out.push(0.0); out.push(1.0 / a); }
+    else if family == FAMILY_WEIBULL || family == FAMILY_GAMMA { out.push(a); out.push(0.0); out.push(b); }
+    else if family == FAMILY_BETA { out.push(a); out.push(b); out.push(0.0); out.push(1.0); }
     else { out.push(b); out.push(0.0); out.push(exp(a)); }
     let p = (count + 1) as f64 / (resamples + 1);
     return good_result(obs, p, nan(), nan());

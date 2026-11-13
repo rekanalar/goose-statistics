@@ -58,6 +58,22 @@ fn run_hypothesis() -> i64 {
     bad += run_group("trimmed");
     bad += run_group("circular");
     bad += run_group("binned");
+    bad += run_group("distributions_location");
+    bad += run_group("contingency");
+    bad += run_group("divergence");
+    bad += run_group("clip");
+    bad += run_group("assoc_rank");
+    bad += run_group("distance");
+    bad += run_group("distance_nd");
+    bad += run_group("assoc_mgc");
+    bad += run_group("line_siegel");
+    bad += run_group("laws");
+    bad += run_group("probplot");
+    bad += run_group("anderson_families");
+    bad += run_group("fitting_mle");
+    bad += run_group("assoc_somers");
+    bad += run_group("contingency_risk");
+    bad += run_group("kde");
     bad += run_group("time");
     return bad;
 }
@@ -156,6 +172,86 @@ fn run_group(name: u8[:]) -> i64 {
         bad += suite::run_binned_tests();
         bad += suite::run_binned_hostile();
     }
+    if is_word(name, "distributions_location") {
+        bad += suite::run_distributions_location_vectors();
+        bad += suite::run_distributions_location_tests();
+        bad += suite::run_distributions_location_hostile();
+    }
+    if is_word(name, "contingency") {
+        bad += suite::run_contingency_vectors();
+        bad += suite::run_contingency_tests();
+        bad += suite::run_contingency_hostile();
+    }
+    if is_word(name, "divergence") {
+        bad += suite::run_divergence_vectors();
+        bad += suite::run_divergence_tests();
+        bad += suite::run_divergence_hostile();
+    }
+    if is_word(name, "clip") {
+        bad += suite::run_clip_vectors();
+        bad += suite::run_clip_tests();
+        bad += suite::run_clip_hostile();
+    }
+    if is_word(name, "assoc_rank") {
+        bad += suite::run_assoc_rank_vectors();
+        bad += suite::run_assoc_rank_tests();
+        bad += suite::run_assoc_rank_hostile();
+    }
+    if is_word(name, "distance") {
+        bad += suite::run_distance_vectors();
+        bad += suite::run_distance_tests();
+        bad += suite::run_distance_hostile();
+    }
+    if is_word(name, "distance_nd") {
+        bad += suite::run_distance_nd_vectors();
+        bad += suite::run_distance_nd_tests();
+        bad += suite::run_distance_nd_hostile();
+    }
+    if is_word(name, "assoc_mgc") {
+        bad += suite::run_assoc_mgc_vectors();
+        bad += suite::run_assoc_mgc_tests();
+        bad += suite::run_assoc_mgc_hostile();
+    }
+    if is_word(name, "line_siegel") {
+        bad += suite::run_line_siegel_vectors();
+        bad += suite::run_line_siegel_tests();
+        bad += suite::run_line_siegel_hostile();
+    }
+    if is_word(name, "laws") {
+        bad += suite::run_laws_vectors();
+        bad += suite::run_laws_tests();
+        bad += suite::run_laws_hostile();
+    }
+    if is_word(name, "probplot") {
+        bad += suite::run_probplot_vectors();
+        bad += suite::run_probplot_tests();
+        bad += suite::run_probplot_hostile();
+    }
+    if is_word(name, "anderson_families") {
+        bad += suite::run_anderson_families_vectors();
+        bad += suite::run_anderson_families_tests();
+        bad += suite::run_anderson_families_hostile();
+    }
+    if is_word(name, "fitting_mle") {
+        bad += suite::run_fitting_mle_vectors();
+        bad += suite::run_fitting_mle_tests();
+        bad += suite::run_fitting_mle_hostile();
+    }
+    if is_word(name, "assoc_somers") {
+        bad += suite::run_assoc_somers_vectors();
+        bad += suite::run_assoc_somers_tests();
+        bad += suite::run_assoc_somers_hostile();
+    }
+    if is_word(name, "contingency_risk") {
+        bad += suite::run_contingency_risk_vectors();
+        bad += suite::run_contingency_risk_tests();
+        bad += suite::run_contingency_risk_hostile();
+    }
+    if is_word(name, "kde") {
+        bad += suite::run_kde_vectors();
+        bad += suite::run_kde_tests();
+        bad += suite::run_kde_hostile();
+    }
     if is_word(name, "time") {
         bad += suite::run_time_tests();
         bad += suite::run_time_descriptive(200000);
@@ -164,6 +260,22 @@ fn run_group(name: u8[:]) -> i64 {
         bad += suite::run_time_trimmed(200000);
         bad += suite::run_time_circular(200000);
         bad += suite::run_time_binned(200000);
+        bad += suite::run_time_distributions_location(200000);
+        bad += suite::run_time_contingency(0);
+        bad += suite::run_time_divergence(200000);
+        bad += suite::run_time_clip(200000);
+        bad += suite::run_time_assoc_rank(20000);
+        bad += suite::run_time_distance(200000);
+        bad += suite::run_time_distance_nd(256);
+        bad += suite::run_time_assoc_mgc(1024);
+        bad += suite::run_time_line_siegel(2000);
+        bad += suite::run_time_laws(4096);
+        bad += suite::run_time_probplot(200000);
+        bad += suite::run_time_anderson_families(20000);
+        bad += suite::run_time_fitting_mle(200);
+        bad += suite::run_time_assoc_somers(200000);
+        bad += suite::run_time_contingency_risk();
+        bad += suite::run_time_kde();
     }
     return bad;
 }

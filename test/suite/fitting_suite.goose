@@ -150,9 +150,10 @@ fn run_gof_tests() -> i64 {
     // The faults. The out buffer is empty after each of them.
     let c7: i64 = 0;
     var junk: f64[>..] = [1.0, 2.0];
-    let _f1, cf1 = statistics::goodness_of_fit(junk, normal[..], statistics::FAMILY_GAMMA, statistics::GOF_ANDERSON, 99, g);
-    check(bad, cf1 == 5 && junk.len == 0, "goodness_of_fit, the gamma family has no fit");
-    for fam in [4, 6, 7, 8, 9] {
+    let neg: f64[3] = [1.0, -1.0, 2.0];
+    let _f1, cf1 = statistics::goodness_of_fit(junk, neg[..], statistics::FAMILY_GAMMA, statistics::GOF_ANDERSON, 99, g);
+    check(bad, cf1 == 5 && junk.len == 0, "goodness_of_fit, the gamma family needs positive values");
+    for fam in [7, 8, 9] {
         let _f, cf = statistics::goodness_of_fit(out, normal[..], fam, statistics::GOF_ANDERSON, 99, g);
         check(bad, cf == 5, "goodness_of_fit, a family with no fit");
     }
