@@ -33,6 +33,10 @@ fn run_distributions_search_d_tests() -> i64 {
     chk_val(bad, "levy pdf of the Levy law", v5, c5, 0.24197072451914337, 1e-12);
     let v6, c6 = statistics::levy_stable_cdf(1.0, 0.5, 1.0);
     chk_val(bad, "levy cdf of the Levy law", v6, c6, 0.31731050786291415, 1e-12);
+    // A point that lies just outside the bound of the point near zeta
+    // keeps its own value. The bound uses the shape of the law.
+    let s1, cs1 = statistics::levy_stable_pdf(0.0018, 0.5, 1.0);
+    chk_val(bad, "levy pdf below the bound near zeta", s1, cs1, 1.2040519459848489e-117, 1e-9);
     // A shape outside its range gives the domain fault.
     let _d1, cd1 = statistics::levy_stable_pdf(1.0, 0.0, 0.5);
     chk_code(bad, "levy shape 0", cd1, 5);
