@@ -155,14 +155,18 @@ fn brent_root<F>(a0: f64, b0: f64, xtol: f64, rtol: f64) -> f64, i64 {
     if is_nan(fa) || is_nan(fb) { return nan(), ERR_NAN; }
     if fa == 0.0 { return a, 0; }
     if fb == 0.0 { return b, 0; }
-    if fa * fb > 0.0 { return nan(), ERR_DOMAIN; }
+    // The sign test never multiplies the two values, because their product
+    // underflows when both are tiny.
+    if (fa > 0.0 && fb > 0.0) || (fa < 0.0 && fb < 0.0) {
+        return nan(), ERR_DOMAIN;
+    }
     var c = a;
     var fc = fa;
     var d = b - a;
     var e = d;
     var iter: i64 = 0;
     while iter < MAX_FIT_STEPS {
-        if fb * fc > 0.0 {
+        if (fb > 0.0 && fc > 0.0) || (fb < 0.0 && fc < 0.0) {
             c = a; fc = fa; d = b - a; e = d;
         }
         if abs(fc) < abs(fb) {

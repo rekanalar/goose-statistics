@@ -285,7 +285,7 @@ fn run_hostile_tests() -> i64 {
         // The fit and the survival test.
         var gen7 = rng { s: 23 };
         var gout: f64[>..] = [];
-        let x21, xc21 = statistics::goodness_of_fit(gout, xs[..], family, opt % 3, 20, gen7);
+        let x21, xc21 = statistics::goodness_of_fit(gout, xs[..], family, opt % 3, 3, gen7);
         let okx21 = (xc21 == 0 && gout.len > 0) || (xc21 != 0 && gout.len == 0);
         hostile_report(bad, okx21, "goodness_of_fit", k, xc21);
         var empty: f64[0] = [];

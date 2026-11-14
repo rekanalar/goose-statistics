@@ -10,7 +10,7 @@ a sample of 64 bit floats. It gives the trimmed forms and the weighted
 forms too. The sum is exact, so the mean and the variance keep their
 digits.
 
-The package gives twenty probability families too. Fifteen are
+The package gives sixty-seven probability families too. Sixty-two are
 continuous and five are discrete. Each family has its density or mass,
 its cumulative function, its survival function, its quantile and its
 four moments.
@@ -106,6 +106,154 @@ import statistics from "rekanalar/goose-statistics@v0.10.0";
 | `geom_pmf(k, p)`, and the same seven calls | the geometric family in the trials form; `p` = 0.5 |
 | `nbinom_pmf(k, r, p)`, and the same seven calls | the negative binomial family; `r` = 1 and `p` = 0.5 |
 | `hypergeom_pmf(k, M, n, N)`, and the same seven calls | the hypergeometric family, no default |
+| `anglit_pdf(x)`, and the same seven calls | the anglit family, no default |
+| `arcsine_pdf(x)`, and the same seven calls | the arcsine family, no default |
+| `cosine_pdf(x)`, and the same seven calls | the cosine family, no default |
+| `gibrat_pdf(x)`, and the same seven calls | the Gibrat family, no default |
+| `halfcauchy_pdf(x)`, and the same seven calls | the half Cauchy family, no default |
+| `halflogistic_pdf(x)`, and the same seven calls | the half logistic family, no default |
+| `halfnorm_pdf(x)`, and the same seven calls | the half normal family, no default |
+| `hypsecant_pdf(x)`, and the same seven calls | the hyperbolic secant family, no default |
+| `semicircular_pdf(x)`, and the same seven calls | the semicircular family, no default |
+| `triang_pdf(x, c)`, and the same seven calls | the triangular family; `c` is the mode |
+| `trapezoid_pdf(x, c, d)`, and the same seven calls | the trapezoid family; `c` and `d` are the ends of the plateau |
+| `bradford_pdf(x, c)`, and the same seven calls | the Bradford family; `c` is the shape |
+| `wald_pdf(x)`, and the same seven calls | the inverse Gaussian family with a mean of 1, no default |
+| `maxwell_pdf(x)`, and the same seven calls | the Maxwell family, no default |
+| `moyal_pdf(x)`, and the same seven calls | the Moyal family, no default |
+| `dweibull_pdf(x, c)`, and the same seven calls | the double Weibull family of the whole line; `c` is the shape |
+| `invweibull_pdf(x, c)`, and the same seven calls | the inverse Weibull family; `c` is the shape |
+| `weibull_max_pdf(x, c)`, and the same seven calls | the Weibull family of the negative line; `c` is the shape |
+| `truncweibull_min_pdf(x, c, a, b)`, and the same seven calls | the Weibull family on `a` to `b`; `c` is the shape |
+| `powernorm_pdf(x, c)`, and the same seven calls | the power of the normal family; `c` is the power |
+| `powerlognorm_pdf(x, c, s)`, and the same seven calls | the power of the log-normal family; `c` is the power and `s` the scale |
+| `exponpow_pdf(x, b)`, and the same seven calls | the generalized exponential family; `b` is the shape |
+| `exponweib_pdf(x, a, c)`, and the same seven calls | the Weibull family of the exponential kind; `a` and `c` are the shapes |
+| `fisk_pdf(x, c)`, and the same seven calls | the log-logistic family; `c` is the shape |
+| `burr_pdf(x, c, d)`, and the same seven calls | the Burr family of the third kind; `c` and `d` are the shapes |
+| `burr12_pdf(x, c, d)`, and the same seven calls | the Burr family of the twelfth kind; `c` and `d` are the shapes |
+| `betaprime_pdf(x, a, b)`, and the same seven calls | the beta prime family; `a` and `b` are the shapes |
+| `genpareto_pdf(x, c)`, and the same seven calls | the generalized Pareto family; `c` is the shape |
+| `genlogistic_pdf(x, c)`, and the same seven calls | the generalized logistic family; `c` is the shape |
+| `genhalflogistic_pdf(x, c)`, and the same seven calls | the generalized half logistic family; `c` is the shape |
+| `gompertz_pdf(x, c)`, and the same seven calls | the Gompertz family; `c` is the shape |
+| `truncexpon_pdf(x, b)`, and the same seven calls | the truncated exponential family; `b` is the upper bound |
+| `truncpareto_pdf(x, b, c)`, and the same seven calls | the truncated Pareto family; `b` is the shape and `c` the upper bound |
+| `truncnorm_pdf(x, a, b)`, and the same seven calls | the truncated normal family; `a` and `b` are the bounds |
+| `chi_pdf(x, df)`, and the same seven calls | the chi family; `df` is the degrees of freedom |
+| `dgamma_pdf(x, a)`, and the same seven calls | the double gamma family; `a` is the shape |
+| `invgamma_pdf(x, a)`, and the same seven calls | the inverse gamma family; `a` is the shape |
+| `loggamma_pdf(x, c)`, and the same seven calls | the log gamma family; `c` is the shape |
+| `gengamma_pdf(x, a, c)`, and the same seven calls | the generalized gamma family; `a` and `c` are the shapes |
+| `genexpon_pdf(x, a, b, c)`, and the same seven calls | the generalized exponential family; `a`, `b` and `c` are the shapes |
+| `mielke_pdf(x, k, s)`, and the same seven calls | the Mielke family; `k` and `s` are the shapes |
+| `gennorm_pdf(x, beta)`, and the same seven calls | the generalized normal family; `beta` is the shape |
+| `halfgennorm_pdf(x, beta)`, and the same seven calls | the generalized half normal family; `beta` is the shape |
+| `tukeylambda_pdf(x, lam)`, and the same seven calls | the law of Tukey and of lambda; `lam` is the shape |
+| `jf_skew_t_pdf(x, a, b)`, and the same seven calls | the skew t family of the Johnson kind; `a` and `b` are the shapes |
+| `johnsonsb_pdf(x, a, b)`, and the same seven calls | the Johnson family of the B kind; `a` and `b` are the shapes |
+| `johnsonsu_pdf(x, a, b)`, and the same seven calls | the Johnson family of the U kind; `a` and `b` are the shapes |
+| `invgauss_pdf(x, mu)`, and the same seven calls | the inverse Gaussian family; `mu` is the mean |
+| `nakagami_pdf(x, nu)`, and the same seven calls | the Nakagami family; `nu` is the shape |
+| `kappa3_pdf(x, a)`, and the same seven calls | the Kappa family of the third kind; `a` is the shape |
+| `pearson3_pdf(x, skew)`, and the same seven calls | the Pearson family of the third kind; `skew` is the skewness |
+| `genextreme_pdf(x, c)`, and the same seven calls | the generalized extreme value family; `c` is the shape |
+| `laplace_asymmetric_pdf(x, kappa)`, and the same seven calls | the asymmetric Laplace family; `kappa` is the shape |
+| `skewnorm_pdf(x, a)`, and the same seven calls | the skew normal family; `a` is the shape |
+| `bernoulli_pmf(k, p)`, `cdf` and `ppf` | the Bernoulli family; `p` is the chance of 1 |
+| `betabinom_pmf(k, n, a, b)`, `cdf` and `ppf` | the beta binomial family; `n` is the count, `a` and `b` the shapes |
+| `betanbinom_pmf(k, n, a, b)`, `cdf` and `ppf` | the beta negative binomial family; `n` is the count of successes |
+| `boltzmann_pmf(k, lambda, n)`, `cdf` and `ppf` | the truncated geometric family of Boltzmann; `n` is the count of values |
+| `dlaplace_pmf(k, a)`, `cdf` and `ppf` | the discrete Laplace family; `a` is the shape |
+| `logser_pmf(k, p)`, `cdf` and `ppf` | the logarithmic series family; `p` is the shape |
+| `nhypergeom_pmf(k, M, n, r)`, `cdf` and `ppf` | the negative hypergeometric family; `r` is the count of successes |
+| `planck_pmf(k, lambda)`, `cdf` and `ppf` | the Planck family, a geometric law from 0; `lambda` is the shape |
+| `poisson_binom_pmf(k, ps)`, `cdf` and `ppf` | the Poisson binomial family; `ps` is the list of the chances |
+| `randint_pmf(k, lo, hi)`, `cdf` and `ppf` | the uniform family of whole numbers from `lo` up to `hi` less 1 |
+| `skellam_pmf(k, mu1, mu2)`, `cdf` and `ppf` | the Skellam family, the difference of two Poisson counts |
+| `yulesimon_pmf(k, alpha)`, `cdf` and `ppf` | the Yule-Simon family; `alpha` is the shape |
+| `zipf_pmf(k, a)`, `cdf` and `ppf` | the Zipf family without an end; `a` is the shape above 1 |
+| `zipfian_pmf(k, a, n)`, `cdf` and `ppf` | the Zipf family on 1 to `n`; `a` is the shape |
+| `rice_pdf(x, b)`, and the same seven calls | the Rice family; `b` is the shape, 0 or more and at most 3000 |
+| `argus_pdf(x, chi)`, `cdf` and `ppf` | the Argus family; `chi` is the shape |
+| `dpareto_lognorm_pdf(x, s, f, scale)`, `cdf` and `ppf` | the Pareto of the log-normal kind; `s` is the shape, `f` the scale and `scale` the shift |
+| `erlang_pdf(x, a, loc)`, `cdf` and `ppf` | the Erlang family; `a` is the shape and `loc` the shift |
+| `exponnorm_pdf(x, k, loc)`, `cdf` and `ppf` | the exponential-normal family; `k` is the shape and `loc` the shift |
+| `foldcauchy_pdf(x, c)`, `cdf` and `ppf` | the folded Cauchy family; `c` is the shift |
+| `foldnorm_pdf(x, c)`, `cdf` and `ppf` | the folded normal family; `c` is the shift |
+| `loguniform_pdf(x, a, b)`, `cdf` and `ppf` | the log uniform family; `a` and `b` are the ends |
+| `irwinhall_pdf(x, n)`, `cdf` and `ppf` | the Irwin-Hall family; `n` is the count of the summed values |
+| `gausshyper_pdf(x, a, b, c)`, `cdf` and `ppf` | the Gauss hypergeometric family; `a`, `b` and `c` are the shapes |
+| `geninvgauss_pdf(x, p, b)`, `cdf` and `ppf` | the generalized inverse Gaussian family; `p` is the shape and `b` the scale |
+| `genhyperbolic_pdf(x, p, a, b)`, `cdf` and `ppf` | the generalized hyperbolic family; `p` is the shape, `a` the location and `b` the scale |
+| `norminvgauss_pdf(x, a, b)`, `cdf` and `ppf` | the normal inverse Gaussian family; `a` is the shape and `b` the skewness |
+| `recipinvgauss_pdf(x, mu)`, `cdf` and `ppf` | the reciprocal inverse Gaussian family; `mu` is the mean |
+| `rel_breitwigner_pdf(x, rho)`, `cdf` and `ppf` | the relative Breit-Wigner family; `rho` is the shape |
+| `studentized_range_pdf(x, k, df)`, `cdf` and `ppf` | the studentized range family; `k` is the count of the samples and `df` the degrees of freedom |
+| `vonmises_pdf(x, kappa)`, `cdf` and `ppf` | the von Mises family of an angle; `kappa` is the shape |
+| `levy_stable_pdf(x, alpha, beta)`, `cdf` and `ppf` | the stable family of Levy; `alpha` is the shape and `beta` the skewness |
+| `alpha_pdf(x, a)`, `cdf` and `ppf` | the alpha family; `a` is the shape |
+| `fatiguelife_pdf(x, c)`, `cdf` and `ppf` | the fatigue life family; `c` is the shape |
+| `levy_pdf(x)`, `cdf` and `ppf` | the Levy family, a stable law of shape one half |
+| `levy_l_pdf(x)`, `cdf` and `ppf` | the mirror of the Levy family, on the negative line |
+| `logistic_pdf(x)`, `cdf` and `ppf` | the logistic family |
+| `loglaplace_pdf(x, c)`, `cdf` and `ppf` | the log Laplace family; `c` is the shape |
+| `lomax_pdf(x, c)`, `cdf` and `ppf` | the Lomax family; `c` is the shape |
+| `pareto_pdf(x, b)`, `cdf` and `ppf` | the Pareto family from 1; `b` is the shape |
+| `powerlaw_pdf(x, a)`, `cdf` and `ppf` | the power law on 0 to 1; `a` is the shape |
+| `reciprocal_pdf(x, a, b)`, `cdf` and `ppf` | the same law as `loguniform`; `a` and `b` are the ends |
+| `rdist_pdf(x, c)`, `cdf` and `ppf` | the R family on -1 to 1; `c` is the shape |
+| `skewcauchy_pdf(x, a)`, `cdf` and `ppf` | the skew Cauchy family; `a` is the skew, below 1 in size |
+| `wrapcauchy_pdf(x, c)`, `cdf` and `ppf` | the wrapped Cauchy family on 0 to 2 pi; `c` is between 0 and 1 |
+| `kappa4_pdf(x, h, k)`, `cdf` and `ppf` | the four parameter Kappa family; `h` and `k` are the shapes |
+| `crystalball_pdf(x, beta, m)`, `cdf` and `ppf` | the crystal ball family; `m` is above 1 |
+| `kstwobign_pdf(x)`, `cdf` and `ppf` | the limit of the Kolmogorov-Smirnov statistic |
+| `vonmises_line_pdf(x, kappa)`, `cdf` and `ppf` | the von Mises law on the line from -pi to pi |
+| `ncx2_pdf(x, df, nc)`, `cdf` and `ppf` | the non-central chi-square family; `nc` is up to 100,000 |
+| `ncf_pdf(x, dfn, dfd, nc)`, `cdf` and `ppf` | the non-central F family; `nc` is up to 100,000 |
+| `nct_pdf(x, df, nc)`, `cdf` and `ppf` | the non-central t family |
+| `ksone_pdf(x, n)`, `cdf` and `ppf` | the one sided Kolmogorov-Smirnov statistic; `n` is up to 1000 |
+| `kstwo_pdf(x, n)`, `cdf` and `ppf` | the two sided Kolmogorov-Smirnov statistic; `n` is up to 1000 |
+| `landau_pdf(x)`, `cdf` and `ppf` | the Landau family |
+| `nchypergeom_fisher_pmf(k, M, n, N, odds)`, `cdf` and `ppf` | the non-central hypergeometric family of Fisher; `M` is up to 100,000 |
+| `nchypergeom_wallenius_pmf(k, M, n, N, odds)`, `cdf` and `ppf` | the non-central hypergeometric family of Wallenius; `M` is up to 500 |
+| `multivariate_normal_pdf(x, mean, cov, d)`, `mean` and `cov` | the multivariate normal family; the matrices hold their values in row order |
+| `multivariate_t_rvs(out, mean, shape, df, d, size, r)` | the draws of the multivariate t family |
+| `multivariate_t_mean(out, mean, shape, d)`, `cov` and `df` | the moments of the multivariate t family |
+| `matrix_normal_rvs(out, mean, cov, d, size, r)` | the draws of the matrix normal family |
+| `matrix_normal_mean(out, mean, cov, d)` and `cov` | the moments of the matrix normal family |
+| `matrix_t_rvs(out, mean, shape, df, d, size, r)` | the draws of the matrix t family |
+| `matrix_t_mean(out, mean, shape, d)` | the mean of the matrix t family |
+| `wishart_rvs(out, shape, df, d, size, r)` and `wishart_mean(out, shape, df, d)` | the Wishart family and its mean |
+| `invwishart_rvs(out, shape, df, d, size, r)` | the inverse Wishart family |
+| `normal_inverse_gamma_rvs(out, mu, lam, a, b, d, size, r)` | the normal inverse gamma family |
+| `multinomial_pmf(x, n, p)`, `mean` and `cov` | the multinomial family |
+| `multinomial_rvs(out, n, p, size, r)` | the draws of the multinomial family |
+| `multivariate_hypergeom_pmf(x, n, N)` and `mean` | the multivariate hypergeometric family |
+| `dirichlet_pdf(x, alpha)`, `logpdf`, `mean`, `var` and `cov` | the Dirichlet family |
+| `dirichlet_rvs(out, alpha, size, r)` | the draws of the Dirichlet family |
+| `uniform_direction_rvs(out, dim, size, r)` | the draws of the uniform direction on a sphere |
+| `ortho_group_rvs(out, dim, size, r)` | the draws of the orthogonal group |
+| `special_ortho_group_rvs(out, dim, size, r)` | the draws of the special orthogonal group; each determinant is 1 |
+| `unitary_group_rvs(out, dim, size, r)` | the draws of the unitary group; the real parts come first, then the imaginary parts |
+| `random_correlation_rvs(out, eigs, r)` | the draw of a correlation matrix with the given eigenvalues |
+| `vonmises_fisher_pdf(x, mu, kappa)`, `logpdf` and `rvs` | the von Mises-Fisher family on a sphere |
+| `random_table_rvs(out, row, col, size, r)` | the draw of a table with the given row sums and column sums |
+| `Dist { kind, a, b }` | the object of a distribution; the kind is 1 for the normal, 2 for the uniform, 3 for the logistic and 4 for the binomial law |
+| `dist_pdf(d, x)`, `dist_cdf`, `dist_ccdf`, `dist_icdf` and `dist_iccdf` | the density, the cumulative function, the survival function and their inverses of an object |
+| `dist_logpdf(d, x)`, `dist_logcdf`, `dist_logccdf`, `dist_ilogcdf` and `dist_ilogccdf` | the logarithms of the calls of an object |
+| `dist_mean(d)`, `dist_median`, `dist_mode`, `dist_variance`, `dist_standard_deviation`, `dist_skewness`, `dist_kurtosis`, `dist_entropy` and `dist_logentropy` | the moments of an object |
+| `dist_moment(d, order)` | the raw moment of an object; the order is up to 64 |
+| `dist_support(d)` | the lower bound, the upper bound and the code of an object |
+| `mixture_pdf(comps, w, x)`, `mixture_cdf`, `mixture_ccdf` and `mixture_icdf` | the mixture of continuous components |
+| `mixture_mean(comps, w)`, `mixture_variance`, `mixture_standard_deviation`, `mixture_skewness`, `mixture_kurtosis` and `mixture_moment` | the moments of a mixture |
+| `mixture_support(comps, w)` | the lower bound, the upper bound and the code of a mixture |
+| `covariance_matrix(out, kind, data, d)` | the covariance matrix of one of the four forms |
+| `covariance_log_pdet(kind, data, d)` and `covariance_rank(kind, data, d)` | the log of the pseudo-determinant and the rank of a form |
+| `covariance_whiten(out, kind, data, d, x)` and `covariance_colorize(out, kind, data, d, x)` | the whitening of a point and its inverse |
+| `histogram_pdf(content, edges, density, x)`, `cdf`, `sf` and `ppf` | the law of a histogram |
+| `histogram_mean(content, edges, density)`, `histogram_var`, `histogram_entropy` and `histogram_moment` | the moments of the law of a histogram |
+| `histogram_rvs(out, content, edges, density, size, r)` | the draws of the law of a histogram |
 | `ttest_1samp(xs, popmean, alt)` | the one-sample t test; gives a `TestResult` |
 | `ttest_ind(xs, ys, alt, equal_var)` | the two-sample t test; `equal_var` false gives the Welch form |
 | `ttest_rel(xs, ys, alt)` | the paired t test |
@@ -169,7 +317,7 @@ import statistics from "rekanalar/goose-statistics@v0.10.0";
 | `MvsResult` | the struct of the three intervals that `bayes_mvs` returns |
 | `MvsDist` | the struct of the three posterior distributions that `mvsdist` returns |
 | `logrank(x, y, alt)` | the log-rank test of two groups of `CensoredData` |
-| `goodness_of_fit(out, xs, family, statistic, resamples, rng)` | the goodness-of-fit test; writes the fitted parameters into `out` |
+| `goodness_of_fit(out, xs, family, statistic, resamples, rng)` | the goodness-of-fit test over the ten families with `GOF_ANDERSON`, `GOF_KOLMOGOROV`, `GOF_CRAMER` or `GOF_FILLIBEN`; writes the fitted parameters into `out` |
 | `barnard_exact(a, b, c, d, alt, pooled, grid)` | the Barnard exact test of a 2 by 2 table |
 | `boschloo_exact(a, b, c, d, alt, grid)` | the Boschloo exact test of a 2 by 2 table |
 | `kstest(out, xs, family, params, alt)` | the one-sample Kolmogorov-Smirnov test; writes the location and the sign into `out` |
@@ -454,7 +602,7 @@ gives NaN as the result and one of these codes.
 | `ERR_NAN` | the sample, a weight or an argument holds a NaN |
 | `ERR_INFINITY` | the sample or a weight holds an infinity |
 | `ERR_DOMAIN` | an argument or a value is out of range for the call |
-| `ERR_LENGTH` | the list of weights has another length than the sample |
+| `ERR_LENGTH` | a list has another length than the call needs |
 | `ERR_UNDEFINED` | the result has no defined value |
 | `ERR_OVERFLOW` | the true result does not fit in a 64 bit float |
 | `ERR_TOO_LONG` | the sample has more than `MAX_INPUT` values |
@@ -519,6 +667,13 @@ The tests allow 4 units for the density of the normal family. They allow
 gamma, the beta and the tailed families, and for every moment. The
 counts of the discrete quantiles are exact.
 
+The moments of the families with no closed form come from a rule of
+Gauss-Legendre on panels. The rule finds the peak of the weighted
+density first. It cuts the range where the weighted density falls below
+1e-15 of that peak. A law of a nonnegative support is integrated in the
+logarithm of the point. That keeps the accuracy of a law with a long
+tail. The rule uses 16 nodes on 100 panels.
+
 ## Limits
 
 - The `levene` and `fligner` calls take a center of the mean, the median
@@ -562,6 +717,17 @@ counts of the discrete quantiles are exact.
   The Weibull family differs by about 1e-4.
 - The beta family of `goodness_of_fit` differs from SciPy by about
   2e-3. Its fit searches two parameters at once.
+- The chi-square, student and F families of `goodness_of_fit` use a
+  Nelder-Mead search. SciPy calls its own optimizer with the location
+  free. The likelihood of the chi-square family has no unique optimum
+  there. This package fixes the location at 0 for the chi-square and F
+  families. It does the same for the gamma and Weibull families. The
+  parameters agree with SciPy to about 1e-4.
+- The student family of `goodness_of_fit` keeps its location free.
+- The `GOF_FILLIBEN` statistic of `goodness_of_fit` is a correlation,
+  so a small value is extreme. Its p-value counts the null values at
+  most as large as the observed one. SciPy counts the same way for
+  this statistic.
 - The `cramervonmises` call stops its series at an absolute term size of
   1e-7, as SciPy does. Its p-value then differs from SciPy by about
   1e-5 on a random sample. The statistic differs by about 1e-9.
@@ -815,6 +981,190 @@ counts of the discrete quantiles are exact.
   and the last level.
 - The logistic fit of `anderson_logistic` agrees with SciPy to about
   1e-5, because SciPy stops its own solver at that tolerance.
+- The `powernorm`, `powerlognorm`, `exponpow` and `exponweib` moments
+  come from an integration of the density of the law. SciPy integrates
+  the quantile function instead. The two routes agree on the mean of
+  `powernorm`, `exponpow` and `exponweib` to about 1e-11. They differ
+  by about 1e-8 on the skewness and on the kurtosis of those three
+  families.
+- The `powerlognorm` moments differ from SciPy by more. SciPy gives a
+  kurtosis of 21062 for the shape 1.4 and the scale 2. The package
+  gives 148180.
+- The rule of the moments finds a peak that is narrow. It also finds a
+  peak that lies far from the origin. The moments of `powerlognorm` with
+  the shape 1 and the scale 0.001 exist. The moments of `exponweib` with
+  the shape 1 and the shape 0.03 exist.
+- The moments of `exponweib` with the shape 1 and the shape 0.03 agree
+  with the exact law. That law is the Weibull family. SciPy gives a
+  mean of 6.81e32. The exact law gives 2.80e37. The package gives
+  2.80e37.
+- The variance, the skewness and the kurtosis of a law with a narrow
+  peak lose digits. They come from differences of the raw moments. The
+  `powerlognorm` law of the scale 0.001 has a variance of 1.0000015e-6.
+  The package gives it to about 3e-9 relative. Its kurtosis is 1.6e-5.
+  The package gives -0.0037 and SciPy gives -0.0219.
+- Three independent routes agree on the value of the package. They are
+  the density, the survival function, and the exact law of the
+  log-normal family at the shape 1.
+- A sample of four million draws gives a fourth raw moment near 3.6e8.
+  That value is below the value of the package. It matches the known
+  bias of the estimator. The tail of SciPy loses its digits here.
+- The `gompertz` moments come from an integration of the density of the
+  law. SciPy integrates the quantile function instead. The two routes
+  differ by about 1e-8 on the kurtosis of the shape 1.5. They agree to
+  about 1e-11 on the other three moments.
+- The `genhalflogistic` moments come from an integration of the density
+  of the law too. They agree with SciPy to about 1e-11.
+- The `fisk`, `burr`, `burr12`, `betaprime` and `genpareto` moments have
+  a closed form. They agree with SciPy to about 1e-13.
+- The `invweibull` moments of the shape 1.5 do not exist. The variance
+  of that law is negative, so the package gives `ERR_UNDEFINED`. SciPy
+  gives the same negative variance and a NaN for the skewness and for
+  the kurtosis.
+- The `gengamma` moments have a closed form. They agree with SciPy to
+  about 1e-14. A shape `c` below 0 gives a moment that exists only up
+  to a limit. The package gives `ERR_UNDEFINED` above that limit.
+  SciPy integrates the law and gives a number.
+- The `genexpon` moments come from an integration of the density of the
+  law. SciPy integrates the quantile function instead. The two routes
+  differ by about 1e-11 on the mean and by about 1e-10 on the kurtosis.
+- The `halfgennorm` moments have a closed form. They agree with SciPy to
+  about 1e-15.
+- The `johnsonsb` moments come from an integration of the density of the
+  law. SciPy integrates the density too and loses digits. The two routes
+  differ by about 4e-7 on the variance. They differ by about 1e-4 on the
+  kurtosis of the shape 1 and the shape 2. The package gives the value
+  of the law.
+- The `johnsonsu` moments have a closed form. They agree with SciPy to
+  about 1e-15.
+- The `mielke` moments have a closed form. The third moment of the
+  shape 2 and the shape 3 does not exist. The package gives
+  `ERR_UNDEFINED` for the skewness and for the kurtosis. SciPy gives an
+  infinity for the skewness and a NaN for the kurtosis.
+- The `truncpareto` law has a bounded support, so all of its moments
+  exist for every shape. SciPy gives `ERR_UNDEFINED` for a shape that
+  is not above the order of the moment. The package gives the value.
+- The `tukeylambda` cumulative function searches the root of the
+  quantile function. SciPy solves the same root with a different
+  method. The two agree to about 1e-12.
+- The `gennorm` and the `halfgennorm` moments have a closed form in the
+  gamma function. They agree with SciPy to about 1e-15.
+- The `chi`, `dgamma`, `invgamma` and `loggamma` moments have a closed
+  form. They agree with SciPy to about 1e-13.
+- The `invgauss` quantile searches the root of the logarithm of the
+  cumulative function or of the survival function. A tiny target keeps
+  its digits. SciPy solves the same root with the code of Boost. The
+  two agree to about 1e-14 in the body of the law.
+- SciPy loses the `invgauss` root in the deep tail. At a target of
+  1e-300 and a mean of 0.05, SciPy gives 1.1187e+248 and reports that
+  it found no solution. The package gives 0.000707432903319254979.
+  The value of mpmath 1.4.1 confirms the answer of the package.
+- The `invgauss` cumulative function and survival function use the
+  logarithm of the normal law. The far tail keeps its digits. SciPy uses
+  the same route.
+- The `kappa3` moments have a closed form. SciPy integrates the quantile
+  function and loses a few digits. The two agree to about 1e-12.
+- The moment of order n of the `kappa3` law exists only when the shape
+  is above n. The package gives `ERR_UNDEFINED` above that limit. SciPy
+  gives a NaN.
+- The `pearson3` law is the law of the normal form when the skewness
+  falls below 1.6e-5. The shape of the law grows without bound as the
+  skewness falls to zero. The package uses the law of the normal form
+  there. The moments of the law have no fault there. SciPy gives a NaN
+  for the moments and a value below 1e-300 for the density.
+- The density of the `pearson3` law keeps its digits at a small
+  skewness. The direct form takes the difference of two large numbers.
+  The package uses the ratio of the point to the shape. SciPy loses
+  about 6 digits at a skewness of 1e-4.
+- The `genextreme` law with the shape 0 is the law of Gumbel. The
+  package uses the law of Gumbel for the density, the cumulative
+  function, the survival function and the quantile. SciPy uses the
+  general form and loses the shape of 0.
+- A small shape gives the skewness and the kurtosis of the Gumbel law
+  for `genextreme`. The package uses the same cutoffs as SciPy. The two
+  agree.
+- The moments of the `genextreme` law need a shape above a bound. The
+  package gives `ERR_UNDEFINED` below that bound. SciPy gives a NaN.
+- The `skewnorm` cumulative function uses the T function of Owen. SciPy
+  uses the code of Boost. The two agree to about 1e-14 in the body of
+  the law. In the far left tail both forms cancel the same two terms.
+  The relative accuracy of both falls there. It falls below a cumulative
+  value of about 1e-7.
+- The `skewnorm` far left tail uses a different form in the package.
+  It keeps the digits of the tail. SciPy loses a few of them.
+- The `skewnorm` quantile searches the root of the cumulative function
+  or of the survival function. The two agree to about 1e-14 in the body
+  of the law.
+- SciPy loses the `skewnorm` root in the deep tail. At a target of
+  1e-300 and a shape of 0.5, SciPy gives -36.231821510534026. The
+  package gives -33.059565133730004. The value of mpmath 1.4.1 confirms
+  the answer of the package.
+
+- The `kstwo_pdf` call takes a central difference of the cumulative
+  function. SciPy uses an exact derivative. The two agree to about 1e-8.
+- The `ksone` and `kstwo` calls accept a sample size up to 1000. SciPy
+  has no bound. The `ksone` sum cancels in its far tail for a large
+  size.
+- The `landau` calls give a density of 0 and a cumulative value of 0
+  below -2.5. The integral cancels its terms in the far left tail, and
+  its absolute error would pass 1e-8 there. The true value at -2.5 is
+  about 1e-5. The answer has an absolute error up to 1e-5 below that
+  point. SciPy holds a rational approximation there.
+- The `nchypergeom_wallenius` call accepts a total up to 500. Each mass
+  needs one integral. The Fisher form accepts a total up to 100,000.
+- The `ncx2` and `ncf` calls sum a Poisson mixture over twelve standard
+  deviations. They refuse a non-centrality above 100,000.
+- The `nct` call integrates over the scale of a chi law. Its accuracy
+  falls for a degrees of freedom above 1e6.
+
+- The `levy_stable` calls follow the method of Nolan. The integral of
+  Nolan needs a split at the peak of the density, where the helper
+  equals one. The package makes that split. A rule without it loses
+  about 8 digits.
+- The rows of the stable law come from the Fourier form of the law, at 30
+  digits of mpmath. SciPy 1.18.1 checks the rows. A point joins the rows
+  only where the two agree to 1e-9. The package and SciPy agree to about
+  1e-14 at every other point of the grid.
+- The far tail of the stable law falls below the resolution of double
+  precision. At a shape of 0.8 and a skewness of 1, the density of SciPy
+  1.18.1 is not monotone. It gives 5.09e-18 at the point 0.0, 0.0 at 0.3,
+  3.57e-139 at 0.4 and 2.26e-65 at 0.5.
+- The package gives 1.84e-65 for the density at a shape of 0.8, a
+  skewness of 1 and the point 0.5. It gives 1.07e-16 for the cumulative
+  function there, where SciPy gives 2.26e-65 and 2.0e-204. The Fourier
+  form of the law gives a negative density at that point. No method of
+  double precision gives the value. The rows of the law leave that region
+  out.
+- The `random_correlation` call needs a draw that reaches a diagonal of
+  1. A shape that no draw can reach gives `ERR_FIT`.
+- The `random_table` call draws each cell from the hypergeometric law
+  of what is left. The draw matches the law of Patefield in its
+  distribution, but not its values, because SciPy uses another
+  generator.
+- The `vonmises_fisher` call needs a unit vector for its point and for
+  its mean. A vector that differs from a unit vector by more than 1e-8
+  gives `ERR_DOMAIN`.
+- The `unitary_group` call gives the real parts of a matrix first, then
+  its imaginary parts, each in row order. SciPy gives a complex matrix.
+- The `histogram` calls need the content of n bins and the n+1 edges.
+  The edges must rise. A bin with no mass gives `ERR_DOMAIN`.
+- The `mixture` calls take continuous components only, as SciPy does.
+  A discrete component gives `ERR_DOMAIN`.
+- The `dist` calls of an object take a plain struct. A kind that the
+  package does not know gives `ERR_DOMAIN`.
+- The binomial object follows the new object classes of SciPy 1.18.1.
+  Its cumulative function is the continuous extension of the law: the
+  regularized incomplete beta function `I(1 - p)` over `(n - x, x + 1)`.
+  The legacy `binom` family of SciPy floors the point instead. The two
+  disagree at a point that is not a whole count.
+- The draws of the multivariate laws use the inverse of the cumulative
+  function of the chi law for the scales. SciPy draws the sum of the
+  squares of the normals instead. One seed does not give the same
+  values as SciPy, but the same law.
+- The `covariance` calls take a kind and a flat buffer. The kind 1
+  holds the diagonal. The kind 2 holds the precision matrix. The kind 3
+  holds the lower Cholesky factor. The kind 4 holds the eigenvalues and
+  then the eigenvectors. A buffer of another length gives `ERR_LENGTH`.
 
 ## Security
 
@@ -855,6 +1205,15 @@ go beyond the reference libraries.
 - `combine_pvalues` gives `ERR_DOMAIN` for weights with the Fisher or the
   Tippett method. SciPy ignores them there. A caller who passes weights
   by mistake sees the fault and not a silent change.
+- The `invgauss` and the `skewnorm` quantile search a root of a
+  continuous function. The search has a bound on its steps and on the
+  range that it covers. A hostile shape cannot make it run forever.
+- The `kappa3` and the `genextreme` moments give the fault
+  `ERR_UNDEFINED` when the moment does not exist. A caller sees the
+  fault and not a silent NaN.
+- The `pearson3` moments have no fault at a small skewness. The law is
+  the law of the normal form there. The moments stay finite and the
+  caller sees a value.
 - The resampling calls bound their work before any draw. A count of
   resamples above 1,000,000 gives `ERR_TOO_LONG`. A product of the
   resamples and the sample size above 500,000,000 gives the same code.
@@ -975,6 +1334,11 @@ go beyond the reference libraries.
   SciPy accept a fraction and truncate it.
 - The moments check their poles before any division. A moment with no
   defined value gives `ERR_UNDEFINED`, never an infinity.
+- The moments of a family of a power check the order of the moment
+  against the shape of the law. The law of Burr has no mean below a
+  shape of 1. The law of the generalized Pareto has no mean below a
+  shape of 1. The package gives `ERR_UNDEFINED` there.
+  SciPy returns NaN or an infinity.
 - A density at a pole gives `ERR_OVERFLOW`. An example is the gamma
   density at 0 with a shape below 1. SciPy returns an infinity there. A density that does not fit also gives
   `ERR_OVERFLOW`.
@@ -985,6 +1349,29 @@ go beyond the reference libraries.
 - The checks run in one order for every call: NaN, infinity, domain. An
   infinite value of x gives `ERR_INFINITY` in every density and
   cumulative call, and an infinite scale gives `ERR_INFINITY` too.
+- The Rice law gives its mean and its variance to full digits. Its
+  skewness and kurtosis lose digits for a shape of 10 or more, because
+  the central moments cancel. At the shape 30 the kurtosis has a relative
+  error of about 2e-3. SciPy 1.18.1 loses digits there too. The shape must
+  be at most 3000. A larger shape gives the domain fault.
+- The families of a truncation check their bounds before any work. The
+  bounds of the truncated normal law must lie in order. The end of the
+  support of the truncated Pareto law has to be above 1. The package
+  gives `ERR_DOMAIN` there.
+- The families that come from the gamma law check their shapes before
+  any work. A shape at or below 0 gives `ERR_DOMAIN`. The shape `c` of
+  the generalized gamma law must not be 0. The package gives
+  `ERR_DOMAIN` there. SciPy returns NaN.
+- The families of the Johnson kind check the shape `b` before any work.
+  A shape at or below 0 gives `ERR_DOMAIN`. The shape `a` may be any
+  finite value.
+- The moments of the new families check the order of the moment against
+  the shape of the law. The check runs before any division. The law of
+  Mielke has no third moment when its shape `s` is 3 or below. The law
+  of the inverse gamma law has no mean when its shape is 1 or below.
+- The skew t family of the Johnson kind has no moment when a shape is
+  not above half the order. The package gives `ERR_UNDEFINED` there.
+  SciPy returns an infinity or a NaN.
 
 These risks stay.
 
@@ -1063,6 +1450,28 @@ These risks stay.
   `MAX_FIT_WORK` of 2,000,000. A `kde_resample` call holds at most
   `MAX_KDE_POINTS` draws.
   The seeded stream is the one of the caller, so a run repeats.
+- The fit of the chi-square, the student and the F families searches
+  with the method of Nelder and Mead. The search stops after
+  `FIT_NM_STEPS` of 200 steps. It stops earlier when the simplex is
+  small against the scale of the parameters and of the objective.
+- The degrees of freedom of a fit stay below `FIT_DF_CAP` of 1,000,000.
+  The laws are flat above it. SciPy returns its own bound there. The
+  fits need as many distinct values as they have parameters.
+
+- The `random_correlation` call checks every eigenvalue for NaN, for an
+  infinity and for a negative value before any work. A sum that differs
+  from the count of the eigenvalues gives `ERR_DOMAIN`.
+- The `random_table` call checks that the row sums and the column sums
+  are equal. It checks that each sum is a whole number. It checks that
+  each sum is at least 0. A total above 1,000,000 gives `ERR_DOMAIN`.
+- The `covariance` calls check the buffer for NaN and for an infinity.
+  A factor that is not lower triangular gives `ERR_DOMAIN`.
+- The `histogram` calls check every bin for NaN, for an infinity and
+  for a negative value. A histogram with no mass gives `ERR_DOMAIN`.
+- The `dist` calls of an object check every point for NaN and for an
+  infinity. A probability outside its range gives `ERR_DOMAIN`.
+- The `mixture` calls check every weight for NaN, for an infinity and
+  for a negative value. They also check that the weights sum to 1.
 
 ## Test
 
@@ -1082,6 +1491,7 @@ goose run examples/exact_tests.goose
 goose run examples/resampling.goose
 goose run examples/comparisons.goose
 goose run examples/survival.goose
+goose run examples/families.goose
 ```
 
 The scripts `test/make_vectors.py`, `test/make_assoc_vectors.py`,
@@ -1120,6 +1530,12 @@ The script `test/mutate.sh` flips one rule of the code at a time in a copy
 of the package. Each flip must make the test program fail. The last line
 reads `N probes, 0 failures`.
 
+The script `test/make_family_vectors.py` writes the vectors of every
+group of families. It needs Python 3, NumPy and SciPy 1.18.1. The
+moments of the families with no closed form come from an integration of
+the density of the law. The script uses that route for the same reason
+as the package.
+
 The environment variable `STATISTICS_SUITES` names one group of the test
 suites. The groups follow the files of the package. The older calls have
 the groups `vectors`, `assoc`, `accept`, `hostile`, `special` and
@@ -1127,6 +1543,15 @@ the groups `vectors`, `assoc`, `accept`, `hostile`, `special` and
 `normality`, `multipletests`, `variance`, `transform`, `exact`,
 `resample`, `multicomp`, `fitting` and `time`. The name `tests` runs the
 whole set of the newer ones. Without the variable every suite runs.
+
+The families have one group for each file. The groups are
+`distributions_elementary`, `distributions_bounded`, `distributions_weibull` and
+`distributions_exponent`. The groups `distributions_power`, `distributions_growth`,
+`distributions_truncated` and `distributions_gamma` follow. The groups
+`distributions_generalized`, `distributions_symmetric` and `distributions_johnson`
+follow them. The last groups are `distributions_special`, `distributions_extreme`
+and `distributions_skew`. The groups `distributions_discrete_a`,
+`distributions_discrete_b` and `distributions_rice` follow them.
 
 The script `test/mutate.sh` names the group that covers the file of each
 probe. A probe then costs only that group. A probe that no group of its

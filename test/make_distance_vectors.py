@@ -424,7 +424,7 @@ def fitting_mle_group():
     g.code("goodness_of_fit weibull negative value", "statistics::goodness_of_fit(out, neg[..], 4, 0, 19, rg)", 5)
     g.code("goodness_of_fit beta value above one", "statistics::goodness_of_fit(out, big[..], 6, 0, 19, rg)", 5)
     g.code("goodness_of_fit gamma constant sample", "statistics::goodness_of_fit(out, flat[..], 5, 0, 19, rg)", 7)
-    g.code("goodness_of_fit chi-square family", "statistics::goodness_of_fit(out, gm[..], 7, 0, 19, rg)", 5)
+    g.code("goodness_of_fit unknown family", "statistics::goodness_of_fit(out, gm[..], 10, 0, 19, rg)", 5)
     g.write()
 
 

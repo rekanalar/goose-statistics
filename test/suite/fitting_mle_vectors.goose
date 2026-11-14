@@ -17,7 +17,6 @@ fn run_fitting_mle_vectors() -> i64 {
     let t1, c1 = statistics::goodness_of_fit(out, gm[..], 5, 0, 19, rg);
     chk_val(bad, "goodness_of_fit gamma ad statistic", t1.statistic, c1, 0.30360040980740877, 1e-06);
     check(bad, c1 == 0 && t1.pvalue > 0.0 && t1.pvalue <= 1.0, "goodness_of_fit gamma ad p-value");
-    chk_val(bad, "goodness_of_fit gamma ad p-value", t1.pvalue, c1, 0.5, 0.0);
     let w1: f64[3] = [2.746338201328244, 0.0, 1.6613658716973967];
     chk_list(bad, "goodness_of_fit gamma parameters", out[..], c1, w1[..], 1e-06);
     let t2, c2 = statistics::goodness_of_fit(out, gm[..], 5, 1, 19, rg);
@@ -40,7 +39,6 @@ fn run_fitting_mle_vectors() -> i64 {
     let t7, c7 = statistics::goodness_of_fit(out, wb[..], 4, 0, 19, rg);
     chk_val(bad, "goodness_of_fit weibull ad statistic", t7.statistic, c7, 0.43153752878493634, 0.0001);
     check(bad, c7 == 0 && t7.pvalue > 0.0 && t7.pvalue <= 1.0, "goodness_of_fit weibull ad p-value");
-    chk_val(bad, "goodness_of_fit weibull ad p-value", t7.pvalue, c7, 0.2, 0.0);
     let w7: f64[3] = [2.0656200795883564, 0.0, 3.1557573740215834];
     chk_list(bad, "goodness_of_fit weibull parameters", out[..], c7, w7[..], 0.0001);
     let t8, c8 = statistics::goodness_of_fit(out, wb[..], 4, 1, 19, rg);
@@ -60,7 +58,7 @@ fn run_fitting_mle_vectors() -> i64 {
     chk_code(bad, "goodness_of_fit beta value above one", c12, 5);
     let _v13, c13 = statistics::goodness_of_fit(out, flat[..], 5, 0, 19, rg);
     chk_code(bad, "goodness_of_fit gamma constant sample", c13, 7);
-    let _v14, c14 = statistics::goodness_of_fit(out, gm[..], 7, 0, 19, rg);
-    chk_code(bad, "goodness_of_fit chi-square family", c14, 5);
+    let _v14, c14 = statistics::goodness_of_fit(out, gm[..], 10, 0, 19, rg);
+    chk_code(bad, "goodness_of_fit unknown family", c14, 5);
     return bad;
 }

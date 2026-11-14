@@ -250,7 +250,7 @@ distributions_t.goose|if p <= 0.5 {|if p <= 0.0 {|the F quantile uses the upper 
 @transform.goose|if abs(l) < 1e-19 { return g; }|if abs(l) < 1e-9 { return g; }|the Box-Cox form at a near zero lambda
 @transform.goose|if method != NORMMAX_PEARSONR \&\& method != NORMMAX_MLE { return nan(), ERR_DOMAIN; }|if method != NORMMAX_PEARSONR \&\& method != NORMMAX_MLE { return nan(), ERR_UNDEFINED; }|an unknown method of the best fit
 @transform_yeo.goose|la >= lb|la > lb|the bounds of the probability plot
-@numeric.goose|if fa * fb > 0.0 { return nan(), ERR_DOMAIN; }|if fa * fb > 1.0 { return nan(), ERR_DOMAIN; }|the root finder needs a sign change
+@numeric.goose|if (fa > 0.0 && fb > 0.0) || (fa < 0.0 && fb < 0.0) {|if (fa > 0.0 && fb > 0.0) {|the root finder needs a sign change
 @resample.goose|INTERVAL_BCA { return rs_boot_fault(ERR_DOMAIN); }|INTERVAL_BCA { return rs_boot_fault(ERR_UNDEFINED); }|an unknown interval gives the domain fault
 @resample.goose|if method.kind != RESAMPLE_BOOTSTRAP { return rs_boot_fault(ERR_DOMAIN); }|if method.kind != RESAMPLE_MONTE_CARLO { return rs_boot_fault(ERR_DOMAIN); }|the kind of the resampling method
 @resample.goose|if method.interval == INTERVAL_BCA && sizes.len > 1 { return rs_boot_fault(ERR_DOMAIN); }|if false { return rs_boot_fault(ERR_DOMAIN); }|the BCa form refuses several samples
@@ -442,6 +442,8 @@ fitting_mle.goose|return log(a) - d - sd;|return log(a) + d - sd;|the gamma equa
 fitting_mle.goose|let scale = mean / a;|let scale = mean * a;|the gamma scale
 fitting_mle.goose|return d1 - d2 - mlog1;|return d1 - d2 - mlog;|the inner beta equation
 fitting_mle.goose|let scale = exp(lmax + log(sp / s.len) / m);|let scale = exp(lmax + log(sp) / m);|the Weibull scale
+fitting_shapes.goose|let a = (k + 1) as f64;|let a = (k + 2) as f64;|the Filliben median shape
+fitting_shapes.goose|sum = sum + head - a * log1p(z * z / df);|sum = sum + head - a * log1p(z * z) / df;|the shape of the student law
 fitting_mle.goose|if family == FAMILY_BETA { return betadist_cdf(x, a, b); }|if family == FAMILY_BETA { return betadist_sf(x, a, b); }|the beta cdf
 fitting_mle.goose|if family == FAMILY_GAMMA { return gammadist_sf(x, a, b); }|if family == FAMILY_GAMMA { return gammadist_cdf(x, a, b); }|the gamma survival
 fitting_mle.goose|else { v, c = weibull_ppf(u, a, b); }|else { v, c = weibull_ppf(u, b, a); }|the Weibull draw
@@ -532,6 +534,203 @@ kde.goose|for i in 0..j + 1 { v = v + kde_cho(k, j, i) * z[i]; }|for i in 0..j {
 kde.goose|acc = acc + kde_weight(k, i);|acc = acc + 1.0 / k.n as f64;|the draw of the index
 kde.goose|sum = sum + exp(-0.5 * q) * kde_weight(k, i);|sum = sum + exp(-0.5 * q);|the weights of the density
 kde.goose|if !(s > 0.0) { return ERR_DOMAIN; }|if false { return ERR_DOMAIN; }|the check of the matrix
+distributions_elementary.goose|return cos(2.0 * x), OK;|return cos(x), OK;|the density of the anglit law
+distributions_elementary.goose|let s = sin(x + PI / 4.0);\n    return s * s, OK;|let s = sin(x + PI / 4.0);\n    return s, OK;|the cdf of the anglit law
+distributions_elementary.goose|return asin(sqrt(p)) - PI / 4.0, OK;|return sqrt(p) - PI / 4.0, OK;|the quantile of the anglit law
+distributions_elementary.goose|return 1.0 / (PI * sqrt(x * (1.0 - x))), OK;|return 1.0 / (PI * sqrt(x * (1.0 + x))), OK;|the density of the arcsine law
+distributions_elementary.goose|return 2.0 / PI * asin(sqrt(x)), OK;|return 2.0 / PI * asin(x), OK;|the cdf of the arcsine law
+distributions_elementary.goose|let s = sin(PI / 2.0 * p);|let s = sin(PI * p);|the quantile of the arcsine law
+distributions_elementary.goose|return (1.0 + cos(x)) / (2.0 * PI), OK;|return (1.0 - cos(x)) / (2.0 * PI), OK;|the density of the cosine law
+distributions_elementary.goose|return (PI + x + sin(x)) / (2.0 * PI), OK;|return (PI + x - sin(x)) / (2.0 * PI), OK;|the cdf of the cosine law
+distributions_elementary.goose|return (PI - x - sin(x)) / (2.0 * PI), OK;|return (PI - x + sin(x)) / (2.0 * PI), OK;|the survival function of the cosine law
+distributions_elementary.goose|if p == 0.5 { return 0.0, OK; }|if p == 0.25 { return 0.0, OK; }|the median of the cosine law
+distributions_elementary.goose|return exp(-0.5 * l * l) / (x * SQRT_2PI), OK;|return exp(-0.5 * l) / (x * SQRT_2PI), OK;|the density of the gibrat law
+distributions_elementary.goose|return norm_cdf(log(x));|return norm_cdf(x);|the cdf of the gibrat law
+distributions_elementary.goose|let r = exp(norm_std_ppf(p));|let r = norm_std_ppf(p);|the quantile of the gibrat law
+distributions_elementary.goose|return 2.0 / (PI * (1.0 + x * x)), OK;|return 2.0 / (PI * (1.0 + x)), OK;|the density of the half Cauchy law
+distributions_elementary.goose|return 2.0 / PI * atan(x), OK;|return 1.0 / PI * atan(x), OK;|the cdf of the half Cauchy law
+distributions_elementary.goose|return tan(PI / 2.0 * p), OK;|return tan(PI / 4.0 * p), OK;|the quantile of the half Cauchy law
+distributions_elementary.goose|return 2.0 * e / ((1.0 + e) * (1.0 + e)), OK;|return e / ((1.0 + e) * (1.0 + e)), OK;|the density of the half logistic law
+distributions_elementary.goose|return -m / (1.0 + exp(-x)), cm;|return m / (1.0 + exp(-x)), cm;|the cdf of the half logistic law
+distributions_elementary.goose|return 2.0 * exp(-0.5 * x * x) / SQRT_2PI, OK;|return exp(-0.5 * x * x) / SQRT_2PI, OK;|the density of the half normal law
+distributions_elementary.goose|return erf(x * INV_SQRT2);|return erf(x);|the cdf of the half normal law
+distributions_elementary.goose|return norm_std_ppf(0.5 + 0.5 * p), OK;|return norm_std_ppf(0.5 + 0.25 * p), OK;|the quantile of the half normal law
+distributions_elementary.goose|return 2.0 / (PI * (exp(x) + exp(-x))), OK;|return 1.0 / (PI * (exp(x) + exp(-x))), OK;|the density of the hypsecant law
+distributions_elementary.goose|return 2.0 / PI * atan(exp(x)), OK;|return 1.0 / PI * atan(exp(x)), OK;|the cdf of the hypsecant law
+distributions_elementary.goose|return log(tan(PI * p / 2.0)), OK;|return log(tan(PI * p / 4.0)), OK;|the quantile of the hypsecant law
+distributions_elementary.goose|fn halfcauchy_mean() -> f64, i64 { return nan(), ERR_UNDEFINED; }|fn halfcauchy_mean() -> f64, i64 { return 0.0, OK; }|the mean of the half Cauchy law
+distributions_elementary.goose|return PI * PI / 16.0 - 0.5, OK;|return PI * PI / 8.0 - 0.5, OK;|the variance of the anglit law
+distributions_bounded.goose|return 2.0 / PI * sqrt(1.0 - x * x), OK;|return 2.0 / PI * sqrt(1.0 + x * x), OK;|the density of the semicircular law
+distributions_bounded.goose|return 0.5 + (x * sqrt(1.0 - x * x) + asin(x)) / PI, OK;|return 0.5 + (x * sqrt(1.0 - x * x) - asin(x)) / PI, OK;|the cdf of the semicircular law
+distributions_bounded.goose|return 2.0 * b - 1.0, OK;|return 2.0 * b + 1.0, OK;|the quantile of the semicircular law
+distributions_bounded.goose|if x < c { return 2.0 * x / c, OK; }|if x < c { return 2.0 * x / (1.0 - c), OK; }|the density of the triangular law
+distributions_bounded.goose|if x < c { return x * x / c, OK; }|if x < c { return x * x / (1.0 - c), OK; }|the cdf of the triangular law
+distributions_bounded.goose|if p < c { return sqrt(c * p), OK; }|if p < c { return sqrt((1.0 - c) * p), OK; }|the quantile of the triangular law
+distributions_bounded.goose|return (c + 1.0) / 3.0, OK;|return (c + 2.0) / 3.0, OK;|the mean of the triangular law
+distributions_bounded.goose|return (1.0 - c + c * c) / 18.0, OK;|return (1.0 - c + c * c) / 9.0, OK;|the variance of the triangular law
+distributions_bounded.goose|if x < c { return u * x / c, OK; }|if x < c { return u * x / d, OK; }|the density of the trapezoid law
+distributions_bounded.goose|if x < c { return x * x / c / (d - c + 1.0), OK; }|if x < c { return x * x / d / (d - c + 1.0), OK; }|the cdf of the trapezoid law
+distributions_bounded.goose|if p < qc { return sqrt(p * c * (1.0 + d - c)), OK; }|if p < qc { return sqrt(p * d * (1.0 + d - c)), OK; }|the quantile of the trapezoid law
+distributions_bounded.goose|if c > 0.0 { t = t + u * pow(c, n + 1) / (n + 2.0); }|if c > 0.0 { t = t + u * pow(c, n + 2) / (n + 2.0); }|the first moment of the trapezoid law
+distributions_bounded.goose|t = t + u * (pow(d, n + 1) - pow(c, n + 1)) / (n + 1.0);|t = t + u * (pow(d, n + 1) - pow(c, n + 1)) / (n + 2.0);|the moment of the plateau of the trapezoid law
+distributions_bounded.goose|return c / (c * x + 1.0) / l, OK;|return c / (c * x + 1.0) * l, OK;|the density of the Bradford law
+distributions_bounded.goose|return m / l, OK;|return m * l, OK;|the cdf of the Bradford law
+distributions_bounded.goose|return m / c, OK;|return m * c, OK;|the quantile of the Bradford law
+distributions_bounded.goose|return (c - l) / (c * l), OK;|return (c + l) / (c * l), OK;|the mean of the Bradford law
+distributions_bounded.goose|return exp(-0.5 * d * d / x) / (SQRT_2PI * x * sqrt(x)), OK;|return exp(-0.5 * d * d / x) / (SQRT_2PI * sqrt(x)), OK;|the density of the wald law
+distributions_bounded.goose|return a + e * b, OK;|return a + b, OK;|the cdf of the wald law
+distributions_bounded.goose|return sqrt(2.0 / PI) * x * x * exp(-0.5 * x * x), OK;|return sqrt(2.0 / PI) * x * exp(-0.5 * x * x), OK;|the density of the maxwell law
+distributions_bounded.goose|return sqrt(2.0 * v), OK;|return sqrt(v), OK;|the quantile of the maxwell law
+distributions_bounded.goose|return exp(-0.5 * (x + e)) / SQRT_2PI, OK;|return exp(-0.5 * (x + e)) * SQRT_2PI, OK;|the density of the moyal law
+distributions_bounded.goose|return -log(2.0 * v * v), OK;|return -log(2.0 * v), OK;|the quantile of the moyal law
+distributions_weibull.goose|return c / 2.0 * pow(a, c - 1.0) * exp(-pow(a, c)), OK;|return c * pow(a, c - 1.0) * exp(-pow(a, c)), OK;|the density of the double Weibull law
+distributions_weibull.goose|return exp(-pow(x, -c)), OK;|return exp(-pow(x, c)), OK;|the cdf of the inverse Weibull law
+distributions_weibull.goose|return -pow(-log(p), 1.0 / c), OK;|return pow(-log(p), 1.0 / c), OK;|the quantile of the Weibull law of the negative line
+distributions_weibull.goose|let s = n as f64 / c + 1.0;|let s = n as f64 / c + 2.0;|the moment of the truncated Weibull law
+distributions_weibull.goose|return (ea - e) / d, OK;|return (e - ea) / d, OK;|the cdf of the truncated Weibull law
+distributions_exponent.goose|return c * exp(-0.5 * x * x) / SQRT_2PI * pow(p, c - 1.0);|return c * exp(-0.5 * x * x) / SQRT_2PI * pow(p, c);|the density of the power of the normal law
+distributions_exponent.goose|let r = -norm_std_ppf(pow(1.0 - p, 1.0 / c));|let r = norm_std_ppf(pow(1.0 - p, 1.0 / c));|the quantile of the power of the normal law
+distributions_exponent.goose|return exp(-norm_std_ppf(pow(1.0 - p, 1.0 / c)) * s), OK;|return exp(norm_std_ppf(pow(1.0 - p, 1.0 / c)) * s), OK;|the quantile of the power of the log-normal law
+distributions_exponent.goose|return b * pow(x, b - 1.0) * exp(1.0 + xb - exp(xb));|return b * pow(x, b - 1.0) * exp(xb - exp(xb));|the density of the generalized exponential law
+distributions_exponent.goose|return a * c * pow(m, a - 1.0) * exp(-xc) * pow(x, c - 1.0);|return a * c * pow(m, a - 1.0) * exp(-xc) * pow(x, c);|the density of the Weibull law of the exponential kind
+distributions_numeric.goose|gauss_legendre(gx, gw, FAM_NODES);|gauss_legendre(gx, gw, FAM_NODES - 1);|the nodes of the rule of the moments
+distributions_numeric.goose|total += exp(l - lstar) * gw[j] * width / 2.0;|total += exp(l - lstar) * gw[j] * width;|the scale of the rule of the moments
+distributions_numeric.goose|total += d * pow(x, n as f64) * gw[j] * width / 2.0;|total += d * pow(x, n as f64) * gw[j] * width;|the scale of the rule of the moments of a law on the whole line
+distributions_numeric.goose|uhi = uhi * 2.0;|uhi = uhi * 1.01;|the widening of the scan for the peak
+distributions_exponent.goose|fam_raws(1, s) { x => powerlognorm_dens(x, c, s) }|fam_raws(1, 1.0) { x => powerlognorm_dens(x, c, s) }|the scale of the rule of the moments of the power of the log-normal law
+distributions_discrete_a.goose|if k == 0.0 { return 1.0 - p, OK; }|if k == 0.0 { return p, OK; }|the mass of the count 0 of the Bernoulli law
+distributions_discrete_a.goose|if k < 1.0 { return 1.0 - p, OK; }|if k < 1.0 { return p, OK; }|the cumulative function of the Bernoulli law
+distributions_discrete_a.goose|if q <= 1.0 - p { return 0.0, OK; }|if q <= p { return 0.0, OK; }|the quantile of the Bernoulli law
+distributions_discrete_a.goose|let lb1, lcb1 = lbeta(k + a, n - k + b);|let lb1, lcb1 = lbeta(k + a, n - k + a);|the density of the beta binomial law
+distributions_discrete_a.goose|if k < 0.0 || k > n { return 0.0, OK; }|if k < 0.0 || k > n + 1.0 { return 0.0, OK; }|the support of the beta binomial law
+distributions_discrete_a.goose|top = top * 2.0;|top = top * 1.5;|the growth of the bound of the search of the quantile
+distributions_discrete_a.goose|if F(mid) >= q { r = mid; } else { l = mid + 1.0; }|if F(mid) > q { r = mid; } else { l = mid + 1.0; }|the rule of the search of the quantile
+distributions_discrete_a.goose|return (1.0 - exp(-a)) / (1.0 + exp(-a)) * exp(-a * abs(k)), OK;|return (1.0 - exp(-a)) / (1.0 + exp(-a)) * exp(-a * k), OK;|the mass of the discrete Laplace law
+distributions_discrete_a.goose|if x != floor(x) { return ERR_DOMAIN; }|if x != floor(x) { return OK; }|the check of a count that must be a whole number
+distributions_discrete_b.goose|return -m * exp(-lambda * k), OK;|return -m * exp(-lambda * (k + 1.0)), OK;|the mass of the Planck law
+distributions_discrete_b.goose|let m, cm = expm1(-lambda * (floor(k) + 1.0));|let m, cm = expm1(-lambda * floor(k));|the cumulative function of the Planck law
+distributions_discrete_b.goose|next.push(old * (1.0 - p));|next.push(old * p);|the masses of the Poisson binomial law
+distributions_discrete_b.goose|next[k + 1] = next[k + 1] + old * p;|next[k + 1] = next[k + 1] + old * (1.0 - p);|the masses of the Poisson binomial law
+distributions_discrete_b.goose|return alpha * b, OK;|return b, OK;|the mass of the Yule-Simon law
+distributions_discrete_b.goose|let v = 1.0 - k * b;|let v = 1.0 - (k + 1.0) * b;|the cumulative function of the Yule-Simon law
+distributions_discrete_b.goose|total += d[0] * weight;|total += d[0] * weight * 2.0;|the Euler transform of the zeta function
+distributions_discrete_b.goose|let den = 1.0 - pow(2.0, 1.0 - a);|let den = 1.0 - pow(2.0, a - 1.0);|the factor of the series of the zeta function
+distributions_discrete_b.goose|total += pow(k, -a);|total += pow(k, a);|the harmonic number of the Zipf law of the finite kind
+distributions_discrete_b.goose|return 1.0 / (h * pow(k, a)), OK;|return 1.0 / (h * pow(k, -a)), OK;|the mass of the Zipf law of the finite kind
+distributions_discrete_b.goose|return zipfian_harmonic(floor(k), a) / h, OK;|return zipfian_harmonic(floor(k) + 1.0, a) / h, OK;|the cumulative function of the Zipf law of the finite kind
+distributions_discrete_b.goose|while skellam_cdf(r, mu1, mu2) < q { r = r * 2.0; }|while skellam_cdf(r, mu1, mu2) < q { r = r * 3.0; }|the bound of the search of the quantile of the Skellam law
+distributions_rice.goose|return x * exp(-0.5 * d * d) * rice_i0e(x * b);|return x * exp(-0.5 * d * d) * rice_i0e(x);|the density of the Rice law
+distributions_rice.goose|return total / sqrt(2.0 * PI * z);|return total / sqrt(PI * z);|the asymptotic series of the Bessel function
+distributions_rice.goose|let q = 0.25 * z * z;|let q = 0.5 * z * z;|the power series of the Bessel function
+distributions_rice.goose|let lw = -lam + j * log(lam) - lg;|let lw = -lam + j * log(lam);|the Poisson weight of the Marcum sum
+distributions_rice.goose|let half = 0.5 * x * x;|let half = x * x;|the argument of the incomplete gamma of the Marcum sum
+distributions_rice.goose|g, cc = gammaincc(j + 1.0, half);|g, cc = gammainc(j + 1.0, half);|the upper tail of the Marcum sum
+distributions_rice.goose|return -m, OK;|return m, OK;|the cumulative function of the Rice law with the shape 0
+distributions_rice.goose|const RICE_MAX_B: f64 = 3000.0;|const RICE_MAX_B: f64 = 30000.0;|the bound of the shape of the Rice law
+distributions_rice.goose|let q = 1.0 - p;|let q = p;|the upper half of the quantile of the Rice law
+distributions_search_a.goose|if x <= 0.0 || x >= 1.0 { return 0.0, OK; }|if x <= 0.0 || x > 1.0 { return 0.0, OK; }|the support of the Argus law
+distributions_search_a.goose|let num = argus_phi(chi * sqrt(1.0 - x * x));|let num = argus_phi(chi * sqrt(1.0 + x * x));|the survival function of the Argus law
+distributions_search_a.goose|return 0.5 * g;|return g;|the helper of the Argus law
+distributions_search_a.goose|l = dpl_log_sub(t1, t2);|l = dpl_log_add(t1, t2);|the cumulative function of the double Pareto log-normal law
+distributions_search_a.goose|let sum = dpl_log_add(r1, r2);|let sum = dpl_log_add(r1, r2) + 1.0;|the sum of the terms of the double Pareto log-normal law
+distributions_search_a.goose|let l = (a - 1.0) * log(x) - x - fam_lngamma(a);|let l = (a - 1.0) * log(x) - x + fam_lngamma(a);|the density of the Erlang law
+distributions_search_a.goose|let l = -log(2.0) - 0.5 * x * x - log(k) + log(exponnorm_erfcx(u));|let l = -log(2.0) - 0.5 * x * x - log(k) - log(exponnorm_erfcx(u));|the density of the sum of a normal and an exponential law
+distributions_search_a.goose|return (1.0 / (1.0 + d1 * d1) + 1.0 / (1.0 + d2 * d2)) / PI, OK;|return (1.0 / (1.0 + d1 * d1) - 1.0 / (1.0 + d2 * d2)) / PI, OK;|the density of the folded Cauchy law
+distributions_search_a.goose|return (atan(d1) + atan(d2)) / PI, OK;|return (atan(d1) - atan(d2)) / PI, OK;|the cumulative function of the folded Cauchy law
+distributions_search_a.goose|return 0.5 * (e1 + e2), OK;|return 0.5 * (e1 - e2), OK;|the cumulative function of the folded normal law
+distributions_search_b.goose|return 1.0 / (x * log(b / a)), OK;|return 1.0 / (x * log(a / b)), OK;|the density of the log-uniform law
+distributions_search_b.goose|if b <= a { return ERR_DOMAIN; }|if b < a { return ERR_DOMAIN; }|the bounds of the log-uniform law
+distributions_search_b.goose|next.push((a + b) / (m - 1) as f64);|next.push((a + b) / m as f64);|the recursion of the cardinal B-spline
+distributions_search_b.goose|for j in 0..min(fl + 1, v.len) { cdf += v[j]; }|for j in 0..min(fl, v.len) { cdf += v[j]; }|the sum of the steps of the Irwin-Hall law
+distributions_search_b.goose|return exp((a - 1.0) * log(x) + (b - 1.0) * log1p_core(-x) - c * log1p_core(z * x));|return exp((a - 1.0) * log(x) + (b - 1.0) * log1p_core(-x) + c * log1p_core(z * x));|the raw density of the Gauss hypergeometric law
+distributions_search_b.goose|return (p - 1.0) * log(x) - 0.5 * b * (x + 1.0 / x) + b - log(2.0) - lkve;|return (p - 1.0) * log(x) - 0.5 * b * (x + 1.0 / x) + b + log(2.0) - lkve;|the log density of the generalized inverse Gaussian law
+distributions_search_b.goose|let d2 = (a + b) * (a - b);|let d2 = (a + b) * (a + b);|the width of the Bessel function of the generalized hyperbolic law
+distributions_search_c.goose|return log(a / PI) + lk - a * s + b * x + g - log(s);|return log(a / PI) + lk - a * s + b * x - g - log(s);|the log density of the normal inverse Gaussian law
+distributions_search_c.goose|let r2 = 1.0 + 1.0 / (rho * rho);|let r2 = 1.0 + rho * rho;|the constant of the relative Breit-Wigner law
+distributions_search_c.goose|return sqrt(2.0 * r2 / (1.0 + sqrt(r2))) * 2.0 / PI;|return sqrt(2.0 * r2 / (1.0 + sqrt(r2))) * PI;|the constant of the relative Breit-Wigner density
+distributions_search_c.goose|inner += zw[j] * ph * pow(d, k - 1.0);|inner += zw[j] * ph * pow(d, k);|the power of the inner integral of the studentized range law
+distributions_search_c.goose|total += sw[i] * exp(lc + (df - 1.0) * log(s) - 0.5 * df * s * s) * inner;|total += sw[i] * exp(lc + (df - 1.0) * log(s) - 0.5 * df * s * s) * 2.0 * inner;|the weight of the outer integral of the studentized range law
+distributions_search_c.goose|let v = fam_quad(0.0, y) { t => exp(kappa * (cos(t) - 1.0)) / (2.0 * PI * vonmises_i0e(kappa)) };|let v = fam_quad(0.0, y) { t => exp(kappa * (cos(t) - 1.0)) / (PI * vonmises_i0e(kappa)) };|the integral of the von Mises law
+distributions_closed.goose|return tl_out(tl_ncdf(a - 1.0 / x) / tl_ncdf(a));|return tl_out(tl_ncdf(a - 1.0 / x));|the normalising divisor of the alpha law
+distributions_closed.goose|return tl_out(1.0 / (a - tl_nppf(q * tl_ncdf(a))));|return tl_out(1.0 / (a - tl_nppf(q)));|the quantile of the alpha law
+distributions_closed.goose|return tl_out(tl_ncdf((s - 1.0 / s) / c));|return tl_out(tl_ncdf((s - 1.0 / s)));|the scale of the fatigue life law
+distributions_closed.goose|return tl_out(2.0 * tl_ncdf(-1.0 / sqrt(x)));|return tl_out(tl_ncdf(-1.0 / sqrt(x)));|the factor of the Levy cumulative function
+distributions_closed.goose|return tl_out(1.0 - 2.0 * tl_ncdf(-1.0 / sqrt(-x)));|return tl_out(2.0 * tl_ncdf(-1.0 / sqrt(-x)));|the mirror of the Levy cumulative function
+distributions_closed.goose|if x < 1.0 { return tl_out(0.5 * pow(x, c)); }|if x < 1.0 { return tl_out(pow(x, c)); }|the left half of the log Laplace law
+distributions_closed.goose|return tl_out(-expm1_raw(-c * log1p_raw(x)));|return tl_out(-expm1_raw(-log1p_raw(x)));|the shape of the Lomax law
+distributions_closed.goose|return tl_out(-expm1_raw(-b * log(x)));|return tl_out(-expm1_raw(-log(x)));|the shape of the Pareto law
+distributions_closed.goose|return tl_out(pow(q, 1.0 / a));|return tl_out(pow(q, a));|the quantile of the power law
+distributions_closed.goose|return betainc(0.5 * c, 0.5 * c, 0.5 * (x + 1.0));|return betainc(0.5 * c, 0.5 * c, x);|the beta argument of the rdist law
+distributions_closed.goose|if x <= 0.0 { return tl_out(0.5 * (1.0 - a) + (1.0 - a) / PI * atan(x / (1.0 - a))); }|if x <= 0.0 { return tl_out(0.5 * (1.0 - a) + (1.0 + a) / PI * atan(x / (1.0 - a))); }|the left branch of the skew Cauchy law
+distributions_closed.goose|if x < PI { return tl_out(atan(r * tan(0.5 * x)) / PI); }|if x < PI { return tl_out(atan(r * tan(x)) / PI); }|the left branch of the wrapped Cauchy law
+distributions_closed.goose|let u = 1.0 - h * p;|let u = 1.0 + h * p;|the inner term of the kappa4 law
+distributions_noncentral.goose|return m / beta / (m - 1.0) * exp(-0.5 * beta * beta) + SQRT_2PI * tl_ncdf(beta);|return m / beta / m * exp(-0.5 * beta * beta) + SQRT_2PI * tl_ncdf(beta);|the constant of the crystal ball law
+distributions_noncentral.goose|cdf += t;|cdf += 2.0 * t;|the theta series of the Kolmogorov limit
+distributions_noncentral.goose|let v = fam_quad(0.0, x) { t => exp(kappa * (cos(t) - 1.0)) * c };|let v = fam_quad(0.0, x) { t => exp(kappa * (cos(t) - 1.0)) * 2.0 * c };|the integral of the von Mises line law
+distributions_noncentral.goose|return exp(-lam + j * log(lam) - fam_lngamma(j + 1.0));|return exp(-lam + j * log(lam) - fam_lngamma(j));|the Poisson weight of the mixtures
+distributions_noncentral.goose|if cp == OK { s += nc_weight(j, lam) * r * p; }|if cp == OK { s += nc_weight(j, lam) * p; }|the scale factor of the non-central F density
+distributions_noncentral.goose|total += fam_quad(edges[i], edges[i + 1]) { s => tl_ncdf(t * s - nc) * exp(nct_lscale(s, df)) };|total += fam_quad(edges[i], edges[i + 1]) { s => tl_ncdf(t * s + nc) * exp(nct_lscale(s, df)) };|the sign of the non-centrality of the t law
+distributions_noncentral.goose|sf += pow(1.0 - x, n);|sf += pow(1.0 - x, n - 1.0);|the first term of the one sided sum
+distributions_noncentral.goose|if s > 7.24 \|\| (s > 3.76 && n > 99.0) {|if s > 7.24 {|the asymptotic branch of the two sided law
+distributions_nch.goose|let l = w + k * log(odds);|let l = w;|the odds weight of the Fisher law
+distributions_nch.goose|let big = odds * (n - k) + (m - n - (d - k));|let big = odds * (n - k) + (m - n - d);|the divisor of the Wallenius integral
+distributions_landau.goose|return max(v / PI, 0.0), OK;|return max(v, 0.0), OK;|the factor of the Landau density
+distributions_landau.goose|return 1.0 - sf, OK;|return sf, OK;|the survival complement of the Landau law
+distributions_search_d.goose|n.zeta = -beta * tan(0.5 * PI * alpha);|n.zeta = beta * tan(0.5 * PI * alpha);|the shift of the stable law
+distributions_search_d.goose|if alpha != 1.0 { x0 = x + zeta; }|if alpha != 1.0 { x0 = x - zeta; }|the change to the form of Nolan
+distributions_search_d.goose|n.c3 = 1.0 / PI;|n.c3 = 2.0 / PI;|the factor of the cumulative function of the stable law
+distributions_search_d.goose|if n.alpha < 1.0 { return 0.0; }|if n.alpha < 1.0 { return inf(); }|the lower end of the helper of the stable law
+distributions_search_d.goose|let bound = LEVY_X_TOL * pow(a, 1.0 / a);|let bound = LEVY_X_TOL * a;|the bound of the point near zeta of the stable law
+distributions_search_d.goose|n.c2 = alpha / (PI * abs(alpha - 1.0) * (x0 - n.zeta));|n.c2 = alpha / (PI * abs(alpha - 1.0) * (x0 + n.zeta));|the factor of the density of the stable law
+distributions_search_numeric.goose|hi = hi * 2.0 + 1.0;|hi = hi * 1.5 + 1.0;|the growth of the bracket of the search of a quantile
+distributions_numeric.goose|return m2 - m1 * m1;|return m2 - m1;|the variance of a family
+distributions_numeric.goose|return (m3 - 3.0 * m1 * m2 + 2.0 * m1 * m1 * m1) / (v * sqrt(v));|return (m3 - 3.0 * m1 * m2) / (v * sqrt(v));|the skewness of a family
+distributions_power.goose|return 1.0 / (1.0 + pow(x, -c)), OK;|return 1.0 / (1.0 + pow(x, c)), OK;|the cdf of the log-logistic law
+distributions_power.goose|return pow(1.0 + pow(x, -c), -d), OK;|return pow(1.0 + pow(x, c), -d), OK;|the cdf of the law of Burr
+distributions_power.goose|return 1.0 - pow(1.0 + pow(x, c), -d), OK;|return pow(1.0 + pow(x, c), -d), OK;|the cdf of the law of Burr of the twelfth kind
+distributions_power.goose|let l = (a - 1.0) * lx - (a + b) * log1p(x) - log(bt);|let l = (a) * lx - (a + b) * log1p(x) - log(bt);|the density of the beta prime law
+distributions_power.goose|let b, cb = beta(1.0 + nc, 1.0 - nc);|let b, cb = beta(1.0 + nc, 1.0 + nc);|the raw moment of the log-logistic law
+distributions_power.goose|let top, ct = beta(a + n as f64, b - n as f64);|let top, ct = beta(a + n as f64, b + n as f64);|the raw moment of the beta prime law
+distributions_power.goose|return 1.0 / (1.0 - c) / (1.0 - c) / (1.0 - 2.0 * c), OK;|return 1.0 / (1.0 - c) / (1.0 - 2.0 * c), OK;|the variance of the generalized Pareto law
+distributions_growth.goose|return exp(log(c) - mult * a - (c + 1.0) * m), OK;|return exp(log(c) - mult * a - (c + 2.0) * m), OK;|the density of the generalized logistic law
+distributions_growth.goose|return exp(-c * m), OK;|return exp(-c * m) * 2.0, OK;|the cdf of the generalized logistic law
+distributions_growth.goose|return 2.0 * t / ((1.0 + t2) * (1.0 + t2)), OK;|return t / ((1.0 + t2) * (1.0 + t2)), OK;|the density of the generalized half logistic law
+distributions_growth.goose|return (1.0 - t2) / (1.0 + t2), OK;|return (1.0 + t2) / (1.0 - t2), OK;|the cdf of the generalized half logistic law
+distributions_growth.goose|return (1.0 - r) / c, OK;|return (1.0 + r) / c, OK;|the quantile of the generalized half logistic law
+distributions_growth.goose|total += c * pow(l, n as f64) * exp(-c * y) * gw[j] * width / 2.0;|total += c * pow(l, n as f64) * exp(-c * y) * gw[j] * width;|the raw moment of the Gompertz law
+distributions_truncated.goose|return exp(-x) / (-d), OK;|return exp(-x) / d, OK;|the density of the truncated exponential law
+distributions_truncated.goose|return e / d, OK;|return e / -d, OK;|the cdf of the truncated exponential law
+distributions_truncated.goose|return (1.0 - pow(x, -b)) / d, OK;|return (1.0 - pow(x, b)) / d, OK;|the cdf of the truncated Pareto law
+distributions_truncated.goose|return p / m, OK;|return p * m, OK;|the density of the truncated normal law
+distributions_gamma.goose|return exp(l), OK;|return exp(-l), OK;|the density of the chi law
+distributions_gamma.goose|return 0.5 + 0.5 * v, OK;|return 0.5 + v, OK;|the cdf of the double gamma law
+distributions_gamma.goose|return exp((a - 1.0) * log(ax) - ax - lg) / 2.0, OK;|return exp((a - 1.0) * log(ax) - ax - lg), OK;|the density of the double gamma law
+distributions_gamma.goose|return 1.0 / (a - 1.0), OK;|return 1.0 / (a + 1.0), OK;|the mean of the inverse gamma law
+distributions_gamma.goose|return exp(c * x - exp(x) - lg), OK;|return exp(c * x + exp(x) - lg), OK;|the density of the log gamma law
+distributions_generalized.goose|let p = exp((c * a - 1.0) * lx - pow(x, c)) * abs(c) / g;|let p = exp((c * a - 1.0) * lx - pow(x, c)) / (abs(c) * g);|the density of the generalized gamma law
+distributions_generalized.goose|return pow(x, k) / pow(1.0 + pow(x, s), k / s), OK;|return pow(x, k) / pow(1.0 + pow(x, s), 2.0 * k / s), OK;|the cdf of the law of Mielke
+distributions_generalized.goose|let u = -e;|let u = e;|the density of the generalized exponential law
+distributions_generalized.goose|let t = a + n as f64 / c;|let t = a + n as f64 * c;|the raw moment of the generalized gamma law
+distributions_symmetric.goose|return p, OK;|return 2.0 * p, OK;|the density of the generalized normal law
+distributions_symmetric.goose|return v / 2.0, OK;|return v, OK;|the cdf of the generalized normal law
+distributions_symmetric.goose|return 1.0 - v, OK;|return 1.0 + v, OK;|the cdf of the law of Tukey and of lambda
+distributions_johnson.goose|return b * p / (x * (1.0 - x)), OK;|return b * p / (x + (1.0 - x)), OK;|the density of the Johnson law of the B kind
+distributions_johnson.goose|return b * p / sqrt(x * x + 1.0), OK;|return b * p / sqrt(x * x), OK;|the density of the Johnson law of the U kind
+distributions_johnson.goose|return 1.0 / (1.0 + e), OK;|return 1.0 / (1.0 - e), OK;|the quantile of the Johnson law of the B kind
+distributions_johnson.goose|return johnson_sinh((z - a) / b), OK;|return johnson_sinh((z + a) / b), OK;|the quantile of the Johnson law of the U kind
+distributions_special.goose|let lp = -0.5 * log(2.0 * PI) - 1.5 * log(x) - d * d / (2.0 * x);|let lp = -0.5 * log(2.0 * PI) - 1.5 * log(x) - d * d / (x * x);|the density of the inverse Gaussian law
+distributions_special.goose|return max(la, lb) + l;|return max(la, lb) - l;|the cdf of the inverse Gaussian law
+distributions_special.goose|return sqrt(v / nu), OK;|return sqrt(v * nu), OK;|the quantile of the Nakagami law
+distributions_special.goose|return m * (1.0 - 4.0 * nu * v) / 2.0 / nu / (v * sqrt(v)), OK;|return m * (1.0 - 4.0 * nu * v) / 4.0 / nu / (v * sqrt(v)), OK;|the skewness of the Nakagami law
+distributions_special.goose|let lp = log(a) - (1.0 / a + 1.0) * kappa3_log_sum(x, a);|let lp = log(a) - (1.0 / a - 1.0) * kappa3_log_sum(x, a);|the density of the Kappa law of the third kind
+distributions_special.goose|return v / beta + zeta, OK;|return v * beta + zeta, OK;|the quantile of the Pearson law of the third kind
+distributions_extreme.goose|return exp(-exp(l / c)), OK;|return exp(-exp(l * c)), OK;|the cdf of the generalized extreme value law
+distributions_extreme.goose|let lp = -exp(t) + (1.0 / c - 1.0) * l;|let lp = -exp(t) + (1.0 / c + 1.0) * l;|the density of the generalized extreme value law
+distributions_extreme.goose|return exp(-exp(l / c)), OK;|return exp(exp(l / c)), OK;|the cdf of the generalized extreme value law
+distributions_skew.goose|return 2.0 * p * fam_ndtr(a * x), OK;|return p * fam_ndtr(a * x), OK;|the density of the skew normal law
+distributions_skew.goose|let v = fam_ndtr(x) - 2.0 * fam_owens_t(x, a);|let v = fam_ndtr(x) + 2.0 * fam_owens_t(x, a);|the cdf of the skew normal law
+distributions_skew.goose|return -log((1.0 - q) * tot * kappa) * ki, OK;|return -log((1.0 - q) * tot * kappa) * kappa, OK;|the quantile of the asymmetric Laplace law
+distributions_skew.goose|return sign * (extra - fam_owens_integral(aa * h, 1.0 / aa));|return sign * (extra + fam_owens_integral(aa * h, 1.0 / aa));|the T function of Owen
 PROBES
 )
 
@@ -560,7 +759,7 @@ groups_for() {
     exact.goose) echo "exact" ;;
     resample.goose) echo "resample" ;;
     multicomp.goose) echo "multicomp" ;;
-    fitting.goose) echo "fitting fitting_mle" ;;
+    fitting.goose) echo "fitting fitting_mle fitting_shapes" ;;
     numeric.goose) echo "transform fitting" ;;
     descriptive.goose) echo "descriptive" ;;
     frequency.goose) echo "frequency" ;;
@@ -582,6 +781,34 @@ groups_for() {
     contingency_risk.goose) echo "contingency_risk" ;;
     kde.goose) echo "kde" ;;
     fitting_mle.goose) echo "fitting_mle" ;;
+    fitting_shapes.goose) echo "fitting_shapes" ;;
+    distributions_elementary.goose) echo "distributions_elementary" ;;
+    distributions_bounded.goose) echo "distributions_bounded" ;;
+    distributions_weibull.goose) echo "distributions_weibull" ;;
+    distributions_numeric.goose) echo "distributions_exponent" ;;
+    distributions_exponent.goose) echo "distributions_exponent" ;;
+    distributions_discrete_a.goose) echo "distributions_discrete_a" ;;
+    distributions_discrete_b.goose) echo "distributions_discrete_b" ;;
+    distributions_rice.goose) echo "distributions_rice" ;;
+    distributions_search_numeric.goose) echo "distributions_search_a" ;;
+    distributions_search_a.goose) echo "distributions_search_a" ;;
+    distributions_search_b.goose) echo "distributions_search_b" ;;
+    distributions_search_c.goose) echo "distributions_search_c" ;;
+    distributions_closed.goose) echo "distributions_closed" ;;
+    distributions_noncentral.goose) echo "distributions_noncentral" ;;
+    distributions_nch.goose) echo "distributions_nch" ;;
+    distributions_landau.goose) echo "distributions_landau" ;;
+    distributions_search_d.goose) echo "distributions_search_d" ;;
+    distributions_power.goose) echo "distributions_power" ;;
+    distributions_growth.goose) echo "distributions_growth" ;;
+    distributions_truncated.goose) echo "distributions_truncated" ;;
+    distributions_gamma.goose) echo "distributions_gamma" ;;
+    distributions_generalized.goose) echo "distributions_generalized" ;;
+    distributions_symmetric.goose) echo "distributions_symmetric" ;;
+    distributions_johnson.goose) echo "distributions_johnson" ;;
+    distributions_special.goose) echo "distributions_special" ;;
+    distributions_extreme.goose) echo "distributions_extreme" ;;
+    distributions_skew.goose) echo "distributions_skew" ;;
     divergence.goose) echo "divergence" ;;
     contingency.goose) echo "contingency" ;;
     distributions_discrete.goose) echo "distributions" ;;

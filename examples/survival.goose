@@ -25,5 +25,14 @@ fn main() {
     let t, ct = statistics::goodness_of_fit(fit, xs[..], statistics::FAMILY_NORMAL, statistics::GOF_ANDERSON, 999, g);
     if ct != 0 { print("fit failed, code ", ct, "\n"); return 1; }
     print("anderson ", t.statistic, " p ", t.pvalue, " mean ", fit[0], " sd ", fit[1], "\n");
+
+    // A sample of the chi-square law fits its family. The Filliben
+    // statistic is a correlation, so a value near one means a good fit.
+    let cs: f64[10] = [3.1, 4.2, 5.8, 6.4, 7.1, 8.3, 9.0, 10.2, 11.4, 12.1];
+    var g2 = rng { s: 7 };
+    var cfit: f64[>..] = [];
+    let t2, ct2 = statistics::goodness_of_fit(cfit, cs[..], statistics::FAMILY_CHI2, statistics::GOF_FILLIBEN, 99, g2);
+    if ct2 != 0 { print("chi-square fit failed, code ", ct2, "\n"); return 1; }
+    print("filliben ", t2.statistic, " p ", t2.pvalue, " df ", cfit[0], " scale ", cfit[2], "\n");
     return 0;
 }

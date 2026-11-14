@@ -71,9 +71,41 @@ fn run_hypothesis() -> i64 {
     bad += run_group("probplot");
     bad += run_group("anderson_families");
     bad += run_group("fitting_mle");
+    bad += run_group("fitting_shapes");
     bad += run_group("assoc_somers");
     bad += run_group("contingency_risk");
     bad += run_group("kde");
+    bad += run_group("distributions_elementary");
+    bad += run_group("distributions_bounded");
+    bad += run_group("distributions_weibull");
+    bad += run_group("distributions_exponent");
+    bad += run_group("distributions_discrete_a");
+    bad += run_group("distributions_discrete_b");
+    bad += run_group("distributions_rice");
+    bad += run_group("distributions_search_a");
+    bad += run_group("distributions_search_b");
+    bad += run_group("distributions_search_c");
+    bad += run_group("distributions_search_d");
+    bad += run_group("distributions_closed");
+    bad += run_group("distributions_noncentral");
+    bad += run_group("distributions_nch");
+    bad += run_group("distributions_landau");
+    bad += run_group("distributions_multivariate");
+    bad += run_group("distributions_random_matrix");
+    bad += run_group("distributions_objects");
+    bad += run_group("distributions_mixture");
+    bad += run_group("distributions_covariance");
+    bad += run_group("distributions_histogram");
+    bad += run_group("distributions_power");
+    bad += run_group("distributions_growth");
+    bad += run_group("distributions_truncated");
+    bad += run_group("distributions_gamma");
+    bad += run_group("distributions_generalized");
+    bad += run_group("distributions_symmetric");
+    bad += run_group("distributions_johnson");
+    bad += run_group("distributions_special");
+    bad += run_group("distributions_extreme");
+    bad += run_group("distributions_skew");
     bad += run_group("time");
     return bad;
 }
@@ -237,6 +269,11 @@ fn run_group(name: u8[:]) -> i64 {
         bad += suite::run_fitting_mle_tests();
         bad += suite::run_fitting_mle_hostile();
     }
+    if is_word(name, "fitting_shapes") {
+        bad += suite::run_fitting_shapes_vectors();
+        bad += suite::run_fitting_shapes_tests();
+        bad += suite::run_fitting_shapes_hostile();
+    }
     if is_word(name, "assoc_somers") {
         bad += suite::run_assoc_somers_vectors();
         bad += suite::run_assoc_somers_tests();
@@ -251,6 +288,184 @@ fn run_group(name: u8[:]) -> i64 {
         bad += suite::run_kde_vectors();
         bad += suite::run_kde_tests();
         bad += suite::run_kde_hostile();
+    }
+    if is_word(name, "distributions_elementary") {
+        bad += suite::run_distributions_elementary_vectors();
+        bad += suite::run_distributions_elementary_tests();
+        bad += suite::run_distributions_elementary_hostile();
+        bad += suite::run_distributions_elementary_time();
+    }
+    if is_word(name, "distributions_bounded") {
+        bad += suite::run_distributions_bounded_vectors();
+        bad += suite::run_distributions_bounded_tests();
+        bad += suite::run_distributions_bounded_hostile();
+        bad += suite::run_distributions_bounded_time();
+    }
+    if is_word(name, "distributions_weibull") {
+        bad += suite::run_distributions_weibull_vectors();
+        bad += suite::run_distributions_weibull_tests();
+        bad += suite::run_distributions_weibull_hostile();
+        bad += suite::run_distributions_weibull_time();
+    }
+    if is_word(name, "distributions_exponent") {
+        bad += suite::run_distributions_exponent_vectors();
+        bad += suite::run_distributions_exponent_tests();
+        bad += suite::run_distributions_exponent_hostile();
+        bad += suite::run_distributions_exponent_time();
+    }
+    if is_word(name, "distributions_discrete_a") {
+        bad += suite::run_distributions_discrete_a_vectors();
+        bad += suite::run_distributions_discrete_a_tests();
+        bad += suite::run_distributions_discrete_a_hostile();
+        bad += suite::run_distributions_discrete_a_time();
+    }
+    if is_word(name, "distributions_discrete_b") {
+        bad += suite::run_distributions_discrete_b_vectors();
+        bad += suite::run_distributions_discrete_b_tests();
+        bad += suite::run_distributions_discrete_b_hostile();
+        bad += suite::run_distributions_discrete_b_time();
+    }
+    if is_word(name, "distributions_rice") {
+        bad += suite::run_distributions_rice_vectors();
+        bad += suite::run_distributions_rice_tests();
+        bad += suite::run_distributions_rice_hostile();
+        bad += suite::run_distributions_rice_time();
+    }
+    if is_word(name, "distributions_search_a") {
+        bad += suite::run_distributions_search_a_vectors();
+        bad += suite::run_distributions_search_a_tests();
+        bad += suite::run_distributions_search_a_hostile();
+        bad += suite::run_distributions_search_a_time();
+    }
+    if is_word(name, "distributions_search_b") {
+        bad += suite::run_distributions_search_b_vectors();
+        bad += suite::run_distributions_search_b_tests();
+        bad += suite::run_distributions_search_b_hostile();
+        bad += suite::run_distributions_search_b_time();
+    }
+    if is_word(name, "distributions_search_c") {
+        bad += suite::run_distributions_search_c_vectors();
+        bad += suite::run_distributions_search_c_tests();
+        bad += suite::run_distributions_search_c_hostile();
+        bad += suite::run_distributions_search_c_time();
+    }
+    if is_word(name, "distributions_search_d") {
+        bad += suite::run_distributions_search_d_vectors();
+        bad += suite::run_distributions_search_d_tests();
+        bad += suite::run_distributions_search_d_hostile();
+        bad += suite::run_distributions_search_d_time();
+    }
+    if is_word(name, "distributions_closed") {
+        bad += suite::run_distributions_closed_vectors();
+        bad += suite::run_distributions_closed_tests();
+        bad += suite::run_distributions_closed_hostile();
+        bad += suite::run_distributions_closed_time();
+    }
+    if is_word(name, "distributions_noncentral") {
+        bad += suite::run_distributions_noncentral_vectors();
+        bad += suite::run_distributions_noncentral_tests();
+        bad += suite::run_distributions_noncentral_hostile();
+        bad += suite::run_distributions_noncentral_time();
+    }
+    if is_word(name, "distributions_nch") {
+        bad += suite::run_distributions_nch_vectors();
+        bad += suite::run_distributions_nch_tests();
+        bad += suite::run_distributions_nch_hostile();
+        bad += suite::run_distributions_nch_time();
+    }
+    if is_word(name, "distributions_landau") {
+        bad += suite::run_distributions_landau_vectors();
+        bad += suite::run_distributions_landau_tests();
+        bad += suite::run_distributions_landau_hostile();
+        bad += suite::run_distributions_landau_time();
+    }
+    if is_word(name, "distributions_multivariate") {
+        bad += suite::run_distributions_multivariate_tests();
+        bad += suite::run_distributions_multivariate_hostile();
+        bad += suite::run_distributions_multivariate_time();
+    }
+    if is_word(name, "distributions_random_matrix") {
+        bad += suite::run_distributions_random_matrix_tests();
+        bad += suite::run_distributions_random_matrix_hostile();
+        bad += suite::run_distributions_random_matrix_time();
+    }
+    if is_word(name, "distributions_objects") {
+        bad += suite::run_distributions_objects_vectors();
+        bad += suite::run_distributions_objects_tests();
+        bad += suite::run_distributions_objects_hostile();
+        bad += suite::run_distributions_objects_time();
+    }
+    if is_word(name, "distributions_mixture") {
+        bad += suite::run_distributions_mixture_vectors();
+        bad += suite::run_distributions_mixture_tests();
+    }
+    if is_word(name, "distributions_covariance") {
+        bad += suite::run_distributions_covariance_vectors();
+        bad += suite::run_distributions_covariance_tests();
+    }
+    if is_word(name, "distributions_histogram") {
+        bad += suite::run_distributions_histogram_vectors();
+        bad += suite::run_distributions_histogram_tests();
+    }
+    if is_word(name, "distributions_power") {
+        bad += suite::run_distributions_power_vectors();
+        bad += suite::run_distributions_power_tests();
+        bad += suite::run_distributions_power_hostile();
+        bad += suite::run_distributions_power_time();
+    }
+    if is_word(name, "distributions_growth") {
+        bad += suite::run_distributions_growth_vectors();
+        bad += suite::run_distributions_growth_tests();
+        bad += suite::run_distributions_growth_hostile();
+        bad += suite::run_distributions_growth_time();
+    }
+    if is_word(name, "distributions_truncated") {
+        bad += suite::run_distributions_truncated_vectors();
+        bad += suite::run_distributions_truncated_tests();
+        bad += suite::run_distributions_truncated_hostile();
+        bad += suite::run_distributions_truncated_time();
+    }
+    if is_word(name, "distributions_gamma") {
+        bad += suite::run_distributions_gamma_vectors();
+        bad += suite::run_distributions_gamma_tests();
+        bad += suite::run_distributions_gamma_hostile();
+        bad += suite::run_distributions_gamma_time();
+    }
+    if is_word(name, "distributions_generalized") {
+        bad += suite::run_distributions_generalized_vectors();
+        bad += suite::run_distributions_generalized_tests();
+        bad += suite::run_distributions_generalized_hostile();
+        bad += suite::run_distributions_generalized_time();
+    }
+    if is_word(name, "distributions_symmetric") {
+        bad += suite::run_distributions_symmetric_vectors();
+        bad += suite::run_distributions_symmetric_tests();
+        bad += suite::run_distributions_symmetric_hostile();
+        bad += suite::run_distributions_symmetric_time();
+    }
+    if is_word(name, "distributions_johnson") {
+        bad += suite::run_distributions_johnson_vectors();
+        bad += suite::run_distributions_johnson_tests();
+        bad += suite::run_distributions_johnson_hostile();
+        bad += suite::run_distributions_johnson_time();
+    }
+    if is_word(name, "distributions_special") {
+        bad += suite::run_distributions_special_vectors();
+        bad += suite::run_distributions_special_tests();
+        bad += suite::run_distributions_special_hostile();
+        bad += suite::run_distributions_special_time();
+    }
+    if is_word(name, "distributions_extreme") {
+        bad += suite::run_distributions_extreme_vectors();
+        bad += suite::run_distributions_extreme_tests();
+        bad += suite::run_distributions_extreme_hostile();
+        bad += suite::run_distributions_extreme_time();
+    }
+    if is_word(name, "distributions_skew") {
+        bad += suite::run_distributions_skew_vectors();
+        bad += suite::run_distributions_skew_tests();
+        bad += suite::run_distributions_skew_hostile();
+        bad += suite::run_distributions_skew_time();
     }
     if is_word(name, "time") {
         bad += suite::run_time_tests();
@@ -273,6 +488,7 @@ fn run_group(name: u8[:]) -> i64 {
         bad += suite::run_time_probplot(200000);
         bad += suite::run_time_anderson_families(20000);
         bad += suite::run_time_fitting_mle(200);
+        bad += suite::run_time_fitting_shapes(100);
         bad += suite::run_time_assoc_somers(200000);
         bad += suite::run_time_contingency_risk();
         bad += suite::run_time_kde();

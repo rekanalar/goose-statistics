@@ -153,7 +153,7 @@ fn run_gof_tests() -> i64 {
     let neg: f64[3] = [1.0, -1.0, 2.0];
     let _f1, cf1 = statistics::goodness_of_fit(junk, neg[..], statistics::FAMILY_GAMMA, statistics::GOF_ANDERSON, 99, g);
     check(bad, cf1 == 5 && junk.len == 0, "goodness_of_fit, the gamma family needs positive values");
-    for fam in [7, 8, 9] {
+    for fam in [10, -2] {
         let _f, cf = statistics::goodness_of_fit(out, normal[..], fam, statistics::GOF_ANDERSON, 99, g);
         check(bad, cf == 5, "goodness_of_fit, a family with no fit");
     }
@@ -161,7 +161,7 @@ fn run_gof_tests() -> i64 {
     check(bad, cf2 == 5, "goodness_of_fit, an unknown family");
     let _f2b, cf2b = statistics::goodness_of_fit(out, normal[..], -1, statistics::GOF_ANDERSON, 99, g);
     check(bad, cf2b == 5, "goodness_of_fit, a negative family");
-    let _f3, cf3 = statistics::goodness_of_fit(out, normal[..], statistics::FAMILY_NORMAL, 3, 99, g);
+    let _f3, cf3 = statistics::goodness_of_fit(out, normal[..], statistics::FAMILY_NORMAL, 4, 99, g);
     check(bad, cf3 == 5, "goodness_of_fit, an unknown statistic");
     let _f3b, cf3b = statistics::goodness_of_fit(out, normal[..], statistics::FAMILY_NORMAL, -1, 99, g);
     check(bad, cf3b == 5, "goodness_of_fit, a negative statistic");

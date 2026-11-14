@@ -40,27 +40,6 @@ fn kde_data(k: Kde&, i: i64, j: i64) -> f64 { return k.buf[k.d * k.d + i * k.d +
 // The weight of the point i.
 fn kde_weight(k: Kde&, i: i64) -> f64 { return k.buf[k.d * k.d + k.n * k.d + i]; }
 
-// The factor of a matrix, lower triangular. The matrix holds d*d values
-// in row order. A matrix that is not positive definite gives the domain
-// fault.
-fn kde_cholesky(out: f64[>..]&, a: const f64[:], d: i64) -> i64 {
-    out.resize(0);
-    for k in 0..d * d { out.push(0.0); }
-    for i in 0..d {
-        for j in 0..i + 1 {
-            var s = a[i * d + j];
-            for m in 0..j { s = s - out[i * d + m] * out[j * d + m]; }
-            if i == j {
-                if !(s > 0.0) { return ERR_DOMAIN; }
-                out[i * d + i] = sqrt(s);
-            } else {
-                out[i * d + j] = s / out[j * d + j];
-            }
-        }
-    }
-    return OK;
-}
-
 // The estimate of a sample of points. The weights may be empty, and then
 // every point has the same weight. The bandwidth selects the factor of
 // Scott, the factor of Silverman or a factor that the caller gives.
@@ -126,7 +105,7 @@ fn kde_fit(data: const f64[:], dims: i64, weights: const f64[:], bw: i64, factor
         if is_nan(cov[k]) || is_inf(cov[k]) { return kde_fault(ERR_OVERFLOW), ERR_OVERFLOW; }
     }
     var chol: f64[>..] = [];
-    let c = kde_cholesky(chol, cov[..], dims);
+    let c = mv_cholesky(chol, cov[..], dims);
     if c != OK { return kde_fault(c), c; }
     var cho: f64[>..] = [];
     for k in 0..dims * dims { cho.push(chol[k] * f); }
