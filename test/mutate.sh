@@ -823,6 +823,7 @@ groups_for() {
     special_gamma.goose) echo "special distributions" ;;
     special_incomplete.goose) echo "special distributions" ;;
     special_inverse.goose) echo "special distributions" ;;
+    normality.goose) echo "normality" ;;
     tests_correlation.goose) echo "hypothesis" ;;
     tests_ks.goose) echo "hypothesis" ;;
     tests_multiplicity.goose) echo "multipletests" ;;
