@@ -869,6 +869,9 @@ def discrete_group_a():
           note="the answers of SciPy 1.18.1")
     sets = [
         ("bernoulli", (0.5,), [0, 1], [0, 1]),
+        # A second probability tells the mass of the count 0 from the
+        # mass of the count 1. At one half the two are the same.
+        ("bernoulli", (0.25,), [0, 1], [0, 1]),
         ("betabinom", (10, 2.0, 3.0), [0, 3, 10], [0, 10]),
         ("betanbinom", (10, 2.0, 3.0), [0, 5, 30], [0, 100]),
         ("boltzmann", (2.0, 5), [0, 2, 4], [0, 4]),
@@ -971,7 +974,3 @@ if __name__ == "__main__":
     tail_group_b()
     nch_group()
     landau_group()
-    objects_group()
-    mixture_group()
-    covariance_group()
-    histogram_group()

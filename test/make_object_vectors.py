@@ -172,3 +172,10 @@ def histogram_group():
     g.val("histogram count cdf 1.5",
           "statistics::histogram_cdf(ccontent, edges, false, 1.5)", float(c2.cdf(1.5)))
     g.write("    let content: f64[3] = [1.0, 2.0, 1.0];\n    let ccontent: f64[3] = [2.0, 4.0, 2.0];\n    let edges: f64[4] = [0.0, 1.0, 2.0, 3.0];\n")
+
+
+if __name__ == "__main__":
+    objects_group()
+    mixture_group()
+    covariance_group()
+    histogram_group()

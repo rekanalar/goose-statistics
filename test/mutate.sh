@@ -533,7 +533,7 @@ kde.goose|let stdev = kde_cho(k, 0, 0);|let stdev = kde_cho(k, 0, 0) * 2.0;|the 
 kde.goose|for i in 0..j + 1 { v = v + kde_cho(k, j, i) * z[i]; }|for i in 0..j { v = v + kde_cho(k, j, i) * z[i]; }|the diagonal of the noise
 kde.goose|acc = acc + kde_weight(k, i);|acc = acc + 1.0 / k.n as f64;|the draw of the index
 kde.goose|sum = sum + exp(-0.5 * q) * kde_weight(k, i);|sum = sum + exp(-0.5 * q);|the weights of the density
-kde.goose|if dims > n { return kde_fault(ERR_DOMAIN), ERR_DOMAIN; }|if false { return kde_fault(ERR_DOMAIN), ERR_DOMAIN; }|more dimensions than points
+kde.goose|if n < 2 { return kde_fault(ERR_TOO_SHORT), ERR_TOO_SHORT; }|if false { return kde_fault(ERR_TOO_SHORT), ERR_TOO_SHORT; }|a sample of one point
 distributions_elementary.goose|return cos(2.0 * x), OK;|return cos(x), OK;|the density of the anglit law
 distributions_elementary.goose|let s = sin(x + PI / 4.0);\n    return s * s, OK;|let s = sin(x + PI / 4.0);\n    return s, OK;|the cdf of the anglit law
 distributions_elementary.goose|return asin(sqrt(p)) - PI / 4.0, OK;|return sqrt(p) - PI / 4.0, OK;|the quantile of the anglit law
@@ -682,7 +682,7 @@ distributions_search_d.goose|n.c3 = 1.0 / PI;|n.c3 = 2.0 / PI;|the factor of the
 distributions_search_d.goose|if n.alpha < 1.0 { return 0.0; }|if n.alpha < 1.0 { return inf(); }|the lower end of the helper of the stable law
 distributions_search_d.goose|let bound = LEVY_X_TOL * pow(alpha, 1.0 / alpha);|let bound = LEVY_X_TOL * alpha;|the bound of the point near zeta of the stable law
 distributions_search_d.goose|n.c2 = alpha / (PI * abs(alpha - 1.0) * (x0 - n.zeta));|n.c2 = alpha / (PI * abs(alpha - 1.0) * (x0 + n.zeta));|the factor of the density of the stable law
-distributions_search_numeric.goose|hi = hi * 2.0 + 1.0;|hi = hi * 1.5 + 1.0;|the growth of the bracket of the search of a quantile
+distributions_search_numeric.goose|while steps < MAX_FAMILY_SEARCH {|while steps < 3 {|the bound of the steps of the search of a quantile
 distributions_numeric.goose|return m2 - m1 * m1;|return m2 - m1;|the variance of a family
 distributions_numeric.goose|return (m3 - 3.0 * m1 * m2 + 2.0 * m1 * m1 * m1) / (v * sqrt(v));|return (m3 - 3.0 * m1 * m2) / (v * sqrt(v));|the skewness of a family
 distributions_power.goose|return 1.0 / (1.0 + pow(x, -c)), OK;|return 1.0 / (1.0 + pow(x, c)), OK;|the cdf of the log-logistic law
