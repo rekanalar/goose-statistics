@@ -254,7 +254,7 @@ distributions_t.goose|if p <= 0.5 {|if p <= 0.0 {|the F quantile uses the upper 
 @resample.goose|INTERVAL_BCA { return rs_boot_fault(ERR_DOMAIN); }|INTERVAL_BCA { return rs_boot_fault(ERR_UNDEFINED); }|an unknown interval gives the domain fault
 @resample.goose|if method.kind != RESAMPLE_BOOTSTRAP { return rs_boot_fault(ERR_DOMAIN); }|if method.kind != RESAMPLE_MONTE_CARLO { return rs_boot_fault(ERR_DOMAIN); }|the kind of the resampling method
 @resample.goose|if method.interval == INTERVAL_BCA && sizes.len > 1 { return rs_boot_fault(ERR_DOMAIN); }|if false { return rs_boot_fault(ERR_DOMAIN); }|the BCa form refuses several samples
-@fitting.goose|if !(m > 0.0) { return nan(), nan(), ERR_FIT; }|if !(m < 0.0) { return nan(), nan(), ERR_FIT; }|a fit needs a positive scale
+@fitting.goose|if !(m > 0.0) { return nan(), nan(), nan(), ERR_FIT; }|if !(m < 0.0) { return nan(), nan(), nan(), ERR_FIT; }|a fit needs a positive mean
 @fitting.goose|if c != OK { return fault_result(c); }|if c != OK { return fault_result(ERR_FIT); }|a censored data fault keeps its own code
 exact.goose|if grid < 1 { return ERR_DOMAIN; }|if grid < 1 { return ERR_UNDEFINED; }|the least count of the grid
 exact_cvm.goose|if params.len != family_arity(family) { return fault_result(ERR_LENGTH); }|if params.len != family_arity(family) { return fault_result(ERR_DOMAIN); }|the arity of the family
@@ -533,7 +533,7 @@ kde.goose|let stdev = kde_cho(k, 0, 0);|let stdev = kde_cho(k, 0, 0) * 2.0;|the 
 kde.goose|for i in 0..j + 1 { v = v + kde_cho(k, j, i) * z[i]; }|for i in 0..j { v = v + kde_cho(k, j, i) * z[i]; }|the diagonal of the noise
 kde.goose|acc = acc + kde_weight(k, i);|acc = acc + 1.0 / k.n as f64;|the draw of the index
 kde.goose|sum = sum + exp(-0.5 * q) * kde_weight(k, i);|sum = sum + exp(-0.5 * q);|the weights of the density
-kde.goose|if !(s > 0.0) { return ERR_DOMAIN; }|if false { return ERR_DOMAIN; }|the check of the matrix
+kde.goose|if dims > n { return kde_fault(ERR_DOMAIN), ERR_DOMAIN; }|if false { return kde_fault(ERR_DOMAIN), ERR_DOMAIN; }|more dimensions than points
 distributions_elementary.goose|return cos(2.0 * x), OK;|return cos(x), OK;|the density of the anglit law
 distributions_elementary.goose|let s = sin(x + PI / 4.0);\n    return s * s, OK;|let s = sin(x + PI / 4.0);\n    return s, OK;|the cdf of the anglit law
 distributions_elementary.goose|return asin(sqrt(p)) - PI / 4.0, OK;|return sqrt(p) - PI / 4.0, OK;|the quantile of the anglit law
@@ -671,16 +671,16 @@ distributions_noncentral.goose|return exp(-lam + j * log(lam) - fam_lngamma(j + 
 distributions_noncentral.goose|if cp == OK { s += nc_weight(j, lam) * r * p; }|if cp == OK { s += nc_weight(j, lam) * p; }|the scale factor of the non-central F density
 distributions_noncentral.goose|total += fam_quad(edges[i], edges[i + 1]) { s => tl_ncdf(t * s - nc) * exp(nct_lscale(s, df)) };|total += fam_quad(edges[i], edges[i + 1]) { s => tl_ncdf(t * s + nc) * exp(nct_lscale(s, df)) };|the sign of the non-centrality of the t law
 distributions_noncentral.goose|sf += pow(1.0 - x, n);|sf += pow(1.0 - x, n - 1.0);|the first term of the one sided sum
-distributions_noncentral.goose|if s > 7.24 \|\| (s > 3.76 && n > 99.0) {|if s > 7.24 {|the asymptotic branch of the two sided law
+distributions_noncentral.goose|if s > 7.24 || (s > 3.76 && n > 99.0) {|if s > 7.24 {|the asymptotic branch of the two sided law
 distributions_nch.goose|let l = w + k * log(odds);|let l = w;|the odds weight of the Fisher law
 distributions_nch.goose|let big = odds * (n - k) + (m - n - (d - k));|let big = odds * (n - k) + (m - n - d);|the divisor of the Wallenius integral
-distributions_landau.goose|return max(v / PI, 0.0), OK;|return max(v, 0.0), OK;|the factor of the Landau density
+distributions_landau.goose|return min(max(v / PI, 0.0), 1.0);|return min(max(v, 0.0), 1.0);|the factor of the Landau cdf
 distributions_landau.goose|return 1.0 - sf, OK;|return sf, OK;|the survival complement of the Landau law
 distributions_search_d.goose|n.zeta = -beta * tan(0.5 * PI * alpha);|n.zeta = beta * tan(0.5 * PI * alpha);|the shift of the stable law
 distributions_search_d.goose|if alpha != 1.0 { x0 = x + zeta; }|if alpha != 1.0 { x0 = x - zeta; }|the change to the form of Nolan
 distributions_search_d.goose|n.c3 = 1.0 / PI;|n.c3 = 2.0 / PI;|the factor of the cumulative function of the stable law
 distributions_search_d.goose|if n.alpha < 1.0 { return 0.0; }|if n.alpha < 1.0 { return inf(); }|the lower end of the helper of the stable law
-distributions_search_d.goose|let bound = LEVY_X_TOL * pow(a, 1.0 / a);|let bound = LEVY_X_TOL * a;|the bound of the point near zeta of the stable law
+distributions_search_d.goose|let bound = LEVY_X_TOL * pow(alpha, 1.0 / alpha);|let bound = LEVY_X_TOL * alpha;|the bound of the point near zeta of the stable law
 distributions_search_d.goose|n.c2 = alpha / (PI * abs(alpha - 1.0) * (x0 - n.zeta));|n.c2 = alpha / (PI * abs(alpha - 1.0) * (x0 + n.zeta));|the factor of the density of the stable law
 distributions_search_numeric.goose|hi = hi * 2.0 + 1.0;|hi = hi * 1.5 + 1.0;|the growth of the bracket of the search of a quantile
 distributions_numeric.goose|return m2 - m1 * m1;|return m2 - m1;|the variance of a family
