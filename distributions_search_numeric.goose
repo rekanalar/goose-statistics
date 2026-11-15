@@ -27,10 +27,29 @@ fn fam_search_ppf<F>(p: f64, lo: f64, hi0: f64) -> f64, i64 {
         steps += 1;
     }
     if !found { return nan(), ERR_FIT; }
-    // The root sits above the lower bound and under the upper bound.
-    let flo = F(lo);
-    if is_nan(flo) { return nan(), ERR_NAN; }
-    if flo >= p { return lo, OK; }
+    // The root sits above the lower bound and under the upper bound. The
+    // lower bound may hold a cumulative function above the probability
+    // when the law has no bound there. The search grows the bracket
+    // downward until the root lies inside it.
+    let flo0 = F(lo);
+    if is_nan(flo0) { return nan(), ERR_NAN; }
+    if flo0 >= p {
+        var l = lo;
+        var fl = flo0;
+        var steps: i64 = 0;
+        while steps < MAX_FAMILY_SEARCH && fl >= p {
+            l = l * 2.0 - 1.0;
+            let f2 = F(l);
+            if is_nan(f2) { return nan(), ERR_NAN; }
+            fl = f2;
+            steps += 1;
+        }
+        if fl >= p { return nan(), ERR_FIT; }
+        let x, cx = brent_root(l, hi, 1e-14, 1e-15) { v => F(v) - p };
+        if cx != OK { return nan(), cx; }
+        return x, OK;
+    }
+    let flo = flo0;
     let x, c = brent_root(lo, hi, 1e-14, 1e-15) { v => F(v) - p };
     if c != OK { return nan(), c; }
     return x, OK;

@@ -123,21 +123,21 @@ fn genlogistic_mean(c: f64) -> f64, i64 {
 fn genlogistic_var(c: f64) -> f64, i64 {
     let k = check_shape(c);
     if k != OK { return nan(), k; }
-    return PI * PI / 6.0 + genlogistic_zeta(2, c), OK;
+    return fam_finite(PI * PI / 6.0 + genlogistic_zeta(2, c));
 }
 
 fn genlogistic_skew(c: f64) -> f64, i64 {
     let k = check_shape(c);
     if k != OK { return nan(), k; }
     let v = PI * PI / 6.0 + genlogistic_zeta(2, c);
-    return (-2.0 * genlogistic_zeta(3, c) + 2.0 * ZETA3) / (v * sqrt(v)), OK;
+    return fam_finite((-2.0 * genlogistic_zeta(3, c) + 2.0 * ZETA3) / (v * sqrt(v)));
 }
 
 fn genlogistic_kurt(c: f64) -> f64, i64 {
     let k = check_shape(c);
     if k != OK { return nan(), k; }
     let v = PI * PI / 6.0 + genlogistic_zeta(2, c);
-    return (PI * PI * PI * PI / 15.0 + 6.0 * genlogistic_zeta(4, c)) / (v * v), OK;
+    return fam_finite((PI * PI * PI * PI / 15.0 + 6.0 * genlogistic_zeta(4, c)) / (v * v));
 }
 
 // ---- genhalflogistic: the generalized half logistic law ------------------
@@ -148,9 +148,14 @@ fn genhalflogistic_pdf(x: f64, c: f64) -> f64, i64 {
     let s = fam_x(x);
     if s != OK { return nan(), s; }
     if x < 0.0 || x > 1.0 / c { return 0.0, OK; }
-    let t = pow(1.0 - c * x, 1.0 / c - 1.0);
-    let t2 = t * (1.0 - c * x);
-    return 2.0 * t / ((1.0 + t2) * (1.0 + t2)), OK;
+    // The point at the end of the support makes the power overflow. The
+    // density of the law is 0 there.
+    let u = 1.0 - c * x;
+    if u == 0.0 { return 0.0, OK; }
+    let t = pow(u, 1.0 / c - 1.0);
+    let t2 = t * u;
+    let v = 2.0 * t / ((1.0 + t2) * (1.0 + t2));
+    return fam_finite(v);
 }
 
 fn genhalflogistic_cdf(x: f64, c: f64) -> f64, i64 {

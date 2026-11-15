@@ -166,19 +166,17 @@ fn cosine_ppf(p: f64) -> f64, i64 {
     if p == 0.5 { return 0.0, OK; }
     let lower = p <= 0.5;
     let t = if lower { p } else { 1.0 - p };
-    var lo = -PI;
-    var hi = 0.0;
-    for k in 0..100 {
-        let mid = 0.5 * (lo + hi);
-        // The mass below mid, with the cancellation near -pi cut by the
-        // series of (u - sin u) for u = mid + pi.
-        let u = mid + PI;
-        let m = (u - sin(u)) / (2.0 * PI);
-        if m < t { lo = mid; } else { hi = mid; }
-    }
-    let r = 0.5 * (lo + hi);
-    if lower { return r, OK; }
-    return -r, OK;
+    let x, cx = brent_root(-PI, 0.0, 1e-15, 4e-16) { v => cosine_cdf_value(v) - t };
+    if cx != OK { return nan(), cx; }
+    if lower { return x, OK; }
+    return -x, OK;
+}
+
+// The mass below a point of the cosine law, with the cancellation near
+// -pi cut by the series of (u - sin u) for u = x + pi.
+fn cosine_cdf_value(x: f64) -> f64 {
+    let u = x + PI;
+    return (u - sin(u)) / (2.0 * PI);
 }
 
 fn cosine_mean() -> f64, i64 { return 0.0, OK; }

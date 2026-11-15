@@ -115,7 +115,9 @@ fn rice_cdf(x: f64, b: f64) -> f64, i64 {
     let s = fam_x(x);
     if s != OK { return nan(), s; }
     if x <= 0.0 { return 0.0, OK; }
-    if b == 0.0 {
+    // A shape so small that its square drops below the resolution of a
+    // double gives the law of Rayleigh.
+    if 0.5 * b * b == 0.0 {
         let m, cm = expm1(-0.5 * x * x);
         if cm != OK { return nan(), cm; }
         return -m, OK;
@@ -129,7 +131,7 @@ fn rice_sf(x: f64, b: f64) -> f64, i64 {
     let s = fam_x(x);
     if s != OK { return nan(), s; }
     if x <= 0.0 { return 1.0, OK; }
-    if b == 0.0 { return exp(-0.5 * x * x), OK; }
+    if 0.5 * b * b == 0.0 { return exp(-0.5 * x * x), OK; }
     return rice_sum(x, b, true);
 }
 
@@ -142,29 +144,26 @@ fn rice_ppf(p: f64, b: f64) -> f64, i64 {
     if e { return ev, ec; }
     // The root of the cumulative function for the lower half and of the
     // survival function for the upper half keeps the digits of the tail.
-    var hi: f64 = b + 8.0;
-    var steps: i64 = 0;
     if p <= 0.5 {
-        while steps < 60 {
-            let c, cc = rice_cdf(hi, b);
-            if cc != OK { return nan(), cc; }
-            if c >= p { break; }
-            hi = hi * 2.0;
-            steps += 1;
-        }
-        let x, cx = brent_root(0.0, hi, 1e-15, 4e-16) { v => rice_cdf(v, b) - p };
-        return x, cx;
+        return fam_search_ppf(p, 0.0, b + 8.0) { v => rice_cdf_value(v, b) };
     }
-    let q = 1.0 - p;
-    while steps < 60 {
-        let c, cc = rice_sf(hi, b);
-        if cc != OK { return nan(), cc; }
-        if c <= q { break; }
-        hi = hi * 2.0;
-        steps += 1;
-    }
-    let x, cx = brent_root(0.0, hi, 1e-15, 4e-16) { v => q - rice_sf(v, b) };
-    return x, cx;
+    return fam_search_ppf_sf(1.0 - p, 0.0, b + 8.0) { v => rice_sf_value(v, b) };
+}
+
+// The cumulative function of the law, without the code. The search of
+// the quantile takes this value.
+fn rice_cdf_value(x: f64, b: f64) -> f64 {
+    let v, c = rice_cdf(x, b);
+    if c != OK { return nan(); }
+    return v;
+}
+
+// The survival function of the law, without the code. The search of the
+// quantile takes this value.
+fn rice_sf_value(x: f64, b: f64) -> f64 {
+    let v, c = rice_sf(x, b);
+    if c != OK { return nan(); }
+    return v;
 }
 
 fn rice_mean(b: f64) -> f64, i64 {

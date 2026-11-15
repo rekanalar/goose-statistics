@@ -583,7 +583,7 @@ distributions_bounded.goose|return sqrt(2.0 / PI) * x * x * exp(-0.5 * x * x), O
 distributions_bounded.goose|return sqrt(2.0 * v), OK;|return sqrt(v), OK;|the quantile of the maxwell law
 distributions_bounded.goose|return exp(-0.5 * (x + e)) / SQRT_2PI, OK;|return exp(-0.5 * (x + e)) * SQRT_2PI, OK;|the density of the moyal law
 distributions_bounded.goose|return -log(2.0 * v * v), OK;|return -log(2.0 * v), OK;|the quantile of the moyal law
-distributions_weibull.goose|return c / 2.0 * pow(a, c - 1.0) * exp(-pow(a, c)), OK;|return c * pow(a, c - 1.0) * exp(-pow(a, c)), OK;|the density of the double Weibull law
+distributions_weibull.goose|let lp = log(c / 2.0) + (c - 1.0) * log(a) - pow(a, c);|let lp = log(c) + (c - 1.0) * log(a) - pow(a, c);|the density of the double Weibull law
 distributions_weibull.goose|return exp(-pow(x, -c)), OK;|return exp(-pow(x, c)), OK;|the cdf of the inverse Weibull law
 distributions_weibull.goose|return -pow(-log(p), 1.0 / c), OK;|return pow(-log(p), 1.0 / c), OK;|the quantile of the Weibull law of the negative line
 distributions_weibull.goose|let s = n as f64 / c + 1.0;|let s = n as f64 / c + 2.0;|the moment of the truncated Weibull law
@@ -609,8 +609,8 @@ distributions_discrete_a.goose|return (1.0 - exp(-a)) / (1.0 + exp(-a)) * exp(-a
 distributions_discrete_a.goose|if x != floor(x) { return ERR_DOMAIN; }|if x != floor(x) { return OK; }|the check of a count that must be a whole number
 distributions_discrete_b.goose|return -m * exp(-lambda * k), OK;|return -m * exp(-lambda * (k + 1.0)), OK;|the mass of the Planck law
 distributions_discrete_b.goose|let m, cm = expm1(-lambda * (floor(k) + 1.0));|let m, cm = expm1(-lambda * floor(k));|the cumulative function of the Planck law
-distributions_discrete_b.goose|next.push(old * (1.0 - p));|next.push(old * p);|the masses of the Poisson binomial law
-distributions_discrete_b.goose|next[k + 1] = next[k + 1] + old * p;|next[k + 1] = next[k + 1] + old * (1.0 - p);|the masses of the Poisson binomial law
+distributions_discrete_b.goose|out[k] = out[k] * (1.0 - p) + out[k - 1] * p;|out[k] = out[k] * (1.0 - p) + out[k - 1] * (1.0 - p);|the masses of the Poisson binomial law
+distributions_discrete_b.goose|out[0] = out[0] * (1.0 - p);|out[0] = out[0] * p;|the survival of the counts of the Poisson binomial law
 distributions_discrete_b.goose|return alpha * b, OK;|return b, OK;|the mass of the Yule-Simon law
 distributions_discrete_b.goose|let v = 1.0 - k * b;|let v = 1.0 - (k + 1.0) * b;|the cumulative function of the Yule-Simon law
 distributions_discrete_b.goose|total += d[0] * weight;|total += d[0] * weight * 2.0;|the Euler transform of the zeta function
@@ -627,7 +627,7 @@ distributions_rice.goose|let half = 0.5 * x * x;|let half = x * x;|the argument 
 distributions_rice.goose|g, cc = gammaincc(j + 1.0, half);|g, cc = gammainc(j + 1.0, half);|the upper tail of the Marcum sum
 distributions_rice.goose|return -m, OK;|return m, OK;|the cumulative function of the Rice law with the shape 0
 distributions_rice.goose|const RICE_MAX_B: f64 = 3000.0;|const RICE_MAX_B: f64 = 30000.0;|the bound of the shape of the Rice law
-distributions_rice.goose|let q = 1.0 - p;|let q = p;|the upper half of the quantile of the Rice law
+distributions_rice.goose|return fam_search_ppf_sf(1.0 - p, 0.0, b + 8.0) { v => rice_sf_value(v, b) };|return fam_search_ppf_sf(p, 0.0, b + 8.0) { v => rice_sf_value(v, b) };|the upper half of the quantile of the Rice law
 distributions_search_a.goose|if x <= 0.0 || x >= 1.0 { return 0.0, OK; }|if x <= 0.0 || x > 1.0 { return 0.0, OK; }|the support of the Argus law
 distributions_search_a.goose|let num = argus_phi(chi * sqrt(1.0 - x * x));|let num = argus_phi(chi * sqrt(1.0 + x * x));|the survival function of the Argus law
 distributions_search_a.goose|return 0.5 * g;|return g;|the helper of the Argus law
@@ -694,7 +694,7 @@ distributions_power.goose|let top, ct = beta(a + n as f64, b - n as f64);|let to
 distributions_power.goose|return 1.0 / (1.0 - c) / (1.0 - c) / (1.0 - 2.0 * c), OK;|return 1.0 / (1.0 - c) / (1.0 - 2.0 * c), OK;|the variance of the generalized Pareto law
 distributions_growth.goose|return exp(log(c) - mult * a - (c + 1.0) * m), OK;|return exp(log(c) - mult * a - (c + 2.0) * m), OK;|the density of the generalized logistic law
 distributions_growth.goose|return exp(-c * m), OK;|return exp(-c * m) * 2.0, OK;|the cdf of the generalized logistic law
-distributions_growth.goose|return 2.0 * t / ((1.0 + t2) * (1.0 + t2)), OK;|return t / ((1.0 + t2) * (1.0 + t2)), OK;|the density of the generalized half logistic law
+distributions_growth.goose|let v = 2.0 * t / ((1.0 + t2) * (1.0 + t2));|let v = t / ((1.0 + t2) * (1.0 + t2));|the density of the generalized half logistic law
 distributions_growth.goose|return (1.0 - t2) / (1.0 + t2), OK;|return (1.0 + t2) / (1.0 - t2), OK;|the cdf of the generalized half logistic law
 distributions_growth.goose|return (1.0 - r) / c, OK;|return (1.0 + r) / c, OK;|the quantile of the generalized half logistic law
 distributions_growth.goose|total += c * pow(l, n as f64) * exp(-c * y) * gw[j] * width / 2.0;|total += c * pow(l, n as f64) * exp(-c * y) * gw[j] * width;|the raw moment of the Gompertz law
@@ -708,7 +708,7 @@ distributions_gamma.goose|return exp((a - 1.0) * log(ax) - ax - lg) / 2.0, OK;|r
 distributions_gamma.goose|return 1.0 / (a - 1.0), OK;|return 1.0 / (a + 1.0), OK;|the mean of the inverse gamma law
 distributions_gamma.goose|return exp(c * x - exp(x) - lg), OK;|return exp(c * x + exp(x) - lg), OK;|the density of the log gamma law
 distributions_generalized.goose|let p = exp((c * a - 1.0) * lx - pow(x, c)) * abs(c) / g;|let p = exp((c * a - 1.0) * lx - pow(x, c)) / (abs(c) * g);|the density of the generalized gamma law
-distributions_generalized.goose|return pow(x, k) / pow(1.0 + pow(x, s), k / s), OK;|return pow(x, k) / pow(1.0 + pow(x, s), 2.0 * k / s), OK;|the cdf of the law of Mielke
+distributions_generalized.goose|let v = pow(xs, k / s) / pow(1.0 + xs, k / s);|let v = pow(xs, 2.0 * k / s) / pow(1.0 + xs, k / s);|the cdf of the law of Mielke
 distributions_generalized.goose|let u = -e;|let u = e;|the density of the generalized exponential law
 distributions_generalized.goose|let t = a + n as f64 / c;|let t = a + n as f64 * c;|the raw moment of the generalized gamma law
 distributions_symmetric.goose|return p, OK;|return 2.0 * p, OK;|the density of the generalized normal law
@@ -887,11 +887,27 @@ run_probe() {
 jobs="${MUTATE_JOBS:-4}"
 total=0
 
+# The variable MUTATE_FILES keeps the probes of the named source files.
+# The names are separated by a comma. A probe runs when one of its files
+# is in the list.
+changed=""
+if [ -n "${MUTATE_FILES:-}" ]; then
+  changed="$(echo "$MUTATE_FILES" | tr ',' ' ')"
+fi
+
 while IFS='|' read -r file from to name; do
   [ -z "$file" ] && continue
   # The variable MUTATE_ONLY keeps the probes whose line matches the pattern.
   if [ -n "${MUTATE_ONLY:-}" ]; then
     echo "$file|$from|$to|$name" | grep -Eq -- "$MUTATE_ONLY" || continue
+  fi
+  # The list of files keeps only the probes of those files.
+  if [ -n "$changed" ]; then
+    f="${file#@}"
+    case " $changed " in
+      *" $f "*) ;;
+      *) continue ;;
+    esac
   fi
   echo "$file|$from|$to|$name"
 

@@ -218,32 +218,17 @@ fn genexpon_ppf(p: f64, a: f64, b: f64, c: f64) -> f64, i64 {
     let e, ev, ec = fam_end(p, 0.0, inf());
     if e { return ev, ec; }
     // The quantile needs the Lambert W function. The package holds no such
-    // function, so the search finds the root of the cumulative function.
-    var lo = 0.0;
-    var hi = 1.0;
-    // The upper bound grows until the cumulative function passes the
-    // probability.
-    var count: i64 = 0;
-    while count < 200 {
-        let v, cv = genexpon_cdf(hi, a, b, c);
-        if cv != OK { return nan(), cv; }
-        if v >= p { break; }
-        hi = hi * 2.0;
-        count += 1;
-    }
-    if count >= 200 { return nan(), ERR_FIT; }
-    // The bisection of the root of the cumulative function.
-    var mid = (lo + hi) / 2.0;
-    count = 0;
-    while count < 200 {
-        let v, cv = genexpon_cdf(mid, a, b, c);
-        if cv != OK { return nan(), cv; }
-        if v == p { return mid, OK; }
-        if v < p { lo = mid; } else { hi = mid; }
-        mid = (lo + hi) / 2.0;
-        count += 1;
-    }
-    return mid, OK;
+    // function, so the shared search finds the root of the cumulative
+    // function.
+    return fam_search_ppf(p, 0.0, 1.0) { v => genexpon_cdf_value(v, a, b, c) };
+}
+
+// The cumulative function of the law, without the code. The search of
+// the quantile takes this value.
+fn genexpon_cdf_value(x: f64, a: f64, b: f64, c: f64) -> f64 {
+    let v, cc = genexpon_cdf(x, a, b, c);
+    if cc != OK { return nan(); }
+    return v;
 }
 
 // The check of the shapes of the generalized exponential law. All three
@@ -376,7 +361,15 @@ fn mielke_cdf(x: f64, k: f64, s: f64) -> f64, i64 {
     let v = fam_x(x);
     if v != OK { return nan(), v; }
     if x <= 0.0 { return 0.0, OK; }
-    return pow(x, k) / pow(1.0 + pow(x, s), k / s), OK;
+    // A huge point overflows the powers. The cumulative function of the
+    // law is 1 there.
+    let xs = pow(x, s);
+    if is_inf(xs) { return 1.0, OK; }
+    let v = pow(xs, k / s) / pow(1.0 + xs, k / s);
+    let o, co = fam_finite(v);
+    if co != OK { return nan(), co; }
+    if o > 1.0 { return 1.0, OK; }
+    return o, OK;
 }
 
 fn mielke_sf(x: f64, k: f64, s: f64) -> f64, i64 {
@@ -393,7 +386,8 @@ fn mielke_ppf(q: f64, k: f64, s: f64) -> f64, i64 {
     let e, ev, ec = fam_end(q, 0.0, inf());
     if e { return ev, ec; }
     let t = pow(q, s / k);
-    return pow(t / (1.0 - t), 1.0 / s), OK;
+    let v = pow(t / (1.0 - t), 1.0 / s);
+    return fam_finite(v);
 }
 
 // The check of the shapes of the law of Mielke. Both shapes must be above 0.

@@ -37,6 +37,9 @@ const FIT_DF_CAP: f64 = 1e6;
 fn filliben_medians(n: i64, out: f64[>..]&) {
     out.resize(0);
     for k in 0..n {
+        // The median of the mirrored beta law is one minus the median,
+        // so the second half reads the first half and no root find runs.
+        if k * 2 >= n { out.push(1.0 - out[n - 1 - k]); continue; }
         let a = (k + 1) as f64;
         let b = (n - k) as f64;
         let v, c = betaincinv(a, b, 0.5);
@@ -71,11 +74,11 @@ fn filliben_corr(xs: const f64[:], ys: const f64[:]) -> f64, i64 {
 // The Filliben statistic of a sorted sample against a fitted family.
 // The quantiles of the family at the medians of the order statistics
 // give the second list.
-fn filliben_statistic(s: const f64[:], family: i64, a: f64, b: f64, loc: f64) -> f64, i64 {
+// The medians come from the caller, so a Monte Carlo run computes them
+// once and not once per resample.
+fn filliben_statistic(s: const f64[:], family: i64, a: f64, b: f64, loc: f64, meds: const f64[:]) -> f64, i64 {
     let n = s.len;
     if n < 2 { return nan(), ERR_TOO_SHORT; }
-    var meds: f64[>..] = [];
-    filliben_medians(n, meds);
     var q: f64[>..] = [];
     for i in 0..n {
         let v, c = ft_ppf(family, meds[i], a, b, loc);

@@ -362,24 +362,16 @@ fn wald_ppf(p: f64) -> f64, i64 {
     if c != OK { return nan(), c; }
     let e, ev, ec = fam_end(p, 0.0, inf());
     if e { return ev, ec; }
-    // The quantile has no closed form, so a search finds it. The law rises
-    // from 0 at 0 to its mode near 0.5 and falls to 0 slowly.
-    var lo = 0.0;
-    var hi = 1.0;
-    while true {
-        let hv, hk = wald_cdf(hi);
-        if hk != OK { return nan(), hk; }
-        if hv >= p { break; }
-        hi = hi * 2.0;
-        if hi > 1e300 { return nan(), ERR_FIT; }
-    }
-    for k in 0..200 {
-        let mid = 0.5 * (lo + hi);
-        let v, cm = wald_cdf(mid);
-        if cm != OK { return nan(), cm; }
-        if v < p { lo = mid; } else { hi = mid; }
-    }
-    return 0.5 * (lo + hi), OK;
+    // The quantile has no closed form, so the shared search finds it.
+    return fam_search_ppf(p, 0.0, 1.0) { v => wald_cdf_value(v) };
+}
+
+// The cumulative function of the law, without the code. The search of
+// the quantile takes this value.
+fn wald_cdf_value(x: f64) -> f64 {
+    let v, c = wald_cdf(x);
+    if c != OK { return nan(); }
+    return v;
 }
 
 fn wald_mean() -> f64, i64 { return 1.0, OK; }

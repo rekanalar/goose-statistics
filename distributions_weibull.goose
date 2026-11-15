@@ -23,7 +23,10 @@ fn dweibull_pdf(x: f64, c: f64) -> f64, i64 {
     if s != OK { return nan(), s; }
     let a = abs(x);
     if a == 0.0 { return 0.0, OK; }
-    return c / 2.0 * pow(a, c - 1.0) * exp(-pow(a, c)), OK;
+    // The log form keeps a huge point from the difference of an infinity
+    // and a zero.
+    let lp = log(c / 2.0) + (c - 1.0) * log(a) - pow(a, c);
+    return exp(lp), OK;
 }
 
 fn dweibull_cdf(x: f64, c: f64) -> f64, i64 {
@@ -97,7 +100,8 @@ fn invweibull_pdf(x: f64, c: f64) -> f64, i64 {
     let s = fam_x(x);
     if s != OK { return nan(), s; }
     if x <= 0.0 { return 0.0, OK; }
-    return c * pow(x, -c - 1.0) * exp(-pow(x, -c)), OK;
+    let lp = log(c) + (-c - 1.0) * log(x) - pow(x, -c);
+    return exp(lp), OK;
 }
 
 fn invweibull_cdf(x: f64, c: f64) -> f64, i64 {
@@ -187,7 +191,8 @@ fn weibull_max_pdf(x: f64, c: f64) -> f64, i64 {
     if s != OK { return nan(), s; }
     if x > 0.0 { return 0.0, OK; }
     let a = -x;
-    return c * pow(a, c - 1.0) * exp(-pow(a, c)), OK;
+    let lp = log(c) + (c - 1.0) * log(a) - pow(a, c);
+    return exp(lp), OK;
 }
 
 fn weibull_max_cdf(x: f64, c: f64) -> f64, i64 {

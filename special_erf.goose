@@ -12,8 +12,8 @@ fn erf_series(x: f64) -> f64 {
     return x * horner(ERF_SERIES, x * x);
 }
 
-// q(x) = exp(x^2) erfc(x), for 0.5 <= x < 28. One fit per range, and the
-// asymptotic series above 7.
+// q(x) = exp(x^2) erfc(x). One fit per range up to 7, and the
+// asymptotic series above 7, which holds at any size.
 fn scaled_q(x: f64) -> f64 {
     if x < 1.5 {
         return clenshaw(H1_CHEB, 2.0 * x - 2.0);

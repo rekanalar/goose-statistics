@@ -311,6 +311,9 @@ fn exponnorm_erfcx(u: f64) -> f64 {
 
 // The scaled complementary error function for an argument of 0 or more.
 fn exponnorm_erfcx_pos(u: f64) -> f64 {
+    // exp(u*u) overflows above 27. The scaled form holds the same value
+    // without the exponential, so the far tail keeps its answer.
+    if u >= 27.0 { return scaled_q(u); }
     if u < 0.5 { return exp(u * u) * (1.0 - erf_series(u)); }
     return exp(u * u) * erfc_pos(u);
 }

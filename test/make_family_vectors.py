@@ -362,6 +362,8 @@ def search_group_a():
         ("dpareto_lognorm", (0.0, 1.0, 1.0, 1.0), (1.0, 2.0, 4.0)),
         ("erlang", (3.0,), (1.0, 2.0, 5.0)),
         ("exponnorm", (1.0,), (-1.0, 0.0, 2.0)),
+        # A shape below one takes the branch of the erfcx helper.
+        ("exponnorm", (0.5,), (1.0, 1.5)),
         ("foldcauchy", (1.0,), (0.5, 1.0, 3.0)),
         ("foldnorm", (0.5,), (0.5, 1.0, 2.0)),
     ]

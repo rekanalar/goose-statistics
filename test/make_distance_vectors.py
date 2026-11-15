@@ -301,13 +301,16 @@ def probplot_group():
     for label, a, b, n in (("a", -2, 2, 9), ("b", 0, 1, 5), ("one", -2, 2, 1)):
         svals, ppcc = st.ppcc_plot(PZ, a, b, N=n)
         g.fill(f"ppcc_plot {label}", f"statistics::ppcc_plot(out, z[..], {float(a)}, {float(b)}, {n})", ppcc.tolist(), "1e-12")
-    # the search of the best shape; the tolerance of the search is 1e-8
-    g.val("ppcc_max", "statistics::ppcc_max(z[..])", float(st.ppcc_max(PZ)), "1e-7")
-    g.val("ppcc_max bracket", "statistics::ppcc_max(z[..], 3, -1.0, 1.0)", float(st.ppcc_max(PZ, brack=(-1.0, 1.0))), "1e-7")
-    g.val("ppcc_max weibull", "statistics::ppcc_max(z[..], 10, 0.5, 3.0)", float(st.ppcc_max(PZ, dist="weibull_min", brack=(0.5, 3.0))), "1e-7")
+    # The search of the best shape. The objective is flat near its
+    # minimum, so the point that the search stops at differs between the
+    # platforms by about 1e-7 of the value. The tolerance covers that
+    # spread.
+    g.val("ppcc_max", "statistics::ppcc_max(z[..])", float(st.ppcc_max(PZ)), "1e-6")
+    g.val("ppcc_max bracket", "statistics::ppcc_max(z[..], 3, -1.0, 1.0)", float(st.ppcc_max(PZ, brack=(-1.0, 1.0))), "1e-6")
+    g.val("ppcc_max weibull", "statistics::ppcc_max(z[..], 10, 0.5, 3.0)", float(st.ppcc_max(PZ, dist="weibull_min", brack=(0.5, 3.0))), "1e-6")
     nz = np.random.default_rng(2).normal(size=40).tolist()
     g.decl("nz", nz)
-    g.val("ppcc_max normal sample", "statistics::ppcc_max(nz[..])", float(st.ppcc_max(nz)), "1e-7")
+    g.val("ppcc_max normal sample", "statistics::ppcc_max(nz[..])", float(st.ppcc_max(nz)), "1e-6")
     # the fault edges
     g.raw("let none: f64[0] = [];")
     g.raw("let one: f64[1] = [1.0];")

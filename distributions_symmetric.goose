@@ -214,7 +214,11 @@ fn tukeylambda_ppf_formula(p: f64, lam: f64) -> f64, i64 {
     }
     let a = pow(p, lam);
     let b = pow(1.0 - p, lam);
-    return (a - b) / lam, OK;
+    let v = (a - b) / lam;
+    // A shape far below the range of a double makes the power overflow.
+    // The difference of two infinities is not a value of the law.
+    if is_nan(v) || is_inf(v) { return nan(), ERR_OVERFLOW; }
+    return v, OK;
 }
 
 // The bounds of the law of Tukey and of lambda. A shape above 0 bounds the

@@ -1457,6 +1457,10 @@ These risks stay.
 - The degrees of freedom of a fit stay below `FIT_DF_CAP` of 1,000,000.
   The laws are flat above it. SciPy returns its own bound there. The
   fits need as many distinct values as they have parameters.
+- The `ppcc_max` call searches for the shape with the best correlation.
+  Its objective is flat near its minimum. The shape that the search
+  stops at therefore differs between the platforms by about 1e-7 of the
+  value. The call agrees with SciPy to that bound.
 
 - The `random_correlation` call checks every eigenvalue for NaN, for an
   infinity and for a negative value before any work. A sum that differs
@@ -1472,6 +1476,18 @@ These risks stay.
   infinity. A probability outside its range gives `ERR_DOMAIN`.
 - The `mixture` calls check every weight for NaN, for an infinity and
   for a negative value. They also check that the weights sum to 1.
+- The searches of a quantile bound their growth and their bisection. A
+  count whose search cannot end gives `ERR_FIT`. SciPy searches without
+  a bound. The draw of the multivariate laws checks the degrees of
+  freedom of the inverse and faults when the draw fails. SciPy gives a
+  degenerate matrix there.
+- A mean direction of a von Mises-Fisher draw holds only finite values.
+  A NaN direction gives `ERR_DOMAIN`. The value scales against the
+  infinity silently elsewhere in SciPy.
+- The densities of the Weibull family work in the logarithm. A point
+  far out gives 0 and not a NaN. SciPy returns a NaN at the same point.
+- The moments of the families of a power give `ERR_OVERFLOW` when the
+  moment overflows. SciPy returns a NaN or an infinity there.
 
 ## Test
 

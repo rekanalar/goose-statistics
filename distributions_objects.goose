@@ -319,7 +319,23 @@ fn dist_moment(d: Dist, order: i64) -> f64, i64 {
     }
     let k1 = (order + 1) as f64;
     if d.kind == DS_UNIFORM {
-        return (pow(d.b, k1) - pow(d.a, k1)) / (k1 * (d.b - d.a)), OK;
+        // The raw moment of the uniform law on [a, b] is the sum of the
+        // binomial terms around the centre. That form keeps its digits
+        // when the bounds are large and near each other, where the form
+        // with the difference of two powers cancels every digit.
+        let c = 0.5 * (d.a + d.b);
+        let h = 0.5 * (d.b - d.a);
+        var total: f64 = 0.0;
+        for j in 0..order + 1 {
+            if j % 2 == 1 { continue; }
+            // The moment of order j of a uniform law on [-1, 1].
+            let u = 1.0 / (j + 1) as f64;
+            // The binomial coefficient of the order.
+            var binom: f64 = 1.0;
+            for t in 0..order - j { binom = binom * ((order - t) as f64) / ((t + 1) as f64); }
+            total = total + binom * pow(c, (order - j) as f64) * pow(h, j as f64) * u;
+        }
+        return total, OK;
     }
     if d.kind == DS_LOGISTIC {
         return logistic_moment(order), OK;
@@ -414,10 +430,17 @@ fn mixture_icdf(comps: const Dist[:], w: const f64[:], p: f64) -> f64, i64 {
     return x, OK;
 }
 
+// The cumulative function of the mixture, without the code. The search
+// of the quantile takes this value. The check of the mixture already ran,
+// so the sum does not repeat it.
 fn mixture_cdf_value(comps: const Dist[:], w: const f64[:], x: f64) -> f64 {
-    let v, c = mixture_cdf(comps, w, x);
-    if c != OK { return nan(); }
-    return v;
+    var s: f64 = 0.0;
+    for i in 0..comps.len {
+        let v, c = dist_cdf(comps[i], x);
+        if c != OK { return nan(); }
+        s = s + w[i] * v;
+    }
+    return s;
 }
 
 fn mixture_iccdf(comps: const Dist[:], w: const f64[:], p: f64) -> f64, i64 {
@@ -431,6 +454,9 @@ fn mixture_iccdf(comps: const Dist[:], w: const f64[:], p: f64) -> f64, i64 {
 // are read once.
 fn mixture_moments(out: f64[>..]&, comps: const Dist[:], w: const f64[:], n: i64) -> i64 {
     out.resize(0);
+    // The order starts at one. The moment of order zero is the empty
+    // product, and the law holds no moment of order zero.
+    if n < 1 || n > DS_MAX_ORDER { return ERR_DOMAIN; }
     let k = mixture_check(comps, w);
     if k != OK { return k; }
     for i in 0..n { out.push(0.0); }

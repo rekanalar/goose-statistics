@@ -314,9 +314,9 @@ fn ad_sum(lo: const f64[:], hi: const f64[:]) -> f64 {
 }
 
 // The statistic of a sorted sample against a fitted family.
-fn ft_statistic(s: const f64[:], family: i64, a: f64, b: f64, c: f64, stat: i64) -> f64, i64 {
+fn ft_statistic(s: const f64[:], family: i64, a: f64, b: f64, c: f64, stat: i64, meds: const f64[:]) -> f64, i64 {
     let n = s.len;
-    if stat == GOF_FILLIBEN { return filliben_statistic(s, family, a, b, c); }
+    if stat == GOF_FILLIBEN { return filliben_statistic(s, family, a, b, c, meds); }
     let nf = n as f64;
     var acc: f64 = 0.0;
     var dplus: f64 = 0.0;
@@ -358,34 +358,21 @@ fn ft_statistic(s: const f64[:], family: i64, a: f64, b: f64, c: f64, stat: i64)
     return r, OK;
 }
 
-// One standard normal draw by the polar method of Marsaglia. The older
-// Goose release has no such call in the standard library, and one routine
-// gives one stream on both releases. The loop ends with probability 1; the
-// bound of 1000 tries stands for a generator that cannot end it.
-fn ft_gaussian(r: rng&) -> f64 {
-    for t in 0..1000 {
-        let u = 2.0 * rand_flt(r) - 1.0;
-        let v = 2.0 * rand_flt(r) - 1.0;
-        let s = u * u + v * v;
-        if s > 0.0 && s < 1.0 { return u * sqrt(-2.0 * log(s) / s); }
-    }
-    return nan();
-}
 
 // One draw from a fitted family. The draw of the chi-square, student
 // and F families inverts the cumulative function at a uniform draw.
 fn ft_draw(family: i64, a: f64, b: f64, c: f64, r: rng&) -> f64 {
-    if family == FAMILY_NORMAL { return a + b * ft_gaussian(r); }
-    if family == FAMILY_UNIFORM { return a + (b - a) * rand_flt(r); }
-    if family == FAMILY_EXPONENTIAL { return -log(1.0 - rand_flt(r)) / a; }
+    if family == FAMILY_NORMAL { return a + b * rs_normal(r); }
+    if family == FAMILY_UNIFORM { return a + (b - a) * rs_unit(r); }
+    if family == FAMILY_EXPONENTIAL { return -log(1.0 - rs_unit(r)) / a; }
     if family >= FAMILY_CHI2 {
         let u = rs_unit(r);
         let v, k = ft_ppf(family, u, a, b, c);
         if k != OK { return nan(); }
         return v;
     }
-    if family >= FAMILY_WEIBULL { return mle_draw(family, a, b, rand_flt(r)); }
-    return exp(a + b * ft_gaussian(r));
+    if family >= FAMILY_WEIBULL { return mle_draw(family, a, b, rs_unit(r)); }
+    return exp(a + b * rs_normal(r));
 }
 
 // The goodness-of-fit test of a sample against the normal, uniform,
@@ -427,7 +414,11 @@ fn goodness_of_fit(out: f64[>..]&, xs: const f64[:], family: i64, statistic: i64
 
     let a, b, c3, cf = ft_fit(s[..], family);
     if cf != OK { return fault_result(cf); }
-    let obs, co = ft_statistic(s[..], family, a, b, c3, statistic);
+    // The medians of the order statistics of the Filliben statistic. They
+    // depend on the count alone, so one pass serves every resample.
+    var meds: f64[>..] = [];
+    if statistic == GOF_FILLIBEN { filliben_medians(s.len, meds); }
+    let obs, co = ft_statistic(s[..], family, a, b, c3, statistic, meds[..]);
     if co != OK { return fault_result(co); }
 
     // The null values, one resample at a time. The count of the values that
@@ -447,7 +438,7 @@ fn goodness_of_fit(out: f64[>..]&, xs: const f64[:], family: i64, statistic: i64
         sort(buf) { x, y => x < y };
         let ra, rb, rc, cr = ft_fit(buf[..], family);
         if cr != OK { return fault_result(cr); }
-        let v, cs = ft_statistic(buf[..], family, ra, rb, rc, statistic);
+        let v, cs = ft_statistic(buf[..], family, ra, rb, rc, statistic, meds[..]);
         if cs != OK { return fault_result(cs); }
         if less { if v <= obs + gamma { count += 1; } }
         else if v >= obs - gamma { count += 1; }

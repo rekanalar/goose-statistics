@@ -423,9 +423,6 @@ fn studentized_range_cdf(x: f64, k: f64, df: f64) -> f64, i64 {
     return v, OK;
 }
 
-fn studentized_range_cdf_value_pub(x: f64, k: f64, df: f64) -> f64 {
-    return studentized_range_cdf_value(x, k, df);
-}
 
 fn studentized_range_ppf(q: f64, k: f64, df: f64) -> f64, i64 {
     let c = studentized_range_check(k, df);

@@ -20,8 +20,10 @@ fn uniform_direction_rvs(out: f64[>..]&, dim: i64, size: i64, r: rng&) -> i64 {
     out.resize(0);
     if dim < 1 || dim > MV_MAX_DIM { return ERR_DOMAIN; }
     if size < 0 || size > MV_MAX_DRAWS { return ERR_DOMAIN; }
+    // One buffer serves every draw of the call.
+    var v: f64[>..] = [];
     for s in 0..size {
-        var v: f64[>..] = [];
+        v.resize(0);
         var n2: f64 = 0.0;
         for i in 0..dim {
             let z = rs_normal(r);
@@ -104,8 +106,8 @@ fn ortho_group_rvs(out: f64[>..]&, dim: i64, size: i64, r: rng&) -> i64 {
     out.resize(0);
     if dim < 1 || dim > MV_MAX_DIM { return ERR_DOMAIN; }
     if size < 0 || size > MV_MAX_DRAWS { return ERR_DOMAIN; }
+    var q: f64[>..] = [];
     for s in 0..size {
-        var q: f64[>..] = [];
         rm_haar(q, dim, r);
         for v in q { out.push(v); }
     }
@@ -117,8 +119,8 @@ fn special_ortho_group_rvs(out: f64[>..]&, dim: i64, size: i64, r: rng&) -> i64 
     out.resize(0);
     if dim < 2 || dim > MV_MAX_DIM { return ERR_DOMAIN; }
     if size < 0 || size > MV_MAX_DRAWS { return ERR_DOMAIN; }
+    var q: f64[>..] = [];
     for s in 0..size {
-        var q: f64[>..] = [];
         rm_haar(q, dim, r);
         // A matrix with a determinant of -1 changes the sign of its first
         // column.
@@ -139,16 +141,21 @@ fn unitary_group_rvs(out: f64[>..]&, dim: i64, size: i64, r: rng&) -> i64 {
     out.resize(0);
     if dim < 1 || dim > MV_MAX_DIM { return ERR_DOMAIN; }
     if size < 0 || size > MV_MAX_DRAWS { return ERR_DOMAIN; }
+    // The buffers serve every draw of the call.
+    var qr: f64[>..] = [];
+    var qi: f64[>..] = [];
+    var cr: f64[>..] = [];
+    var ci: f64[>..] = [];
     for s in 0..size {
-        var qr: f64[>..] = [];
-        var qi: f64[>..] = [];
+        qr.resize(0);
+        qi.resize(0);
         for i in 0..dim * dim {
             qr.push(0.0);
             qi.push(0.0);
         }
         for j in 0..dim {
-            var cr: f64[>..] = [];
-            var ci: f64[>..] = [];
+            cr.resize(0);
+            ci.resize(0);
             for i in 0..dim {
                 cr.push(rs_normal(r));
                 ci.push(rs_normal(r));
@@ -342,7 +349,10 @@ fn vonmises_fisher_rvs(out: f64[>..]&, mu: const f64[:], kappa: f64, size: i64, 
     if ck != OK { return ck; }
     if size < 0 || size > MV_MAX_DRAWS { return ERR_DOMAIN; }
     var nm: f64 = 0.0;
-    for v in mu { nm = nm + v * v; }
+    for v in mu {
+        if is_nan(v) || is_inf(v) { return ERR_DOMAIN; }
+        nm = nm + v * v;
+    }
     if abs(nm - 1.0) > 1e-8 { return ERR_DOMAIN; }
     let dm1 = (d - 1) as f64;
     // The constants of the sampler.

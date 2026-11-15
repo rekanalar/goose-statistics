@@ -37,12 +37,24 @@ fn disc_count(k: f64) -> i64 {
 // the upper side, so the search grows its bound until the cumulative
 // function reaches the probability. The block gives the cumulative
 // function of a count.
+// The bisection of a quantile halves a span of the whole float range at
+// most, so a little more than a thousand halvings cover it.
+const DISC_FIND_STEPS: i64 = 2100;
+// The growth of a bracket doubles from one count, so a little more than
+// a thousand doublings reach the end of the float range.
+const DISC_GROW_STEPS: i64 = 1100;
+
 fn disc_find<F>(q: f64, lo: f64, hi: f64) -> f64, i64 {
     var l = lo;
     var r = hi;
-    while l < r {
+    // The step bound. A count far from the mode sits at a size where the
+    // step of one whole number is below the resolution of a float, so the
+    // bisection cannot end on its own. The bound stops it there.
+    var steps: i64 = 0;
+    while l < r && steps < DISC_FIND_STEPS {
         let mid = floor(0.5 * (l + r));
         if F(mid) >= q { r = mid; } else { l = mid + 1.0; }
+        steps += 1;
     }
     return l, OK;
 }
@@ -311,8 +323,26 @@ fn dlaplace_ppf(q: f64, a: f64) -> f64, i64 {
     // the count of the law.
     var l: f64 = -1.0;
     var r: f64 = 1.0;
-    while dlaplace_cdf(l, a) >= q { l = l * 2.0; }
-    while dlaplace_cdf(r, a) < q { r = r * 2.0; }
+    // The bounds grow until the root lies between them. The count of the
+    // steps is bounded, so a law that does not end gives the fit fault.
+    var steps: i64 = 0;
+    while steps < DISC_GROW_STEPS {
+        let v, c = dlaplace_cdf(l, a);
+        if c != OK { return nan(), c; }
+        if v < q { break; }
+        l = l * 2.0;
+        steps += 1;
+    }
+    if steps >= DISC_GROW_STEPS { return nan(), ERR_FIT; }
+    steps = 0;
+    while steps < DISC_GROW_STEPS {
+        let v, c = dlaplace_cdf(r, a);
+        if c != OK { return nan(), c; }
+        if v >= q { break; }
+        r = r * 2.0;
+        steps += 1;
+    }
+    if steps >= DISC_GROW_STEPS { return nan(), ERR_FIT; }
     return disc_find(q, l, r) { x => dlaplace_cdf(x, a) };
 }
 

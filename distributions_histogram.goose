@@ -35,9 +35,10 @@ fn hist_check(content: const f64[:], edges: const f64[:], density: bool, total: 
     }
     var sum: f64 = 0.0;
     for i in 0..n {
-        var h = content[i];
-        if !density { h = h / (edges[i + 1] - edges[i]); }
-        sum = sum + h * (edges[i + 1] - edges[i]);
+        // The content of a count is the mass of its bin. The content of a
+        // density is the mass times the width of its bin.
+        if density { sum = sum + content[i] * (edges[i + 1] - edges[i]); }
+        else { sum = sum + content[i]; }
     }
     if !(sum > 0.0) || is_inf(sum) { return ERR_DOMAIN; }
     total = sum;
@@ -135,7 +136,9 @@ fn histogram_moment(content: const f64[:], edges: const f64[:], density: bool, o
     let k = (order + 1) as f64;
     var s: f64 = 0.0;
     for i in 0..content.len {
-        s = s + h[i] * (pow(edges[i + 1], k) - pow(edges[i], k)) / k;
+        let t = h[i] * (pow(edges[i + 1], k) - pow(edges[i], k)) / k;
+        if is_nan(t) { return nan(), ERR_OVERFLOW; }
+        s = s + t;
     }
     return s, OK;
 }
@@ -176,18 +179,26 @@ fn histogram_rvs(out: f64[>..]&, content: const f64[:], edges: const f64[:], den
     if size < 0 || size > 100000000 { return ERR_DOMAIN; }
     var h: f64[>..] = [];
     hist_heights(h, content, edges, density, total);
+    // The cumulative mass of every bin. The draw finds its bin with a
+    // search, so the cost of a draw does not grow with the count of bins.
+    var cum: f64[>..] = [];
+    var acc: f64 = 0.0;
+    for i in 0..h.len {
+        acc = acc + h[i] * (edges[i + 1] - edges[i]);
+        cum.push(acc);
+    }
     for s in 0..size {
         let u = rs_unit(r);
-        var acc: f64 = 0.0;
-        var x: f64 = edges[edges.len - 1];
-        for i in 0..h.len {
-            let m = h[i] * (edges[i + 1] - edges[i]);
-            if acc + m >= u {
-                x = edges[i] + (u - acc) / h[i];
-                break;
-            }
-            acc = acc + m;
+        var lo: i64 = 0;
+        var hi: i64 = cum.len - 1;
+        while lo < hi {
+            let m = (lo + hi) / 2;
+            if cum[m] < u { lo = m + 1; } else { hi = m; }
         }
+        var before: f64 = 0.0;
+        if lo > 0 { before = cum[lo - 1]; }
+        var x = edges[lo] + (u - before) / h[lo];
+        if x > edges[lo + 1] { x = edges[lo + 1]; }
         out.push(x);
     }
     return OK;

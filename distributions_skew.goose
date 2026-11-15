@@ -230,13 +230,6 @@ fn skewnorm_cdf_value(x: f64, a: f64) -> f64 {
     return v;
 }
 
-// The survival function of the skew normal law as one number. The search
-// for the quantile needs it.
-fn skewnorm_sf_value(x: f64, a: f64) -> f64 {
-    let v, c = skewnorm_sf(x, a);
-    if c != OK { return nan(); }
-    return v;
-}
 
 fn skewnorm_sf(x: f64, a: f64) -> f64, i64 {
     let c = check_scalar(x);

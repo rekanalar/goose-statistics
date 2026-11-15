@@ -61,22 +61,16 @@ fn poisson_binom_masses(ps: const f64[:]) -> f64[>..] {
     var out: f64[>..] = [];
     out.push(1.0);
     for i in 0..ps.len {
-        var next: f64[>..] = [];
         let p = ps[i];
-        var k: i64 = 0;
-        while k < out.len {
-            let old = out[k];
-            next.push(old * (1.0 - p));
-            k += 1;
+        // The update walks the counts from the top, so the value that the
+        // success term reads is the value of the last pass.
+        out.push(0.0);
+        var k: i64 = out.len - 1;
+        while k > 0 {
+            out[k] = out[k] * (1.0 - p) + out[k - 1] * p;
+            k -= 1;
         }
-        next.push(0.0);
-        k = 0;
-        while k < out.len {
-            let old = out[k];
-            next[k + 1] = next[k + 1] + old * p;
-            k += 1;
-        }
-        out = copy(next);
+        out[0] = out[0] * (1.0 - p);
     }
     return out;
 }
@@ -178,22 +172,35 @@ fn randint_ppf(q: f64, low: f64, high: f64) -> f64, i64 {
 
 // The mass of the Skellam law. The law needs the modified Bessel
 // function of the first kind. The rule computes it from its series.
-fn skellam_bessel_i(n: f64, z: f64) -> f64, i64 {
-    // The series of the function. Its terms are all of one sign, so the
-    // sum keeps its digits.
+// The logarithm of the modified Bessel function of the first kind. The
+// series of the function has terms of one sign, so the sum keeps its
+// digits. The sum runs in the logarithm, so a large argument does not
+// overflow the terms.
+fn skellam_bessel_log(n: f64, z: f64) -> f64, i64 {
     let half = z / 2.0;
-    var term = pow(half, n) / gamma(n + 1.0);
-    var total = term;
+    let lh = log(half);
+    // The logarithm of the first term, and the largest term so far.
+    var lt = n * lh - fam_lngamma(n + 1.0);
+    var mx = lt;
+    var total = 1.0;
     var k: i64 = 1;
     var steps: i64 = 0;
     while steps < MAX_ITER_SERIES {
-        term = term * (half * half) / (k as f64 * (k + n));
-        total += term;
-        if abs(term) < 1e-18 * abs(total) { break; }
+        // The next term of the series.
+        lt = lt + 2.0 * lh - log(k as f64) - log(k as f64 + n);
+        if lt > mx {
+            // The largest term grew, so the sum shrinks by that factor.
+            total = total * exp(mx - lt);
+            mx = lt;
+        }
+        total = total + exp(lt - mx);
+        // The terms fall below the largest term and keep falling.
+        if lt < mx - 40.0 { break; }
         k += 1;
         steps += 1;
     }
-    return total, OK;
+    if is_nan(total) || !(total > 0.0) { return nan(), ERR_FIT; }
+    return mx + log(total), OK;
 }
 
 fn skellam_pmf(k: f64, mu1: f64, mu2: f64) -> f64, i64 {
@@ -204,15 +211,16 @@ fn skellam_pmf(k: f64, mu1: f64, mu2: f64) -> f64, i64 {
     let kc = disc_count(k);
     if kc != OK { return nan(), kc; }
     let n = abs(k);
-    let b, bc = skellam_bessel_i(n, 2.0 * sqrt(mu1 * mu2));
+    let lb, bc = skellam_bessel_log(n, 2.0 * sqrt(mu1 * mu2));
     if bc != OK { return nan(), bc; }
     let half = k / 2.0;
-    let r = exp(-(mu1 + mu2)) * b;
     // The power of the ratio needs the form with the logarithm when the
     // ratio is far from one.
     let l = log(mu1) - log(mu2);
-    let p = exp(half * l);
-    return r * p, OK;
+    let lp = -(mu1 + mu2) + lb + half * l;
+    if lp > 709.0 { return nan(), ERR_OVERFLOW; }
+    if lp < -745.0 { return 0.0, OK; }
+    return exp(lp), OK;
 }
 
 fn skellam_cdf(k: f64, mu1: f64, mu2: f64) -> f64, i64 {
@@ -262,8 +270,28 @@ fn skellam_ppf(q: f64, mu1: f64, mu2: f64) -> f64, i64 {
     // the count of the law.
     var l: f64 = -1.0;
     var r: f64 = 1.0;
-    while skellam_cdf(l, mu1, mu2) >= q { l = l * 2.0; }
-    while skellam_cdf(r, mu1, mu2) < q { r = r * 2.0; }
+    // The bounds grow until the root lies between them. The count of the
+    // steps is bounded, so a law that does not end gives the fit fault.
+    var steps: i64 = 0;
+    while steps < 200 {
+        let v, c = skellam_cdf(l, mu1, mu2);
+        if c != OK { return nan(), c; }
+        if is_nan(v) { return nan(), ERR_FIT; }
+        if v < q { break; }
+        l = l * 2.0;
+        steps += 1;
+    }
+    if steps >= 200 { return nan(), ERR_FIT; }
+    steps = 0;
+    while steps < 200 {
+        let v, c = skellam_cdf(r, mu1, mu2);
+        if c != OK { return nan(), c; }
+        if is_nan(v) { return nan(), ERR_FIT; }
+        if v >= q { break; }
+        r = r * 2.0;
+        steps += 1;
+    }
+    if steps >= 200 { return nan(), ERR_FIT; }
     return disc_find(q, l, r) { x => skellam_cdf(x, mu1, mu2) };
 }
 

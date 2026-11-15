@@ -61,10 +61,6 @@ fn covariance_check(kind: i64, data: const f64[:], d: i64) -> i64 {
     return OK;
 }
 
-fn cov_check_x(x: const f64[:], d: i64) -> i64 {
-    return mv_check_flat(x, d);
-}
-
 // The log of the pseudo-determinant. A value that is 0 or less drops out.
 fn covariance_log_pdet(kind: i64, data: const f64[:], d: i64) -> f64, i64 {
     let c = covariance_check(kind, data, d);
@@ -159,7 +155,7 @@ fn covariance_matrix(out: f64[>..]&, kind: i64, data: const f64[:], d: i64) -> i
 // covariance. The factor depends on the kind.
 fn covariance_whiten(out: f64[>..]&, kind: i64, data: const f64[:], d: i64, x: const f64[:]) -> i64 {
     out.resize(0);
-    let c = first_code(covariance_check(kind, data, d), cov_check_x(x, d));
+    let c = first_code(covariance_check(kind, data, d), mv_check_flat(x, d));
     if c != OK { return c; }
     if kind == COV_DIAGONAL {
         for i in 0..d {
@@ -196,7 +192,7 @@ fn covariance_whiten(out: f64[>..]&, kind: i64, data: const f64[:], d: i64, x: c
 // The coloured point: the inverse of the whitening.
 fn covariance_colorize(out: f64[>..]&, kind: i64, data: const f64[:], d: i64, x: const f64[:]) -> i64 {
     out.resize(0);
-    let c = first_code(covariance_check(kind, data, d), cov_check_x(x, d));
+    let c = first_code(covariance_check(kind, data, d), mv_check_flat(x, d));
     if c != OK { return c; }
     if kind == COV_DIAGONAL {
         for i in 0..d {
@@ -228,8 +224,6 @@ fn covariance_colorize(out: f64[>..]&, kind: i64, data: const f64[:], d: i64, x:
     var f: f64[>..] = [];
     let cf = mv_cholesky(f, data, d);
     if cf != OK { return cf; }
-    var z: f64[>..] = [];
-    mv_solve_lower_transpose(f[..], x, d, z);
-    for v in z { out.push(v); }
+    mv_solve_lower_transpose(f[..], x, d, out);
     return OK;
 }

@@ -73,6 +73,7 @@ fn multinomial_rvs(out: f64[>..]&, n: i64, p: const f64[:], size: i64, r: rng&) 
     let k = p.len;
     if k == 0 || k > MV_MAX_DIM { return ERR_DOMAIN; }
     if n < 0 || n > MV_MAX_DRAWS { return ERR_DOMAIN; }
+    if size < 0 || size > MV_MAX_DRAWS { return ERR_DOMAIN; }
     var total: f64 = 0.0;
     for v in p {
         if v < 0.0 || v > 1.0 { return ERR_DOMAIN; }
@@ -248,8 +249,8 @@ fn dirichlet_rvs(out: f64[>..]&, alpha: const f64[:], size: i64, r: rng&) -> i64
 
 // A draw of the gamma law of the shape a, by the inverse of its
 // cumulative function. The scale is 1.
-fn mv_gamma_draw(a: f64, r: rng&) -> f64 {
+fn mv_gamma_draw(a: f64, r: rng&) -> f64, i64 {
     let v, c = gammadist_ppf(rs_unit(r), a, 1.0);
-    if c != OK { return 0.0; }
-    return v;
+    if c != OK { return 0.0, c; }
+    return v, OK;
 }

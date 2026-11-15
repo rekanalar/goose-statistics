@@ -115,22 +115,7 @@ fn mv_matmul(out: f64[>..]&, a: const f64[:], b: const f64[:], r: i64, k: i64, c
     }
 }
 
-// The trace of a matrix.
-fn mv_trace(a: const f64[:], d: i64) -> f64 {
-    var s: f64 = 0.0;
-    for i in 0..d { s = s + a[i * d + i]; }
-    return s;
-}
 
-// The log of the determinant of a positive definite matrix. The Cholesky
-// factor gives the determinant as the square of the product of its
-// diagonal.
-fn mv_logdet(a: const f64[:], d: i64) -> f64, i64 {
-    var l: f64[>..] = [];
-    let c = mv_cholesky(l, a, d);
-    if c != OK { return nan(), c; }
-    return mv_logdet_factor(l, d), OK;
-}
 
 // The log of the determinant from a Cholesky factor that the caller holds.
 fn mv_logdet_factor(l: const f64[:], d: i64) -> f64 {
@@ -141,10 +126,10 @@ fn mv_logdet_factor(l: const f64[:], d: i64) -> f64 {
 
 // A draw of the chi law over the degrees of freedom. The draw comes from
 // the inverse of the cumulative function of the chi law.
-fn mv_chisq_draw(df: f64, r: rng&) -> f64 {
+fn mv_chisq_draw(df: f64, r: rng&) -> f64, i64 {
     let v, c = chi2_ppf(rs_unit(r), df);
-    if c != OK { return 0.0; }
-    return v;
+    if c != OK { return 0.0, c; }
+    return v, OK;
 }
 
 // ---- multivariate_normal --------------------------------------------------
@@ -203,8 +188,9 @@ fn multivariate_normal_rvs(out: f64[>..]&, mean: const f64[:], cov: const f64[:]
     var l: f64[>..] = [];
     let cl = mv_cholesky(l, cov, d);
     if cl != OK { return cl; }
+    var z: f64[>..] = [];
     for s in 0..size {
-        var z: f64[>..] = [];
+        z.resize(0);
         for i in 0..d { z.push(rs_normal(r)); }
         for i in 0..d {
             var v = mean[i];
@@ -262,17 +248,20 @@ fn multivariate_t_rvs(out: f64[>..]&, mean: const f64[:], shape: const f64[:], d
     var l: f64[>..] = [];
     let cl = mv_cholesky(l, shape, d);
     if cl != OK { return cl; }
+    var z: f64[>..] = [];
+    var v: f64[>..] = [];
     for s in 0..size {
-        var z: f64[>..] = [];
+        z.resize(0);
         for i in 0..d { z.push(rs_normal(r)); }
-        var v: f64[>..] = [];
+        v.resize(0);
         for i in 0..d {
             var t = 0.0;
             for j in 0..i + 1 { t = t + l[i * d + j] * z[j]; }
             v.push(t);
         }
         // The scale is the root of a chi law over the degrees of freedom.
-        let g = mv_chisq_draw(df, r);
+        let g, gd = mv_chisq_draw(df, r);
+        if gd != OK { return gd; }
         let scale = sqrt(df / g);
         for i in 0..d { out.push(mean[i] + v[i] / scale); }
     }
@@ -368,12 +357,14 @@ fn matrix_t_rvs(out: f64[>..]&, mean: const f64[:], shape: const f64[:], df: f64
     var l: f64[>..] = [];
     let cl = mv_cholesky(l, shape, d);
     if cl != OK { return cl; }
+    var z: f64[>..] = [];
     for s in 0..size {
         // The matrix of the draw is the product of a normal draw and the
         // root of the scale.
-        var z: f64[>..] = [];
+        z.resize(0);
         for i in 0..d * d { z.push(rs_normal(r)); }
-        var g = mv_chisq_draw(df, r);
+        var g, ge = mv_chisq_draw(df, r);
+        if ge != OK { return ge; }
         let scale = sqrt(df / g);
         for i in 0..d {
             for j in 0..d {

@@ -350,19 +350,19 @@ fn loggamma_mean(c: f64) -> f64, i64 {
 fn loggamma_var(c: f64) -> f64, i64 {
     let k = check_shape(c);
     if k != OK { return nan(), k; }
-    return genlogistic_zeta(2, c), OK;
+    return fam_finite(genlogistic_zeta(2, c));
 }
 
 fn loggamma_skew(c: f64) -> f64, i64 {
     let k = check_shape(c);
     if k != OK { return nan(), k; }
     let v = genlogistic_zeta(2, c);
-    return -2.0 * genlogistic_zeta(3, c) / (v * sqrt(v)), OK;
+    return fam_finite(-2.0 * genlogistic_zeta(3, c) / (v * sqrt(v)));
 }
 
 fn loggamma_kurt(c: f64) -> f64, i64 {
     let k = check_shape(c);
     if k != OK { return nan(), k; }
     let v = genlogistic_zeta(2, c);
-    return 6.0 * genlogistic_zeta(4, c) / (v * v), OK;
+    return fam_finite(6.0 * genlogistic_zeta(4, c) / (v * v));
 }

@@ -341,7 +341,7 @@ fn nct_edges(df: f64, edges: f64[>..]&) {
     let w = 1.0 / sqrt(2.0 * df);
     let zs: f64[15] = [-40.0, -20.0, -12.0, -8.0, -5.0, -3.0, -1.5, 0.0, 1.5, 3.0, 5.0, 8.0, 12.0, 20.0, 40.0];
     edges.push(0.0);
-    for i in 0..15 {
+    for i in 0..zs.len {
         let e = 1.0 + w * zs[i];
         if e > edges[edges.len - 1] { edges.push(e); }
     }
@@ -497,9 +497,14 @@ fn kstwo_cdf_value(n: f64, d: f64) -> f64 {
             if i - j + 1 < 0 { hm.push(0.0); } else { hm.push(1.0); }
         }
     }
+    // The powers of h from 1 to m, one multiply each, so the two border
+    // rows share one table.
+    var hp: f64[>..] = [];
+    var t: f64 = 1.0;
+    for i in 0..m { t = t * h; hp.push(t); }
     for i in 0..m {
-        hm[i * m] = hm[i * m] - pow(h, (i + 1) as f64);
-        hm[(m - 1) * m + i] = hm[(m - 1) * m + i] - pow(h, (m - i) as f64);
+        hm[i * m] = hm[i * m] - hp[i];
+        hm[(m - 1) * m + i] = hm[(m - 1) * m + i] - hp[m - 1 - i];
     }
     if 2.0 * h - 1.0 > 0.0 { hm[(m - 1) * m] = hm[(m - 1) * m] + pow(2.0 * h - 1.0, m as f64); }
     for i in 0..m {

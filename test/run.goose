@@ -398,10 +398,12 @@ fn run_group(name: u8[:]) -> i64 {
     if is_word(name, "distributions_mixture") {
         bad += suite::run_distributions_mixture_vectors();
         bad += suite::run_distributions_mixture_tests();
+        bad += suite::run_distributions_mixture_time();
     }
     if is_word(name, "distributions_covariance") {
         bad += suite::run_distributions_covariance_vectors();
         bad += suite::run_distributions_covariance_tests();
+        bad += suite::run_distributions_covariance_time();
     }
     if is_word(name, "distributions_histogram") {
         bad += suite::run_distributions_histogram_vectors();

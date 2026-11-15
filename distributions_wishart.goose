@@ -38,7 +38,8 @@ fn wishart_rvs(out: f64[>..]&, shape: const f64[:], df: f64, d: i64, size: i64, 
                     f[i * d + j] = rs_normal(r);
                 } else {
                     // The degrees of freedom that are left, at least one.
-                    let g = mv_chisq_draw(df - (i as f64), r);
+                    let g, gc = mv_chisq_draw(df - (i as f64), r);
+                    if gc != OK { return gc; }
                     f[i * d + i] = sqrt(g);
                 }
             }
@@ -103,13 +104,13 @@ fn invwishart_rvs(out: f64[>..]&, shape: const f64[:], df: f64, d: i64, size: i6
         for j in 0..d {
             var e: f64[>..] = [];
             for i in 0..d { if i == j { e.push(1.0); } else { e.push(0.0); } }
+            // The column of the inverse solves W y = e_j. With W = L L' the
+            // solve runs forward on L and back on L'.
             var x: f64[>..] = [];
             mv_solve_lower(l, e, d, x);
-            for i in 0..d {
-                var v: f64 = 0.0;
-                for k in 0..i + 1 { v = v + l[i * d + k] * x[k]; }
-                out.push(v / (l[i * d + i] * l[i * d + i]));
-            }
+            var y: f64[>..] = [];
+            mv_solve_lower_transpose(l, x, d, y);
+            for i in 0..d { out.push(y[i]); }
         }
     }
     return OK;
@@ -132,7 +133,8 @@ fn normal_inverse_gamma_rvs(out: f64[>..]&, mu: const f64[:], lam: f64, a: f64, 
     if size < 0 || size > MV_MAX_DRAWS { return ERR_DOMAIN; }
     for s in 0..size {
         // The shape of the law is an inverse gamma draw.
-        let g = mv_igamma_draw(a, b, r);
+        let g, gc2 = mv_igamma_draw(a, b, r);
+        if gc2 != OK { return gc2; }
         for i in 0..d {
             let z = rs_normal(r);
             out.push(mu[i] + z * sqrt(lam / g));
@@ -144,9 +146,10 @@ fn normal_inverse_gamma_rvs(out: f64[>..]&, mu: const f64[:], lam: f64, a: f64, 
 
 // A draw of the inverse gamma law. The value is the scale over a draw of
 // the gamma law of the shape a.
-fn mv_igamma_draw(a: f64, b: f64, r: rng&) -> f64 {
-    let g = mv_gamma_draw(a, r);
-    if g <= 0.0 { return 0.0; }
-    return b / g;
+fn mv_igamma_draw(a: f64, b: f64, r: rng&) -> f64, i64 {
+    let g, c = mv_gamma_draw(a, r);
+    if c != OK { return 0.0, c; }
+    if g <= 0.0 { return 0.0, ERR_OVERFLOW; }
+    return b / g, OK;
 }
 
