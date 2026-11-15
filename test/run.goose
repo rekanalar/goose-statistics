@@ -199,6 +199,9 @@ fn run_group(name: u8[:]) -> i64 {
         bad += suite::run_entropy_tests();
         bad += suite::run_entropy_hostile();
     }
+    if is_word(name, "speed") {
+        bad += suite::run_speed();
+    }
     if is_word(name, "trimmed") {
         bad += suite::run_trimmed_vectors();
         bad += suite::run_trimmed_tests();

@@ -40,10 +40,69 @@ fn log_density_gamma(a: f64, x: f64) -> f64 {
     return t - lg;
 }
 
+// The sum of the power series of the lower tail, in plain doubles.
+fn series_p_fast(a: f64, x: f64) -> f64 {
+    var term: f64 = 1.0;
+    var s: f64 = 1.0;
+    var k: i64 = 1;
+    while k <= MAX_ITER_SERIES {
+        term = term * x / (a + k);
+        s += term;
+        if term <= 1e-17 * s { break; }
+        k += 1;
+    }
+    return s;
+}
+
+// The log of a tail of the incomplete gamma function, in plain doubles.
+// The solver of the inverse uses it for its steps, where the digits of a
+// pair are not needed. On the side of the 0.5 line where the wanted tail
+// lies, the tail comes direct from the series or from the continued
+// fraction, and on the other side it comes from one minus the direct
+// tail, so the residual keeps the sign that the bracket needs. The
+// polish of the solver repairs the last digits in the value domain.
+fn log_tail_gamma_fast(a: f64, x: f64, upper: bool) -> f64 {
+    let use_series = x < a + 1.0 || x < 6.0;
+    // The series carries the factor gamma(a + 1), the continued
+    // fraction the factor gamma(a).
+    let base_s = a * log(x) - x - fam_lngamma(a + 1.0);
+    let base_c = a * log(x) - x - fam_lngamma(a);
+    if upper {
+        if use_series {
+            let s = series_p_fast(a, x);
+            let lp = base_s + log(s);
+            let p = exp(lp);
+            if p >= 1.0 { return -inf(); }
+            return log(1.0 - p);
+        }
+        let h, c = cf_q(a, x);
+        if c != 0 { return nan(); }
+        return base_c + log(h);
+    }
+    if use_series {
+        let s = series_p_fast(a, x);
+        return base_s + log(s);
+    }
+    let h, c = cf_q(a, x);
+    if c != 0 { return nan(); }
+    let lq = base_c + log(h);
+    let q = exp(lq);
+    if q >= 1.0 { return -inf(); }
+    return log(1.0 - q);
+}
+
+// The log of the density x^(a-1) exp(-x) / Gamma(a), in plain doubles.
+fn log_density_gamma_fast(a: f64, x: f64) -> f64 {
+    return (a - 1.0) * log(x) - x - fam_lngamma(a);
+}
+
 // Solve the tail of the incomplete gamma for a target log, in u = log x.
 // The residual is monotone, so one bracket holds the root. A step that
 // leaves the bracket falls back to a bisection step.
 fn solve_gamma_tail(a: f64, target: f64, upper: bool) -> f64, i64 {
+    // A tail lies between 0 and 1. A target outside solves to no point,
+    // so the call faults before the search burns its iterations.
+    if !(target > 0.0 && target < 1.0) { return nan(), 5; }
     let target_log = dd_to_f64(dd_log_d(target));
     var u0: f64 = 0.0;
     if upper {
@@ -64,10 +123,8 @@ fn solve_gamma_tail(a: f64, target: f64, upper: bool) -> f64, i64 {
     // the bracket: the residual is below 0 at lo and above 0 at hi for the
     // lower tail, and the other way round for the upper tail
     while n < 60 {
-        let flo, c1 = log_tail_gamma(a, exp(lo), upper);
-        if c1 != 0 { return nan(), c1; }
-        let fhi, c2 = log_tail_gamma(a, exp(hi), upper);
-        if c2 != 0 { return nan(), c2; }
+        let flo = log_tail_gamma_fast(a, exp(lo), upper);
+        let fhi = log_tail_gamma_fast(a, exp(hi), upper);
         var ok_lo = false;
         var ok_hi = false;
         if upper {
@@ -90,15 +147,22 @@ fn solve_gamma_tail(a: f64, target: f64, upper: bool) -> f64, i64 {
     var i: i64 = 0;
     while i < MAX_ITER_INVERSE {
         let x = exp(u);
-        let lt, c = log_tail_gamma(a, x, upper);
-        if c != 0 { return nan(), c; }
+        let lt = log_tail_gamma_fast(a, x, upper);
+        if is_nan(lt) { return nan(), ERR_NAN; }
         let f = lt - target_log;
+        // The exact root breaks the loop. A step at a zero residual would
+        // put the point on the edge of the bracket and spoil the bracket.
+        if f == 0.0 { break; }
+        // The residual holds the rounding of a log of a wide range, so
+        // the loop stops at the noise floor. The polish after the loop
+        // repairs the last digits.
+        if abs(f) <= 1e-14 { break; }
         if upper {
             if f > 0.0 { lo = u; } else { hi = u; }
         } else {
             if f > 0.0 { hi = u; } else { lo = u; }
         }
-        let ld = log_density_gamma(a, x) - lt + u;
+        let ld = log_density_gamma_fast(a, x) - lt + u;
         var g: f64 = 0.0;
         if ld < 700.0 { g = exp(ld); }
         if upper { g = -g; }
@@ -107,7 +171,7 @@ fn solve_gamma_tail(a: f64, target: f64, upper: bool) -> f64, i64 {
             let t = u - f / g;
             if t > lo && t < hi && !is_nan(t) { un = t; }
         }
-        if abs(un - u) <= 1e-16 * max(abs(un), 1.0) {
+        if abs(un - u) <= 1e-13 * max(abs(un), 1.0) {
             u = un;
             break;
         }

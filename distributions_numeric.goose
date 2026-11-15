@@ -28,8 +28,9 @@ const FAM_ULO: f64 = -30.0;    // the lowest point of the scan, in logs
 const FAM_UHI: f64 = 60.0;     // the highest point of the scan, in logs
 const FAM_REACH: f64 = 30.0;   // the reach of a law on the whole line
 const FAM_TRIES: i64 = 8;      // the widenings of the scan for the peak
-const FAM_GOLD: i64 = 40;      // the steps of the search for the peak
-const FAM_BISECT: i64 = 40;    // the steps of the bisection of a border
+const FAM_RAW_PANELS: i64 = 50; // the panels of the grid of the raw moments
+const FAM_LINE_SCAN: i64 = 64;  // the points of the scan for the range of the line
+const FAM_LINE_PANELS: i64 = 60; // the panels of the grid of the line
 
 // The logarithm of one plus the exponential of a value. The form with
 // the maximum of the two parts keeps the digits on each side. The direct
@@ -89,9 +90,19 @@ fn fam_logw<F>(n: i64, scale: f64, u: f64) -> f64 {
 
 // The raw moments of a law on 0 to inf. The density of the law is the
 // trailing block of the call. The rule works in the logarithm of the
-// point. The scale gives the point of the law from the logarithm. A scale
-// of one gives the point itself. The count gives the highest order that
-// the rule computes.
+// point. The scale gives the point of the law from the logarithm. A
+// scale of one gives the point itself. The count gives the highest
+// order that the rule computes.
+//
+// The weighted density of the order n is the weighted density of the
+// order 1 plus (n - 1) times the point, so one scan and one grid serve
+// every order. The scan holds the values of the first order, and the
+// value of another order follows from it with one addition. The peak of
+// an order comes from the scan, and the border of an order is the point
+// where its weighted density falls under the cut. The grid runs over the
+// range of the first order to the range of the last order, and the
+// weighted density of the middle orders stays under the cut outside
+// that range.
 fn fam_raws<F>(count: i64, scale: f64) -> f64, f64, f64, f64, i64 {
     var gx: f64[>..] = [];
     var gw: f64[>..] = [];
@@ -100,138 +111,130 @@ fn fam_raws<F>(count: i64, scale: f64) -> f64, f64, f64, f64, i64 {
     var m2: f64 = 0.0;
     var m3: f64 = 0.0;
     var m4: f64 = 0.0;
-    var code: i64 = OK;
-    for n in 1..count + 1 {
-        // The scan of the logarithm of the weighted density. The scan
-        // widens when the peak or a border lies at its edge.
-        var ulo: f64 = FAM_ULO;
-        var uhi: f64 = FAM_UHI;
-        var lo: f64 = 0.0;
-        var hi: f64 = 0.0;
-        var lstar: f64 = 0.0;
-        var done: i64 = 0;
-        var tries: i64 = 0;
-        while tries < FAM_TRIES && done == 0 {
-            tries += 1;
-            // The scan of the logarithm of the weighted density. The point
-            // of the peak gives the scale of the integral.
-            var peak: f64 = -inf();
-            var peak_index: i64 = 0;
+    var ulo: f64 = FAM_ULO;
+    var uhi: f64 = FAM_UHI;
+    var done: i64 = 0;
+    var tries: i64 = 0;
+    var lo: f64 = 0.0;
+    var hi: f64 = 0.0;
+    var vals: f64[>..] = [];
+    var stars: f64[>..] = [];
+    while tries < FAM_TRIES && done == 0 {
+        tries += 1;
+        let step = (uhi - ulo) / FAM_SCAN as f64;
+        vals.resize(0);
+        // The scan of the weighted density of the first order.
+        var pk1: f64 = -inf();
+        var i1: i64 = 0;
+        for k in 0..FAM_SCAN + 1 {
+            let u = ulo + step * k as f64;
+            let l1 = fam_logw(1, scale, u) { x => F(x) };
+            vals.push(l1);
+            if l1 > pk1 { pk1 = l1; i1 = k; }
+        }
+        // The scan found no density. The law lies outside the reach of
+        // the rule. The call gives the fit fault.
+        if is_inf(pk1) || is_nan(pk1) { break; }
+        // The peak of every order, from the shared values.
+        stars.resize(0);
+        var edge_lo: bool = i1 == 0;
+        var edge_hi: bool = i1 == FAM_SCAN;
+        var ilast: i64 = i1;
+        for n in 1..count + 1 {
+            let w = (n - 1) as f64 * scale;
+            var pk: f64 = -inf();
+            var ik: i64 = 0;
             for k in 0..FAM_SCAN + 1 {
-                let u = ulo + (uhi - ulo) * k as f64 / FAM_SCAN as f64;
-                let l = fam_logw(n, scale, u) { x => F(x) };
-                if l > peak { peak = l; peak_index = k; }
+                let l = vals[k] + w * (ulo + step * k as f64);
+                if l > pk { pk = l; ik = k; }
             }
-            // The scan found no density. The law lies outside the reach of
-            // the rule. The call gives the fit fault.
-            if is_inf(peak) || is_nan(peak) { code = ERR_FIT; break; }
-            // The peak lies at the edge of the scan. The scan widens.
-            if peak_index == 0 || peak_index == FAM_SCAN {
-                if peak_index == 0 && ulo > -690.0 { ulo = ulo * 2.0; }
-                else if uhi < 690.0 { uhi = uhi * 2.0; }
-                continue;
-            }
-            let step = (uhi - ulo) / FAM_SCAN as f64;
-            // The golden section search for the peak. The bracket holds the
-            // two points of the scan beside the peak.
-            var ga = ulo + step * (peak_index - 1) as f64;
-            var gb = ulo + step * (peak_index + 1) as f64;
-            let phi: f64 = 0.6180339887498949;
-            var x1 = gb - phi * (gb - ga);
-            var x2 = ga + phi * (gb - ga);
-            var l1 = fam_logw(n, scale, x1) { x => F(x) };
-            var l2 = fam_logw(n, scale, x2) { x => F(x) };
-            for it in 0..FAM_GOLD {
-                if l1 < l2 {
-                    ga = x1;
-                    x1 = x2;
-                    l1 = l2;
-                    x2 = ga + phi * (gb - ga);
-                    l2 = fam_logw(n, scale, x2) { x => F(x) };
-                } else {
-                    gb = x2;
-                    x2 = x1;
-                    l2 = l1;
-                    x1 = gb - phi * (gb - ga);
-                    l1 = fam_logw(n, scale, x1) { x => F(x) };
-                }
-            }
-            let ustar = (ga + gb) / 2.0;
-            lstar = fam_logw(n, scale, ustar) { x => F(x) };
-            // The range where the weighted density is above the cut.
-            let thr = lstar + log(FAM_TAIL);
-            // The border on the left. The walk gives the point of the scan
-            // below the cut.
-            var li: i64 = peak_index;
-            while li >= 0 {
-                let l = fam_logw(n, scale, ulo + step * li as f64) { x => F(x) };
-                if l <= thr { break; }
-                li -= 1;
-            }
-            // The border on the right.
-            var ri: i64 = peak_index;
-            while ri <= FAM_SCAN {
-                let l = fam_logw(n, scale, ulo + step * ri as f64) { x => F(x) };
-                if l <= thr { break; }
-                ri += 1;
-            }
-            // A border lies outside the scan. The law extends past the
-            // reach of the rule. The scan widens.
-            if li < 0 || ri > FAM_SCAN {
-                if li < 0 && ulo > -690.0 { ulo = ulo * 2.0; }
-                else if uhi < 690.0 { uhi = uhi * 2.0; }
-                continue;
-            }
-            // The bisection of the border on the left.
-            var lref = if li + 1 > peak_index { ustar } else { ulo + step * (li + 1) as f64 };
-            var la = ulo + step * li as f64;
-            var lb = lref;
-            for it in 0..FAM_BISECT {
-                let mid = (la + lb) / 2.0;
-                let lm = fam_logw(n, scale, mid) { x => F(x) };
-                if lm > thr { lb = mid; } else { la = mid; }
-            }
-            lo = (la + lb) / 2.0;
-            // The bisection of the border on the right.
-            var rref = if ri - 1 < peak_index { ustar } else { ulo + step * (ri - 1) as f64 };
-            var ra = ulo + step * ri as f64;
-            var rb = rref;
-            for it in 0..FAM_BISECT {
-                let mid = (ra + rb) / 2.0;
-                let lm = fam_logw(n, scale, mid) { x => F(x) };
-                if lm > thr { rb = mid; } else { ra = mid; }
-            }
-            hi = (ra + rb) / 2.0;
-            done = 1;
+            stars.push(pk);
+            if ik == 0 { edge_lo = true; }
+            if ik == FAM_SCAN { edge_hi = true; }
+            ilast = ik;
         }
-        // The scan found no range. The law lies outside the reach of the
-        // rule. The call gives the fit fault.
-        if done == 0 { code = ERR_FIT; continue; }
-        // The integral of the weighted density, scaled by the peak.
-        let width = (hi - lo) / FAM_PANELS as f64;
-        var total: f64 = 0.0;
-        for k in 0..FAM_PANELS {
-            let left = lo + width * k as f64;
-            for j in 0..FAM_NODES {
-                let u = left + width * (gx[j] + 1.0) / 2.0;
-                let l = fam_logw(n, scale, u) { x => F(x) };
-                if !is_nan(l) && !is_inf(l) {
-                    total += exp(l - lstar) * gw[j] * width / 2.0;
+        // A peak lies at the edge of the scan. The scan widens.
+        if edge_lo {
+            if ulo > -690.0 { ulo = ulo * 2.0; continue; }
+            if edge_hi && uhi < 690.0 { uhi = uhi * 2.0; continue; }
+            break;
+        }
+        if edge_hi {
+            if uhi < 690.0 { uhi = uhi * 2.0; continue; }
+            break;
+        }
+        // The border of the first order on the left and the border of the
+        // last order on the right, from the shared values. The walks run
+        // past the ends of the scan, so a border outside the scan widens
+        // it.
+        let cut1 = stars[0] + log(FAM_TAIL);
+        var li: i64 = i1;
+        while li >= 0 {
+            if vals[li] <= cut1 { break; }
+            li -= 1;
+        }
+        let wc = (count - 1) as f64 * scale;
+        let cutc = stars[count - 1] + log(FAM_TAIL);
+        var ri: i64 = ilast;
+        while ri <= FAM_SCAN {
+            if vals[ri] + wc * (ulo + step * ri as f64) <= cutc { break; }
+            ri += 1;
+        }
+        // A border lies outside the scan. The scan widens.
+        if li < 0 || ri > FAM_SCAN {
+            if li < 0 && ulo > -690.0 { ulo = ulo * 2.0; continue; }
+            if uhi < 690.0 { uhi = uhi * 2.0; continue; }
+            break;
+        }
+        lo = ulo + step * li as f64;
+        hi = ulo + step * ri as f64;
+        done = 1;
+    }
+    // The scan found no range. The law lies outside the reach of the
+    // rule. The call gives the fit fault.
+    if done == 0 {
+        return m1, m2, m3, m4, ERR_FIT;
+    }
+    // The grid of the union range. The value of the first order comes
+    // once per node, and the value of the order n follows with one
+    // addition.
+    let width = (hi - lo) / FAM_RAW_PANELS as f64;
+    var tot: f64[>..] = [];
+    for n in 1..count + 1 { tot.push(0.0); }
+    for k in 0..FAM_RAW_PANELS {
+        let left = lo + width * k as f64;
+        for j in 0..FAM_NODES {
+            let u = left + width * (gx[j] + 1.0) / 2.0;
+            let l1 = fam_logw(1, scale, u) { x => F(x) };
+            if !is_nan(l1) && !is_inf(l1) {
+                let wj = gw[j] * width / 2.0;
+                for n in 1..count + 1 {
+                    let l = l1 + (n - 1) as f64 * scale * u - stars[n - 1];
+                    if l > -700.0 {
+                        tot[n - 1] += exp(l) * wj;
+                    }
                 }
             }
         }
-        let v = exp(lstar) * total;
+    }
+    for n in 1..count + 1 {
+        let v = exp(stars[n - 1]) * tot[n - 1];
         if n == 1 { m1 = v; }
         else if n == 2 { m2 = v; }
         else if n == 3 { m3 = v; }
         else { m4 = v; }
     }
-    return m1, m2, m3, m4, code;
+    return m1, m2, m3, m4, OK;
 }
 
 // The raw moments of a law on the whole line. The density of the law is
 // the trailing block of the call. The rule works in the point itself. The
 // count gives the highest order that the rule computes.
+//
+// A scan finds the range where the density carries weight, and one pass
+// over the grid of that range serves every order: the value of the
+// density at a node comes once, and the four powers of the node come
+// from multiplications.
 fn fam_raws_line<F>(count: i64) -> f64, f64, f64, f64, i64 {
     var gx: f64[>..] = [];
     var gw: f64[>..] = [];
@@ -240,39 +243,52 @@ fn fam_raws_line<F>(count: i64) -> f64, f64, f64, f64, i64 {
     var m2: f64 = 0.0;
     var m3: f64 = 0.0;
     var m4: f64 = 0.0;
-    var code: i64 = OK;
-    for n in 1..count + 1 {
-        // The integral of the weighted density on each side of the peak.
-        var total: f64 = 0.0;
-        // The largest density on the range. The density at the edge of the
-        // range is compared with it.
-        var top: f64 = 0.0;
-        for side in 0..2 {
-            let left = if side == 0 { -FAM_REACH } else { 0.0 };
-            let right = if side == 0 { 0.0 } else { FAM_REACH };
-            let width = (right - left) / FAM_PANELS as f64;
-            for k in 0..FAM_PANELS {
-                let base = left + width * k as f64;
-                for j in 0..FAM_NODES {
-                    let x = base + width * (gx[j] + 1.0) / 2.0;
-                    let d = F(x);
-                    if !is_nan(d) && !is_inf(d) {
-                        total += d * pow(x, n as f64) * gw[j] * width / 2.0;
-                        if d > top { top = d; }
-                    }
-                }
+    // The scan of the density over the reach. The values at the ends
+    // serve the check of the reach.
+    var vals: f64[>..] = [];
+    var top: f64 = 0.0;
+    let wscan = 2.0 * FAM_REACH / FAM_LINE_SCAN as f64;
+    for k in 0..FAM_LINE_SCAN + 1 {
+        let d = F(-FAM_REACH + wscan * k as f64);
+        vals.push(d);
+        if !is_nan(d) && !is_inf(d) && d > top { top = d; }
+    }
+    let e1 = vals[FAM_LINE_SCAN];
+    let e2 = vals[0];
+    // The density at the edge of the range decides if the law extends
+    // past the reach of the rule. The call gives the fit fault then.
+    if is_nan(e1) || is_nan(e2) || is_inf(e1) || is_inf(e2) { return m1, m2, m3, m4, ERR_FIT; }
+    if e1 > top * 1e-9 || e2 > top * 1e-9 { return m1, m2, m3, m4, ERR_FIT; }
+    // The range where the density is above the cut, with one step of
+    // margin on both sides. A density below the cut everywhere keeps the
+    // whole reach.
+    let cut = top * 1e-13;
+    var i0: i64 = 0;
+    while i0 < FAM_LINE_SCAN && vals[i0] < cut { i0 += 1; }
+    var i1: i64 = FAM_LINE_SCAN;
+    while i1 > 0 && vals[i1] < cut { i1 -= 1; }
+    if i0 > 0 { i0 -= 1; }
+    if i1 < FAM_LINE_SCAN { i1 += 1; }
+    var lo2: f64 = -FAM_REACH + wscan * i0 as f64;
+    var hi2: f64 = -FAM_REACH + wscan * i1 as f64;
+    if i0 >= i1 { lo2 = -FAM_REACH; hi2 = FAM_REACH; }
+    // The single pass over the grid. One value of the density serves
+    // every order.
+    let width = (hi2 - lo2) / FAM_LINE_PANELS as f64;
+    for k in 0..FAM_LINE_PANELS {
+        let base = lo2 + width * k as f64;
+        for j in 0..FAM_NODES {
+            let x = base + width * (gx[j] + 1.0) / 2.0;
+            let d = F(x);
+            if !is_nan(d) && !is_inf(d) {
+                let wj = d * gw[j] * width / 2.0;
+                let x2 = x * x;
+                if count >= 1 { m1 += wj * x; }
+                if count >= 2 { m2 += wj * x2; }
+                if count >= 3 { m3 += wj * x2 * x; }
+                if count >= 4 { m4 += wj * x2 * x2; }
             }
         }
-        // The density at the edge of the range decides if the law extends
-        // past the reach of the rule. The call gives the fit fault then.
-        let e1 = F(FAM_REACH);
-        let e2 = F(-FAM_REACH);
-        if is_nan(e1) || is_nan(e2) || is_inf(e1) || is_inf(e2) { code = ERR_FIT; continue; }
-        if e1 > top * 1e-9 || e2 > top * 1e-9 { code = ERR_FIT; continue; }
-        if n == 1 { m1 = total; }
-        else if n == 2 { m2 = total; }
-        else if n == 3 { m3 = total; }
-        else { m4 = total; }
     }
-    return m1, m2, m3, m4, code;
+    return m1, m2, m3, m4, OK;
 }

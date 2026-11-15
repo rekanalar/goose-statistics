@@ -28,14 +28,25 @@ fn landau_expo(t: f64, x: f64) -> f64 {
 
 // The integral of the integrand over t. The flag tells whether the
 // integrand holds the divisor t. The panels have a width of 1 and the
-// integral stops once the exponent falls under the cut.
+// integral stops once the exponent falls under the cut. The nodes of the
+// rule come once for the whole integral; the integrand is analytic on a
+// panel of width 1 above 0, so one fixed rule of the panel is enough.
+// The first panel holds the point 0, where t log t is not analytic, so
+// that panel keeps the graded rule.
 fn landau_integral(x: f64, with_div: bool) -> f64, i64 {
+    var gx: f64[>..] = [];
+    var gw: f64[>..] = [];
+    gauss_legendre(gx, gw, FAM_QUAD_NODES);
     var total: f64 = 0.0;
     var lo: f64 = 0.0;
     var n: i64 = 0;
     while n < LANDAU_PANELS {
         let hi = lo + 1.0;
-        total += fam_quad(lo, hi) { t => landau_term(t, x, with_div) };
+        if lo == 0.0 {
+            total += fam_quad_graded(lo, hi) { t => landau_term(t, x, with_div) };
+        } else {
+            total += fam_quad_panels(lo, hi, 1, gx[..], gw[..]) { t => landau_term(t, x, with_div) };
+        }
         // The exponent falls for t above its peak. It falls below the cut
         // soon after.
         if landau_expo(hi, x) < LANDAU_CUT && hi > exp(-x - 1.0) { return total, OK; }

@@ -16,7 +16,6 @@ import std;
 import math;
 
 const NC_MAX: f64 = 100000.0;       // the largest non-centrality of a mixture
-const KS_MAX_N: f64 = 1000.0;       // the largest sample size of ksone and kstwo
 
 // The two sided bracket of a quantile of a law of the whole line. The
 // block gives the cumulative function.
@@ -211,6 +210,24 @@ fn nc_weight(j: f64, lam: f64) -> f64 {
     return exp(-lam + j * log(lam) - fam_lngamma(j + 1.0));
 }
 
+// The weights of every count of the mixture, from lo to hi. A quantile
+// search builds them once and reuses them at every step.
+fn nc_weights(lam: f64, lo: i64, hi: i64, ws: f64[>..]&) {
+    ws.resize(0);
+    for j in lo..hi + 1 {
+        ws.push(nc_weight(j, lam));
+    }
+}
+
+// The weights of the mixture of the mean lam = nc / 2. The call returns
+// the lowest count of the range, and it fills ws with the weights.
+fn nc_prep(nc: f64, ws: f64[>..]&) -> i64 {
+    let lam = 0.5 * nc;
+    let lo, hi = nc_range(lam);
+    nc_weights(lam, lo as i64, hi as i64, ws);
+    return lo as i64;
+}
+
 // ---- ncx2: the non-central chi-square law ---------------------------------
 
 fn ncx2_check(df: f64, nc: f64) -> i64 {
@@ -239,18 +256,38 @@ fn ncx2_pdf(x: f64, df: f64, nc: f64) -> f64, i64 {
     return tl_out(s);
 }
 
-fn ncx2_cdf_value(x: f64, df: f64, nc: f64) -> f64 {
+// The cumulative value from prepared weights. The cumulative values of
+// the chi-square law of one count follow from the value of the count
+// before: the shape grows by one, so one recurrence step costs one
+// multiply and one subtract.
+fn ncx2_cdf_core(x: f64, df: f64, lo: i64, ws: const f64[:]) -> f64 {
     if x <= 0.0 { return 0.0; }
-    let lam = 0.5 * nc;
-    let lo, hi = nc_range(lam);
-    var s: f64 = 0.0;
-    var j = lo;
-    while j <= hi {
-        let p, cp = chi2_cdf(x, df + 2.0 * j);
-        if cp == OK { s += nc_weight(j, lam) * p; }
-        j += 1.0;
+    let z = 0.5 * x;
+    let lz = log(z);
+    var a = 0.5 * df + lo;
+    let p0, c0 = gammainc(a, z);
+    if c0 != OK { return 0.0; }
+    let lg, sg, cg = lgamma(a + 1.0);
+    if cg != OK { return 0.0; }
+    // d holds z^a exp(-z) / gamma(a + 1), the step of the recurrence.
+    var d = exp(a * lz - z - lg);
+    var p = p0;
+    var s = ws[0] * p0;
+    for i in 1..ws.len {
+        p = p - d;
+        s += ws[i] * p;
+        d = d * z / (a + 1.0);
+        a = a + 1.0;
     }
     return min(s, 1.0);
+}
+
+fn ncx2_cdf_value(x: f64, df: f64, nc: f64) -> f64 {
+    let lam = 0.5 * nc;
+    let lo, hi = nc_range(lam);
+    var ws: f64[>..] = [];
+    nc_weights(lam, lo as i64, hi as i64, ws);
+    return ncx2_cdf_core(x, df, lo as i64, ws[..]);
 }
 
 fn ncx2_cdf(x: f64, df: f64, nc: f64) -> f64, i64 {
@@ -264,7 +301,10 @@ fn ncx2_ppf(q: f64, df: f64, nc: f64) -> f64, i64 {
     if k != OK { return nan(), k; }
     if q == 0.0 { return 0.0, OK; }
     if q == 1.0 { return inf(), OK; }
-    return fam_search_ppf(q, 0.0, df + nc + 1.0) { v => ncx2_cdf_value(v, df, nc) };
+    // The weights serve every step of the search.
+    var ws: f64[>..] = [];
+    let lo = nc_prep(nc, ws);
+    return fam_search_ppf(q, 0.0, df + nc + 1.0) { v => ncx2_cdf_core(v, df, lo, ws[..]) };
 }
 
 // ---- ncf: the non-central F law -------------------------------------------
@@ -280,36 +320,71 @@ fn ncf_check(dfn: f64, dfd: f64, nc: f64) -> i64 {
     return OK;
 }
 
+// The density from prepared weights. The law of one count is a scaled
+// F law, and every scaled F law of the mixture carries the beta density
+// of the point u = dfn x / (dfn x + dfd) with the same u and the same
+// second shape. The beta densities follow one from the next by a
+// recurrence, so the loop holds no special call.
+fn ncf_pdf_core(x: f64, dfn: f64, dfd: f64, lo: i64, ws: const f64[:]) -> f64 {
+    let u = dfn * x / (dfn * x + dfd);
+    let b = 0.5 * dfd;
+    var a = 0.5 * dfn + lo;
+    // q holds the beta density of u for the shape a.
+    let lb, clb = lbeta(a, b);
+    if clb != OK { return 0.0; }
+    var q = exp((a - 1.0) * log(u) + (b - 1.0) * log(1.0 - u) - lb);
+    if is_nan(q) { q = 0.0; }
+    var s = ws[0] * q;
+    for i in 1..ws.len {
+        q = q * u * (a + b) / a;
+        s += ws[i] * q;
+        a = a + 1.0;
+    }
+    return s * dfn * dfd / ((dfn * x + dfd) * (dfn * x + dfd));
+}
+
 fn ncf_pdf(x: f64, dfn: f64, dfd: f64, nc: f64) -> f64, i64 {
     let k = tl_px(x, ncf_check(dfn, dfd, nc));
     if k != OK { return nan(), k; }
     if x < 0.0 { return 0.0, OK; }
-    let lam = 0.5 * nc;
-    let lo, hi = nc_range(lam);
-    var s: f64 = 0.0;
-    var j = lo;
-    while j <= hi {
-        let r = dfn / (dfn + 2.0 * j);
-        let p, cp = fdist_pdf(x * r, dfn + 2.0 * j, dfd);
-        if cp == OK { s += nc_weight(j, lam) * r * p; }
-        j += 1.0;
+    var ws: f64[>..] = [];
+    let lo = nc_prep(nc, ws);
+    return tl_out(ncf_pdf_core(x, dfn, dfd, lo, ws[..]));
+}
+
+// The cumulative value from prepared weights. The cumulative values of
+// the beta law of one count follow from the value of the count before:
+// the first shape grows by one, so one recurrence step costs one
+// multiply and one subtract.
+fn ncf_cdf_core(x: f64, dfn: f64, dfd: f64, lo: i64, ws: const f64[:]) -> f64 {
+    if x <= 0.0 { return 0.0; }
+    let u = dfn * x / (dfn * x + dfd);
+    let b = 0.5 * dfd;
+    var a = 0.5 * dfn + lo;
+    let p0, c0 = betainc(a, b, u);
+    if c0 != OK { return 0.0; }
+    // d holds u^a (1 - u)^b / (a B(a, b)), the step of the recurrence.
+    // The three logarithms of the gamma come direct: the core sits in
+    // the hot loop of the quantile search, where the pair path of
+    // lbeta costs more.
+    let d0 = exp(a * log(u) + b * log(1.0 - u) - fam_lngamma(a) - fam_lngamma(b) + fam_lngamma(a + b)) / a;
+    var d: f64 = d0;
+    if is_nan(d) { d = 0.0; }
+    var p = p0;
+    var s = ws[0] * p0;
+    for i in 1..ws.len {
+        p = p - d;
+        s += ws[i] * p;
+        d = d * u * (a + b) / (a + 1.0);
+        a = a + 1.0;
     }
-    return tl_out(s);
+    return min(s, 1.0);
 }
 
 fn ncf_cdf_value(x: f64, dfn: f64, dfd: f64, nc: f64) -> f64 {
-    if x <= 0.0 { return 0.0; }
-    let lam = 0.5 * nc;
-    let lo, hi = nc_range(lam);
-    let u = dfn * x / (dfn * x + dfd);
-    var s: f64 = 0.0;
-    var j = lo;
-    while j <= hi {
-        let p, cp = betainc(0.5 * dfn + j, 0.5 * dfd, u);
-        if cp == OK { s += nc_weight(j, lam) * p; }
-        j += 1.0;
-    }
-    return min(s, 1.0);
+    var ws: f64[>..] = [];
+    let lo = nc_prep(nc, ws);
+    return ncf_cdf_core(x, dfn, dfd, lo, ws[..]);
 }
 
 fn ncf_cdf(x: f64, dfn: f64, dfd: f64, nc: f64) -> f64, i64 {
@@ -323,7 +398,10 @@ fn ncf_ppf(q: f64, dfn: f64, dfd: f64, nc: f64) -> f64, i64 {
     if k != OK { return nan(), k; }
     if q == 0.0 { return 0.0, OK; }
     if q == 1.0 { return inf(), OK; }
-    return fam_search_ppf(q, 0.0, 2.0) { v => ncf_cdf_value(v, dfn, dfd, nc) };
+    // The weights serve every step of the search.
+    var ws: f64[>..] = [];
+    let lo = nc_prep(nc, ws);
+    return fam_search_ppf(q, 0.0, 2.0) { v => ncf_cdf_core(v, dfn, dfd, lo, ws[..]) };
 }
 
 // ---- nct: the non-central t law -------------------------------------------
@@ -352,15 +430,49 @@ fn nct_lscale(s: f64, df: f64) -> f64 {
     return log(2.0) + 0.5 * df * log(0.5 * df) - fam_lngamma(0.5 * df) + (df - 1.0) * log(s) - 0.5 * df * s * s;
 }
 
-// The cumulative function at t, as an integral over the scale.
-fn nct_cdf_value(t: f64, df: f64, nc: f64) -> f64 {
+// The nodes of the fixed rule over the scale, with the density of the
+// scale folded into the weight of every node. The quantile search builds
+// them once and reuses them at every step. The integrand of the
+// cumulative function is analytic on every panel, so one fixed rule of
+// the panel is enough.
+fn nct_prep(df: f64, sp: f64[>..]&, sw: f64[>..]&) {
     var edges: f64[>..] = [];
     nct_edges(df, edges);
-    var total: f64 = 0.0;
+    var gx: f64[>..] = [];
+    var gw: f64[>..] = [];
+    gauss_legendre(gx, gw, FAM_QUAD_NODES);
+    let c = log(2.0) + 0.5 * df * log(0.5 * df) - fam_lngamma(0.5 * df);
+    sp.resize(0);
+    sw.resize(0);
     for i in 0..edges.len - 1 {
-        total += fam_quad(edges[i], edges[i + 1]) { s => tl_ncdf(t * s - nc) * exp(nct_lscale(s, df)) };
+        let lo = edges[i];
+        let hi = edges[i + 1];
+        let w = (hi - lo) / 2.0;
+        for j in 0..gx.len {
+            let s = lo + w * (gx[j] + 1.0);
+            sp.push(s);
+            sw.push(gw[j] * w * exp(c + (df - 1.0) * log(s) - 0.5 * df * s * s));
+        }
+    }
+}
+
+// The cumulative value from prepared nodes. The weight of every node
+// holds the density of the scale, so the loop evaluates one normal
+// cumulative value per node.
+fn nct_cdf_core(t: f64, nc: f64, sp: const f64[:], sw: const f64[:]) -> f64 {
+    var total: f64 = 0.0;
+    for i in 0..sp.len {
+        total += sw[i] * tl_ncdf(t * sp[i] - nc);
     }
     return min(max(total, 0.0), 1.0);
+}
+
+// The cumulative function at t, as an integral over the scale.
+fn nct_cdf_value(t: f64, df: f64, nc: f64) -> f64 {
+    var sp: f64[>..] = [];
+    var sw: f64[>..] = [];
+    nct_prep(df, sp, sw);
+    return nct_cdf_core(t, nc, sp[..], sw[..]);
 }
 
 fn nct_pdf(t: f64, df: f64, nc: f64) -> f64, i64 {
@@ -386,198 +498,9 @@ fn nct_ppf(q: f64, df: f64, nc: f64) -> f64, i64 {
     if k != OK { return nan(), k; }
     if q == 0.0 { return -inf(), OK; }
     if q == 1.0 { return inf(), OK; }
-    return tl_ppf_line(q, nc) { v => nct_cdf_value(v, df, nc) };
-}
-
-// ---- ksone: the one sided Kolmogorov-Smirnov statistic --------------------
-
-fn ks_check(n: f64) -> i64 {
-    let c = check_scalar(n);
-    if c != OK { return c; }
-    if n < 1.0 || n != floor(n) || n > KS_MAX_N { return ERR_DOMAIN; }
-    return OK;
-}
-
-// The survival function of the sum of Birnbaum and Tingey, and the
-// density as its negative derivative. The point lies from 0 to 1.
-fn ksone_both(x: f64, n: f64) -> f64, f64 {
-    var sf: f64 = 0.0;
-    var dd: f64 = 0.0;
-    let jmax = floor(n * (1.0 - x));
-    var j: f64 = 0.0;
-    while j <= jmax {
-        let lc, cc = lchoose(n, j);
-        if cc != OK { return nan(), nan(); }
-        let a = x + j / n;
-        let b = 1.0 - x - j / n;
-        if j == 0.0 {
-            sf += pow(1.0 - x, n);
-            dd += -n * pow(1.0 - x, n - 1.0);
-        } else if b > 0.0 {
-            let l = exp(lc + (j - 1.0) * log(a) + (n - j) * log(b));
-            sf += x * l;
-            dd += l * (1.0 + x * (j - 1.0) / a - x * (n - j) / b);
-        } else if n - j == 0.0 {
-            let l = exp(lc + (j - 1.0) * log(a));
-            sf += x * l;
-            dd += l * (1.0 + x * (j - 1.0) / a);
-        }
-        j += 1.0;
-    }
-    return sf, -dd;
-}
-
-fn ksone_pdf(x: f64, n: f64) -> f64, i64 {
-    let k = tl_px(x, ks_check(n));
-    if k != OK { return nan(), k; }
-    if x <= 0.0 || x >= 1.0 { return 0.0, OK; }
-    let sf, d = ksone_both(x, n);
-    return tl_out(max(d, 0.0));
-}
-
-fn ksone_cdf_value(x: f64, n: f64) -> f64 {
-    if x <= 0.0 { return 0.0; }
-    if x >= 1.0 { return 1.0; }
-    let sf, d = ksone_both(x, n);
-    return min(max(1.0 - sf, 0.0), 1.0);
-}
-
-fn ksone_cdf(x: f64, n: f64) -> f64, i64 {
-    let k = tl_px(x, ks_check(n));
-    if k != OK { return nan(), k; }
-    return tl_out(ksone_cdf_value(x, n));
-}
-
-fn ksone_ppf(q: f64, n: f64) -> f64, i64 {
-    let k = tl_pq(q, ks_check(n));
-    if k != OK { return nan(), k; }
-    if q == 0.0 { return 0.0, OK; }
-    if q == 1.0 { return 1.0, OK; }
-    let x, cx = brent_root(0.0, 1.0, 1e-14, 4e-16) { v => ksone_cdf_value(v, n) - q };
-    return x, cx;
-}
-
-// ---- kstwo: the two sided Kolmogorov-Smirnov statistic --------------------
-
-// The product c = a * b of two square matrices of the side m.
-fn ks_mul(a: const f64[:], b: const f64[:], c: f64[>..]&, m: i64) {
-    for i in 0..m {
-        for j in 0..m {
-            var s: f64 = 0.0;
-            for l in 0..m { s += a[i * m + l] * b[l * m + j]; }
-            c[i * m + j] = s;
-        }
-    }
-}
-
-// Scale a matrix by 1e-140 when its largest entry grows too large. The
-// call returns the added power of ten.
-fn ks_rescale(v: f64[>..]&) -> i64 {
-    var top: f64 = 0.0;
-    for i in 0..v.len { top = max(top, abs(v[i])); }
-    if top < 1e140 { return 0; }
-    for i in 0..v.len { v[i] = v[i] * 1e-140; }
-    return 140;
-}
-
-// The cumulative function of the statistic, by the matrix method.
-fn kstwo_cdf_value(n: f64, d: f64) -> f64 {
-    if d <= 0.5 / n { return 0.0; }
-    if d >= 1.0 { return 1.0; }
-    let s = d * d * n;
-    if s > 7.24 || (s > 3.76 && n > 99.0) {
-        return 1.0 - 2.0 * exp(-(2.000071 + 0.331 / sqrt(n) + 1.409 / n) * s);
-    }
-    let k = floor(n * d) as i64 + 1;
-    let m = 2 * k - 1;
-    let h = k - n * d;
-    var hm: f64[>..] = [];
-    for i in 0..m {
-        for j in 0..m {
-            if i - j + 1 < 0 { hm.push(0.0); } else { hm.push(1.0); }
-        }
-    }
-    // The powers of h from 1 to m, one multiply each, so the two border
-    // rows share one table.
-    var hp: f64[>..] = [];
-    var t: f64 = 1.0;
-    for i in 0..m { t = t * h; hp.push(t); }
-    for i in 0..m {
-        hm[i * m] = hm[i * m] - hp[i];
-        hm[(m - 1) * m + i] = hm[(m - 1) * m + i] - hp[m - 1 - i];
-    }
-    if 2.0 * h - 1.0 > 0.0 { hm[(m - 1) * m] = hm[(m - 1) * m] + pow(2.0 * h - 1.0, m); }
-    for i in 0..m {
-        for j in 0..m {
-            if i - j + 1 > 0 {
-                for g in 1..(i - j + 2) { hm[i * m + j] = hm[i * m + j] / g; }
-            }
-        }
-    }
-    // The power of the matrix by repeated squaring, with a power of ten
-    // kept apart.
-    var r: f64[>..] = [];
-    var p: f64[>..] = [];
-    var t: f64[>..] = [];
-    for i in 0..m * m {
-        r.push(0.0);
-        t.push(0.0);
-        p.push(hm[i]);
-    }
-    for i in 0..m { r[i * m + i] = 1.0; }
-    var er: i64 = 0;
-    var ep: i64 = 0;
-    var e = n as i64;
-    while e > 0 {
-        if e % 2 == 1 {
-            ks_mul(r[..], p[..], t, m);
-            for i in 0..m * m { r[i] = t[i]; }
-            er += ep;
-            er += ks_rescale(r);
-        }
-        e = e / 2;
-        if e > 0 {
-            ks_mul(p[..], p[..], t, m);
-            for i in 0..m * m { p[i] = t[i]; }
-            ep = ep * 2;
-            ep += ks_rescale(p);
-        }
-    }
-    var v = r[(k - 1) * m + k - 1];
-    let ni = n as i64;
-    for i in 1..(ni + 1) {
-        v = v * i / n;
-        if v < 1e-140 {
-            v = v * 1e140;
-            er -= 140;
-        }
-    }
-    return min(max(v * pow(10.0, er as f64), 0.0), 1.0);
-}
-
-fn kstwo_cdf(x: f64, n: f64) -> f64, i64 {
-    let k = tl_px(x, ks_check(n));
-    if k != OK { return nan(), k; }
-    return tl_out(kstwo_cdf_value(n, x));
-}
-
-// The density is the derivative of the cumulative function. The call
-// takes a central difference.
-fn kstwo_pdf(x: f64, n: f64) -> f64, i64 {
-    let k = tl_px(x, ks_check(n));
-    if k != OK { return nan(), k; }
-    if x <= 0.0 || x >= 1.0 { return 0.0, OK; }
-    let h = 1e-6;
-    let hi = min(x + h, 1.0);
-    let lo = max(x - h, 0.0);
-    return tl_out(max((kstwo_cdf_value(n, hi) - kstwo_cdf_value(n, lo)) / (hi - lo), 0.0));
-}
-
-fn kstwo_ppf(q: f64, n: f64) -> f64, i64 {
-    let k = tl_pq(q, ks_check(n));
-    if k != OK { return nan(), k; }
-    if q == 0.0 { return 0.5 / n, OK; }
-    if q == 1.0 { return 1.0, OK; }
-    let x, cx = brent_root(0.5 / n, 1.0, 1e-14, 4e-16) { v => kstwo_cdf_value(n, v) - q };
-    return x, cx;
+    // The nodes serve every step of the search.
+    var sp: f64[>..] = [];
+    var sw: f64[>..] = [];
+    nct_prep(df, sp, sw);
+    return tl_ppf_line(q, nc) { v => nct_cdf_core(v, nc, sp[..], sw[..]) };
 }

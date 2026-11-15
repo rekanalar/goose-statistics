@@ -21,7 +21,7 @@ import std;
 import math;
 
 const LAW_NODES: i64 = 16;                 // nodes of the rule on one panel
-const LAW_PANELS: i64 = 32;                // panels on each side of the location
+const LAW_PANELS: i64 = 16;                // panels on each side of the location
 const LAW_TAIL: f64 = 1e-18;               // lower tail mass left out of a moment
 const LAW_TOP: f64 = 0.9999999999999999;   // the upper probability of a moment
 

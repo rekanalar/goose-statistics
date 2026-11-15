@@ -249,3 +249,4 @@ import distributions_covariance_suite;
 import distributions_covariance_time;
 import distributions_histogram_vectors;
 import distributions_histogram_suite;
+import speed_suite;

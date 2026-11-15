@@ -15,6 +15,8 @@ import math;
 
 // ---- norminvgauss: the normal inverse Gaussian law ------------------------
 
+const NIG_PANELS_RULE: i64 = 16;       // the panels of the fixed rule of the map
+
 fn norminvgauss_check(a: f64, b: f64) -> i64 {
     let c1 = check_shape(a);
     if c1 != OK { return c1; }
@@ -25,21 +27,20 @@ fn norminvgauss_check(a: f64, b: f64) -> i64 {
 }
 
 // The log of the density of the normal inverse Gaussian law. The value of
-// g is the square root of (a + b) (a - b).
-fn norminvgauss_logdens(x: f64, a: f64, b: f64, g: f64) -> f64 {
+// g is the square root of (a + b) (a - b). The nodes of the Bessel rule
+// come from the caller, so an integral or a search builds them once.
+fn norminvgauss_logdens(x: f64, a: f64, b: f64, g: f64, bx: const f64[:], bw: const f64[:]) -> f64 {
     let s = sqrt(1.0 + x * x);
-    var bx: f64[>..] = [];
-    var bw: f64[>..] = [];
-    fam_bessel_nodes(bx, bw);
     // The scaled Bessel function of the first kind, K1(a s) exp(a s).
-    let lk = log(fam_kve(1.0, a * s, bx[..], bw[..]));
+    let lk = log(fam_kve(1.0, a * s, bx, bw));
     if is_nan(lk) { return nan(); }
     return log(a / PI) + lk - a * s + b * x + g - log(s);
 }
 
-// The density of the law, without the checks.
-fn norminvgauss_dens(x: f64, a: f64, b: f64, g: f64) -> f64 {
-    let l = norminvgauss_logdens(x, a, b, g);
+// The density of the law, without the checks. The nodes come from the
+// caller.
+fn norminvgauss_dens(x: f64, a: f64, b: f64, g: f64, bx: const f64[:], bw: const f64[:]) -> f64 {
+    let l = norminvgauss_logdens(x, a, b, g, bx, bw);
     if is_nan(l) { return nan(); }
     if l < -700.0 { return 0.0; }
     return exp(l);
@@ -51,20 +52,44 @@ fn norminvgauss_pdf(x: f64, a: f64, b: f64) -> f64, i64 {
     let s = fam_x(x);
     if s != OK { return nan(), s; }
     let g = sqrt((a + b) * (a - b));
-    let v = norminvgauss_dens(x, a, b, g);
+    var bx: f64[>..] = [];
+    var bw: f64[>..] = [];
+    fam_bessel_nodes(bx, bw);
+    let v = norminvgauss_dens(x, a, b, g, bx[..], bw[..]);
     if is_nan(v) { return nan(), ERR_FIT; }
     return v, OK;
 }
 
+// The point of the law from the mapped point t of the rule on 0 to 1.
+// The map carries the half line to the unit interval, and the factor
+// holds the weight of the map.
+fn norminvgauss_map_term(t: f64, x: f64, a: f64, b: f64, g: f64, bx: const f64[:], bw: const f64[:], up: bool) -> f64 {
+    let w = 1.0 - t;
+    var y: f64 = 0.0;
+    if up {
+        y = x + t / w;
+    } else {
+        y = x - t / w;
+    }
+    return norminvgauss_dens(y, a, b, g, bx, bw) / (w * w);
+}
+
 // The cumulative function of the law, without the code. The integral runs
-// from minus infinity to the point.
+// from minus infinity to the point. The nodes of the Bessel rule come
+// once, and the map of the half line holds one fixed rule of panels.
 fn norminvgauss_cdf_value(x: f64, a: f64, b: f64, g: f64) -> f64 {
     let mean = b / g;
+    var bx: f64[>..] = [];
+    var bw: f64[>..] = [];
+    fam_bessel_nodes(bx, bw);
+    var gx: f64[>..] = [];
+    var gw: f64[>..] = [];
+    gauss_legendre(gx, gw, NIG_PANELS_RULE);
     var v: f64 = 0.0;
     if x <= mean {
-        v = fam_quad_down(x) { t => norminvgauss_dens(t, a, b, g) };
+        v = fam_quad_panels(0.0, 1.0, NIG_PANELS_RULE, gx[..], gw[..]) { t => norminvgauss_map_term(t, x, a, b, g, bx[..], bw[..], false) };
     } else {
-        v = 1.0 - fam_quad_up(x) { t => norminvgauss_dens(t, a, b, g) };
+        v = 1.0 - fam_quad_panels(0.0, 1.0, NIG_PANELS_RULE, gx[..], gw[..]) { t => norminvgauss_map_term(t, x, a, b, g, bx[..], bw[..], true) };
     }
     if v < 0.0 { return 0.0; }
     if v > 1.0 { return 1.0; }
@@ -235,10 +260,10 @@ fn rel_breitwigner_ppf(q: f64, rho: f64) -> f64, i64 {
 
 // ---- studentized_range: the studentized range law -------------------------
 
-const SR_Z_NODES: i64 = 10;          // nodes of one panel of the inner rule
-const SR_S_NODES: i64 = 10;          // nodes of one panel of the outer rule
-const SR_Z_REACH: f64 = 12.0;        // the reach of the inner rule
-const SR_S_REACH: f64 = 12.0;        // the reach of the outer rule
+const SR_Z_NODES: i64 = 12;          // nodes of one panel of the inner rule
+const SR_S_NODES: i64 = 12;          // nodes of one panel of the outer rule
+const SR_Z_REACH: f64 = 8.0;        // the reach of the inner rule
+const SR_S_REACH: f64 = 8.0;        // the reach of the outer rule
 
 fn studentized_range_check(k: f64, df: f64) -> i64 {
     let c1 = check_shape(k);
@@ -260,16 +285,14 @@ fn sr_z_rule(zs: f64[>..]&, zw: f64[>..]&) {
     var gx: f64[>..] = [];
     var gw: f64[>..] = [];
     gauss_legendre(gx, gw, SR_Z_NODES);
-    // The edges of the panels on the positive side. The width doubles at
-    // every step.
+    // The edges of the panels on the positive side. The panels grow
+    // away from 0, so the smooth part gets the wide panels.
     var edges: f64[>..] = [];
     edges.push(0.0);
-    var d = 0.125;
-    while edges[edges.len - 1] < SR_Z_REACH {
-        let last = edges[edges.len - 1] + d;
-        edges.push(min(last, SR_Z_REACH));
-        d = d * 2.0;
-    }
+    edges.push(1.0);
+    edges.push(3.0);
+    edges.push(6.0);
+    edges.push(SR_Z_REACH);
     // The panels on the negative side, in the reverse order.
     var n = edges.len;
     for i in 0..n - 1 {
@@ -303,14 +326,15 @@ fn sr_s_rule(sp: f64[>..]&, sw: f64[>..]&) {
     var gx: f64[>..] = [];
     var gw: f64[>..] = [];
     gauss_legendre(gx, gw, SR_S_NODES);
+    // The edges of the panels. The first panels hold the peak of the
+    // weight of the divisor, the later panels hold its tail.
     var edges: f64[>..] = [];
     edges.push(0.0);
-    var d = 0.05;
-    while edges[edges.len - 1] < SR_S_REACH {
-        let last = edges[edges.len - 1] + d;
-        edges.push(min(last, SR_S_REACH));
-        d = min(d * 1.5, 1.0);
-    }
+    edges.push(0.5);
+    edges.push(1.0);
+    edges.push(2.0);
+    edges.push(4.0);
+    edges.push(SR_S_REACH);
     for i in 0..edges.len - 1 {
         let lo = edges[i];
         let hi = edges[i + 1];
@@ -338,39 +362,68 @@ fn studentized_range_cdf_value(x: f64, k: f64, df: f64) -> f64 {
     if is_nan(lc) { return nan(); }
     var zs: f64[>..] = [];
     var zw: f64[>..] = [];
-    sr_z_rule(zs, zw);
+    var cdfz: f64[>..] = [];
+    var phs: f64[>..] = [];
     var sp: f64[>..] = [];
     var sw: f64[>..] = [];
+    sr_prep(zs, zw, cdfz, phs, sp, sw);
+    return sr_cdf_core(x, k, df, lc, zs[..], zw[..], cdfz[..], phs[..], sp[..], sw[..]);
+}
+
+// The rules of the integral and the values of the fixed nodes. The
+// quantile search builds them once and reuses them at every step.
+fn sr_prep(zs: f64[>..]&, zw: f64[>..]&, cdfz: f64[>..]&, phs: f64[>..]&, sp: f64[>..]&, sw: f64[>..]&) {
+    sr_z_rule(zs, zw);
     sr_s_rule(sp, sw);
+    cdfz.resize(0);
+    phs.resize(0);
+    for j in 0..zs.len {
+        let zc, zcc = norm_cdf(zs[j]);
+        cdfz.push(if zcc == OK { zc } else { nan() });
+        let pc, pcc = norm_pdf(zs[j]);
+        phs.push(if pcc == OK { pc } else { nan() });
+    }
+}
+
+// d to the power e, with the small integer exponents of the family in
+// closed form. The powers up to eight are in closed form; a larger
+// exponent falls to pow.
+fn sr_ipow(d: f64, e: f64) -> f64 {
+    if e == 0.0 { return 1.0; }
+    if e == 1.0 { return d; }
+    if e == 2.0 { return d * d; }
+    if e == 3.0 { return d * d * d; }
+    if e == 4.0 { let d2 = d * d; return d2 * d2; }
+    if e == 5.0 { let d2 = d * d; return d2 * d2 * d; }
+    if e == 6.0 { let d3 = d * d * d; return d3 * d3; }
+    if e == 7.0 { let d3 = d * d * d; return d3 * d3 * d; }
+    if e == 8.0 { let d2 = d * d; let d4 = d2 * d2; return d4 * d4; }
+    return pow(d, e);
+}
+
+// The cumulative value from prepared rules. The normal cumulative value
+// of every fixed node comes in, so the loop evaluates one call per pair.
+fn sr_cdf_core(x: f64, k: f64, df: f64, lc: f64, zs: const f64[:], zw: const f64[:], cdfz: const f64[:], phs: const f64[:], sp: const f64[:], sw: const f64[:]) -> f64 {
     var total: f64 = 0.0;
+    let ke = k - 1.0;
     for i in 0..sp.len {
         let s = sp[i];
         if s <= 0.0 { continue; }
         // The inner integral over the point of the normal law.
+        let xs = x * s;
         var inner: f64 = 0.0;
         for j in 0..zs.len {
-            let z = zs[j];
-            let d = norm_cdf_diff(z + x * s, z);
+            let na, ca = norm_cdf(zs[j] + xs);
+            if ca != OK { continue; }
+            let d = na - cdfz[j];
             if d <= 0.0 { continue; }
-            let ph, cph = norm_pdf(z);
-            if cph != OK { continue; }
-            inner += zw[j] * ph * pow(d, k - 1.0);
+            inner += zw[j] * phs[j] * sr_ipow(d, ke);
         }
         total += sw[i] * exp(lc + (df - 1.0) * log(s) - 0.5 * df * s * s) * inner;
     }
     if total < 0.0 { return 0.0; }
     if total > 1.0 { return 1.0; }
     return total;
-}
-
-// The difference of two cumulative functions of the normal law. The form
-// keeps the digits of a small difference.
-fn norm_cdf_diff(a: f64, b: f64) -> f64 {
-    let na, ca = norm_cdf(a);
-    if ca != OK { return nan(); }
-    let nb, cb = norm_cdf(b);
-    if cb != OK { return nan(); }
-    return na - nb;
 }
 
 fn studentized_range_pdf(x: f64, k: f64, df: f64) -> f64, i64 {
@@ -387,24 +440,28 @@ fn studentized_range_pdf(x: f64, k: f64, df: f64) -> f64, i64 {
     let lc = log(k) + log(k - 1.0) + 0.5 * df * log(df) - lg - (0.5 * df - 1.0) * log(2.0);
     var zs: f64[>..] = [];
     var zw: f64[>..] = [];
-    sr_z_rule(zs, zw);
+    var cdfz: f64[>..] = [];
+    var phs: f64[>..] = [];
     var sp: f64[>..] = [];
     var sw: f64[>..] = [];
-    sr_s_rule(sp, sw);
+    sr_prep(zs, zw, cdfz, phs, sp, sw);
     var total: f64 = 0.0;
+    let ke = k - 2.0;
     for i in 0..sp.len {
         let s = sp[i];
         if s <= 0.0 { continue; }
+        let xs = x * s;
         var inner: f64 = 0.0;
         for j in 0..zs.len {
             let z = zs[j];
-            let d = norm_cdf_diff(z + x * s, z);
+            let na, ca = norm_cdf(z + xs);
+            if ca != OK { continue; }
+            let d = na - cdfz[j];
             if d <= 0.0 { continue; }
-            let p1, c1 = norm_pdf(z);
-            if c1 != OK { continue; }
-            let p2, c2 = norm_pdf(z + x * s);
+            let p1 = phs[j];
+            let p2, c2 = norm_pdf(z + xs);
             if c2 != OK { continue; }
-            inner += zw[j] * p1 * p2 * pow(d, k - 2.0);
+            inner += zw[j] * p1 * p2 * sr_ipow(d, ke);
         }
         total += sw[i] * exp(lc + df * log(s) - 0.5 * df * s * s) * inner;
     }
@@ -431,7 +488,19 @@ fn studentized_range_ppf(q: f64, k: f64, df: f64) -> f64, i64 {
     if pc != OK { return nan(), pc; }
     if q == 0.0 { return 0.0, OK; }
     if q == 1.0 { return inf(), OK; }
-    return fam_search_ppf(q, 0.0, k + 4.0) { v => studentized_range_cdf_value(v, k, df) };
+    let lc = sr_log_cdf_const(k, df);
+    if is_nan(lc) { return nan(), ERR_NAN; }
+    // The rules and the fixed nodes serve every step of the search.
+    var zs: f64[>..] = [];
+    var zw: f64[>..] = [];
+    var cdfz: f64[>..] = [];
+    var phs: f64[>..] = [];
+    var sp: f64[>..] = [];
+    var sw: f64[>..] = [];
+    sr_prep(zs, zw, cdfz, phs, sp, sw);
+    return fam_search_ppf(q, 0.0, k + 4.0) {
+        v => sr_cdf_core(v, k, df, lc, zs[..], zw[..], cdfz[..], phs[..], sp[..], sw[..])
+    };
 }
 
 // ---- vonmises: the von Mises law -------------------------------------------

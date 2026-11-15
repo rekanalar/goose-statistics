@@ -51,6 +51,7 @@ import distributions_search_c;
 import distributions_search_d;
 import distributions_closed;
 import distributions_noncentral;
+import distributions_ks;
 import distributions_nch;
 import distributions_landau;
 import distributions_multivariate;

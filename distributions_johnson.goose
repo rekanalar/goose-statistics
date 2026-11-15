@@ -210,14 +210,19 @@ fn johnson_check(a: f64, b: f64) -> i64 {
     return OK;
 }
 
-// The raw moment of order n of the Johnson law of the B kind. It comes from
-// an integration of the density of the law.
-fn johnsonsb_raw(n: i64, a: f64, b: f64) -> f64, i64 {
+// The raw moments up to the order count of the Johnson law of the B
+// kind. They come from an integration of the density of the law. One
+// pass over the grid serves every order: the density at a node comes
+// once, and the powers of the node come from multiplications.
+fn johnsonsb_raws(a: f64, b: f64, count: i64) -> f64, f64, f64, f64, i64 {
     var gx: f64[>..] = [];
     var gw: f64[>..] = [];
     gauss_legendre(gx, gw, FAM_NODES);
-    var total: f64 = 0.0;
-    let panels: i64 = 100;
+    var m1: f64 = 0.0;
+    var m2: f64 = 0.0;
+    var m3: f64 = 0.0;
+    var m4: f64 = 0.0;
+    let panels: i64 = 40;
     let width = 1.0 / panels as f64;
     for k in 0..panels {
         let left = width * k;
@@ -226,54 +231,63 @@ fn johnsonsb_raw(n: i64, a: f64, b: f64) -> f64, i64 {
             if x <= 0.0 || x >= 1.0 { continue; }
             let l = log(x / (1.0 - x));
             let p, cp = norm_pdf(a + b * l);
-            if cp != OK { return nan(), cp; }
+            if cp != OK { return nan(), nan(), nan(), nan(), cp; }
             let d = b * p / (x * (1.0 - x));
-            total += pow(x, n) * d * gw[j] * width / 2.0;
+            let wj = d * gw[j] * width / 2.0;
+            let x2 = x * x;
+            if count >= 1 { m1 += wj * x; }
+            if count >= 2 { m2 += wj * x2; }
+            if count >= 3 { m3 += wj * x2 * x; }
+            if count >= 4 { m4 += wj * x2 * x2; }
         }
     }
-    if is_nan(total) || is_inf(total) { return nan(), ERR_OVERFLOW; }
-    return total, OK;
+    if count >= 1 && (is_nan(m1) || is_inf(m1)) { return nan(), nan(), nan(), nan(), ERR_OVERFLOW; }
+    if count >= 2 && (is_nan(m2) || is_inf(m2)) { return nan(), nan(), nan(), nan(), ERR_OVERFLOW; }
+    if count >= 3 && (is_nan(m3) || is_inf(m3)) { return nan(), nan(), nan(), nan(), ERR_OVERFLOW; }
+    if count >= 4 && (is_nan(m4) || is_inf(m4)) { return nan(), nan(), nan(), nan(), ERR_OVERFLOW; }
+    return m1, m2, m3, m4, OK;
+}
+
+// The raw moment of order n of the Johnson law of the B kind. It comes
+// from an integration of the density of the law.
+fn johnsonsb_raw(n: i64, a: f64, b: f64) -> f64, i64 {
+    let m1, m2, m3, m4, ck = johnsonsb_raws(a, b, n);
+    if ck != OK { return nan(), ck; }
+    if n == 1 { return m1, OK; }
+    if n == 2 { return m2, OK; }
+    if n == 3 { return m3, OK; }
+    return m4, OK;
 }
 
 fn johnsonsb_mean(a: f64, b: f64) -> f64, i64 {
     let k = johnson_check(a, b);
     if k != OK { return nan(), k; }
-    return johnsonsb_raw(1, a, b);
+    let m1, m2, m3, m4, ck = johnsonsb_raws(a, b, 1);
+    if ck != OK { return nan(), ck; }
+    return m1, OK;
 }
 
 fn johnsonsb_var(a: f64, b: f64) -> f64, i64 {
     let k = johnson_check(a, b);
     if k != OK { return nan(), k; }
-    let m1, c1 = johnsonsb_raw(1, a, b);
-    if c1 != OK { return nan(), c1; }
-    let m2, c2 = johnsonsb_raw(2, a, b);
-    if c2 != OK { return nan(), c2; }
+    let m1, m2, m3, m4, ck = johnsonsb_raws(a, b, 2);
+    if ck != OK { return nan(), ck; }
     return m2 - m1 * m1, OK;
 }
 
 fn johnsonsb_skew(a: f64, b: f64) -> f64, i64 {
     let k = johnson_check(a, b);
     if k != OK { return nan(), k; }
-    let m1, c1 = johnsonsb_raw(1, a, b);
-    if c1 != OK { return nan(), c1; }
-    let m2, c2 = johnsonsb_raw(2, a, b);
-    if c2 != OK { return nan(), c2; }
-    let m3, c3 = johnsonsb_raw(3, a, b);
-    if c3 != OK { return nan(), c3; }
+    let m1, m2, m3, m4, ck = johnsonsb_raws(a, b, 3);
+    if ck != OK { return nan(), ck; }
     return fam_skew_raw(m1, m2, m3), OK;
 }
 
 fn johnsonsb_kurt(a: f64, b: f64) -> f64, i64 {
     let k = johnson_check(a, b);
     if k != OK { return nan(), k; }
-    let m1, c1 = johnsonsb_raw(1, a, b);
-    if c1 != OK { return nan(), c1; }
-    let m2, c2 = johnsonsb_raw(2, a, b);
-    if c2 != OK { return nan(), c2; }
-    let m3, c3 = johnsonsb_raw(3, a, b);
-    if c3 != OK { return nan(), c3; }
-    let m4, c4 = johnsonsb_raw(4, a, b);
-    if c4 != OK { return nan(), c4; }
+    let m1, m2, m3, m4, ck = johnsonsb_raws(a, b, 4);
+    if ck != OK { return nan(), ck; }
     return fam_kurt_raw(m1, m2, m3, m4), OK;
 }
 

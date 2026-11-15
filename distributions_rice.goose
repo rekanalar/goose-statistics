@@ -70,32 +70,66 @@ fn rice_dens(x: f64, b: f64) -> f64 {
 // false and the survival function when upper is true. The sum runs from
 // the mode of the Poisson weights outward, and it stops when the weight
 // falls under 1e-18.
+//
+// The incomplete gamma function of the count above the mode follows from
+// the function of the count below by one step, and the same holds below
+// the mode. One call of the incomplete gamma function then serves the
+// whole sum.
 fn rice_sum(x: f64, b: f64, upper: bool) -> f64, i64 {
     let half = 0.5 * x * x;
     let lam = 0.5 * b * b;
     let j0 = floor(lam);
+    let a0 = j0 + 1.0;
+    var g: f64 = 0.0;
+    var cc: i64 = OK;
+    if upper {
+        g, cc = gammaincc(a0, half);
+    } else {
+        g, cc = gammainc(a0, half);
+    }
+    if cc != OK { return nan(), cc; }
+    let lg, sg, cg = lgamma(a0 + 1.0);
+    if cg != OK { return nan(), cg; }
+    // e holds half^a exp(-half) / gamma(a + 1), the step of the sum.
+    let e0 = exp(a0 * log(half) - half - lg);
+    let g0 = g;
+    var e = e0;
+    var a = a0;
+    let llam = log(lam);
+    let lcut = log(1e-18);
     var total: f64 = 0.0;
-    var dir: i64 = 0;
-    while dir < 2 {
-        var j = j0;
-        if dir == 1 { j = j0 - 1.0; }
-        while j >= 0.0 {
-            let lg, sg, cg = lgamma(j + 1.0);
-            if cg != OK { return nan(), cg; }
-            let lw = -lam + j * log(lam) - lg;
-            if lw < log(1e-18) && j != j0 { break; }
-            var g: f64 = 0.0;
-            var cc: i64 = OK;
-            if upper {
-                g, cc = gammaincc(j + 1.0, half);
-            } else {
-                g, cc = gammainc(j + 1.0, half);
-            }
-            if cc != OK { return nan(), cc; }
-            total += exp(lw) * g;
-            if dir == 0 { j += 1.0; } else { j -= 1.0; }
-        }
-        dir += 1;
+    // The count at the mode.
+    let lg0, sg0, cg0 = lgamma(j0 + 1.0);
+    if cg0 != OK { return nan(), cg0; }
+    total += exp(-lam + j0 * llam - lg0) * g;
+    // The counts above the mode.
+    var j = j0 + 1.0;
+    while true {
+        let lgj, sgj, cgj = lgamma(j + 1.0);
+        if cgj != OK { return nan(), cgj; }
+        let lw = -lam + j * llam - lgj;
+        if lw < lcut { break; }
+        if upper { g = g + e; } else { g = g - e; }
+        e = e * half / (a + 1.0);
+        a = a + 1.0;
+        total += exp(lw) * g;
+        j += 1.0;
+    }
+    // The counts below the mode.
+    e = e0;
+    g = g0;
+    a = a0;
+    j = j0 - 1.0;
+    while j >= 0.0 {
+        let lgj, sgj, cgj = lgamma(j + 1.0);
+        if cgj != OK { return nan(), cgj; }
+        let lw = -lam + j * llam - lgj;
+        if lw < lcut { break; }
+        if half > 0.0 { e = e * a / half; }
+        a = a - 1.0;
+        if upper { g = g - e; } else { g = g + e; }
+        total += exp(lw) * g;
+        j -= 1.0;
     }
     if total > 1.0 { total = 1.0; }
     return total, OK;
