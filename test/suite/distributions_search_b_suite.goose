@@ -23,6 +23,10 @@ fn run_distributions_search_b_tests() -> i64 {
     chk_val(bad, "gausshyper pdf below the support", v5, c5, 0.0, 1e-12);
     let v6, c6 = statistics::gausshyper_cdf(-0.5, 2.0, 3.0, 1.0, 1.0);
     chk_val(bad, "gausshyper cdf below the support", v6, c6, 0.0, 1e-12);
+    // The bounds of the log-uniform law must rise. Equal bounds give the
+    // domain fault.
+    let _e0, ce0 = statistics::loguniform_pdf(1.0, 1.0, 1.0);
+    chk_code(bad, "loguniform with equal bounds", ce0, 5);
     // The cumulative function of the quantile gives the probability back.
     let q1, kq1 = statistics::loguniform_ppf(0.4, 1.0, 4.0);
     let r1, kr1 = statistics::loguniform_cdf(q1, 1.0, 4.0);
