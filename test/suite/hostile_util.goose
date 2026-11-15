@@ -12,7 +12,7 @@ fn weights_of(st: u64&, n: i64) -> f64[>..] {
     var i: i64 = 0;
     while i < n {
         if rnd(st) % 4 == 0 { out.push(hostile_value(st)); }
-        else { out.push((rnd(st) % 4) as f64); }
+        else { out.push((rnd(st) % 4)); }
         i += 1;
     }
     return out;
@@ -23,7 +23,7 @@ fn edges_of(st: u64&) -> f64[>..] {
     var out: f64[>..] = [];
     var i: i64 = 0;
     while i < 4 {
-        out.push((rnd(st) % 7) as f64 - 3.0);
+        out.push((rnd(st) % 7) - 3.0);
         i += 1;
     }
     return out;

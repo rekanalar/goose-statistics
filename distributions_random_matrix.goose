@@ -204,7 +204,7 @@ fn random_correlation_rvs(out: f64[>..]&, eigs: const f64[:], r: rng&) -> i64 {
         if v < 0.0 { return ERR_DOMAIN; }
         total = total + v;
     }
-    if abs(total - d as f64) > 1e-9 * d as f64 { return ERR_DOMAIN; }
+    if abs(total - d) > 1e-9 * d { return ERR_DOMAIN; }
     var q: f64[>..] = [];
     rm_haar(q, d, r);
     var m: f64[>..] = [];
@@ -269,7 +269,7 @@ fn vmf_lognorm(dim: i64, kappa: f64) -> f64, i64 {
     let nu = 0.5 * dim as f64 - 1.0;
     let lb = vmf_log_besseli(nu, kappa);
     if is_nan(lb) { return nan(), ERR_FIT; }
-    return nu * log(kappa) - 0.5 * dim as f64 * log(2.0 * PI) - lb, OK;
+    return nu * log(kappa) - 0.5 * dim * log(2.0 * PI) - lb, OK;
 }
 
 // The log of the modified Bessel function of the first kind and the

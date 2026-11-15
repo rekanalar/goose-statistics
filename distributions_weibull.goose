@@ -228,7 +228,7 @@ fn weibull_max_ppf(p: f64, c: f64) -> f64, i64 {
 // The raw moments of the Weibull law of the negative line. The moment of
 // order n has the sign of n.
 fn weibull_max_raw(n: i64, c: f64) -> f64, i64 {
-    let g, cg = gamma(1.0 + n as f64 / c);
+    let g, cg = gamma(1.0 + n / c);
     if cg != OK { return nan(), cg; }
     if n % 2 == 1 { return -g, OK; }
     return g, OK;
@@ -367,7 +367,7 @@ fn truncweibull_min_ppf(p: f64, c: f64, a: f64, b: f64) -> f64, i64 {
 fn truncweibull_raw(n: i64, c: f64, a: f64, b: f64) -> f64, i64 {
     let d, cd = truncweibull_mass(c, a, b);
     if cd != OK { return nan(), cd; }
-    let s = n as f64 / c + 1.0;
+    let s = n / c + 1.0;
     let ga, cg = gammaincc(s, pow(a, c));
     if cg != OK { return nan(), cg; }
     let gb, cgb = gammaincc(s, pow(b, c));

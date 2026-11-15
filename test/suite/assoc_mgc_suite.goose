@@ -89,14 +89,14 @@ fn run_assoc_mgc_tests() -> i64 {
     }
     var g4 = rng { s: 9 };
     let full, cf = statistics::multiscale_graphcorr_dist(map, dx[..], dy[..], 30, g4);
-    chk_val(bad, "the permutation shortcut", full.pvalue, cf, (1.0 + count as f64) / 31.0, 1e-12);
+    chk_val(bad, "the permutation shortcut", full.pvalue, cf, (1.0 + count) / 31.0, 1e-12);
     // a strong curve gives a small p-value, and a shuffled sample gives a large one
     var cx: f64[>..] = [];
     var cy: f64[>..] = [];
     for k in 0..30 {
         let t = (k as f64 - 15.0) / 5.0;
         cx.push(t);
-        cy.push(t * t + 0.01 * (k % 3) as f64);
+        cy.push(t * t + 0.01 * (k % 3));
     }
     var g5 = rng { s: 21 };
     let c1, cc1 = statistics::multiscale_graphcorr(map, cx[..], cy[..], 1, 1, 99, g5);
@@ -109,7 +109,7 @@ fn run_assoc_mgc_tests() -> i64 {
     chk_val(bad, "equal statistics count as extreme", fl.pvalue, cfl, 1.0, 1e-12);
     // the work bound refuses many repetitions on a large sample
     var big: f64[>..] = [];
-    for k in 0..200 { big.push(k as f64); }
+    for k in 0..200 { big.push(k); }
     let wr, cwr = statistics::multiscale_graphcorr(map, big[..], big[..], 1, 1, 300, gen);
     chk_code(bad, "more work than the bound allows", cwr, 9);
     check(bad, is_nan(wr.statistic) && map.len == 0, "a refused call gives an empty result");

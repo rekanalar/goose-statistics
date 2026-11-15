@@ -29,20 +29,20 @@ fn run_binned_hostile() -> i64 {
         let tail = rnd(st) % 4;
         let prop = (rnd(st) % 90) as f64 / 100.0;
 
-        let t34, c34 = statistics::binned_statistic(out, out2, out2, out2, out2, xs[..], ys[..], stat, (rnd(st) % 6) as i64);
+        let t34, c34 = statistics::binned_statistic(out, out2, out2, out2, out2, xs[..], ys[..], stat, (rnd(st) % 6));
         hostile_report(bad, sound_table(t34, c34), "binned_statistic", k, c34);
         let t35, c35 = statistics::binned_statistic_2d(out, out2, out2, out2, out2, xs[..], ys[..], ys[..], stat, 2, 2);
         hostile_report(bad, sound_table(t35, c35), "binned_statistic_2d", k, c35);
-        let t36, c36 = statistics::binned_statistic_dd(out, out2, out2, out2, out2, xs[..], (rnd(st) % 4) as i64, ys[..], stat, 2);
+        let t36, c36 = statistics::binned_statistic_dd(out, out2, out2, out2, out2, xs[..], (rnd(st) % 4), ys[..], stat, 2);
         hostile_report(bad, sound_table(t36, c36), "binned_statistic_dd", k, c36);
         let ge = edges_of(st);
         let t49, c49 = statistics::binned_statistic_edges(out, out2, out2, out2, out2, xs[..], ys[..], stat, ge[..]);
         hostile_report(bad, sound_table(t49, c49), "binned_statistic_edges", k, c49);
-        let t50, c50 = statistics::binned_statistic_with(out, out2, out2, out2, out2, xs[..], ys[..], (rnd(st) % 6) as i64) { v => sum_of(v) };
+        let t50, c50 = statistics::binned_statistic_with(out, out2, out2, out2, out2, xs[..], ys[..], (rnd(st) % 6)) { v => sum_of(v) };
         hostile_report(bad, sound_table(t50, c50), "binned_statistic_with", k, c50);
         let t51, c51 = statistics::binned_statistic_2d_with(out, out2, out2, out2, out2, xs[..], ys[..], ys[..], 2, 2) { v => sum_of(v) };
         hostile_report(bad, sound_table(t51, c51), "binned_statistic_2d_with", k, c51);
-        let t52, c52 = statistics::binned_statistic_dd_with(out, out2, out2, out2, out2, xs[..], (rnd(st) % 4) as i64, ys[..], 2) { v => sum_of(v) };
+        let t52, c52 = statistics::binned_statistic_dd_with(out, out2, out2, out2, out2, xs[..], (rnd(st) % 4), ys[..], 2) { v => sum_of(v) };
         hostile_report(bad, sound_table(t52, c52), "binned_statistic_dd_with", k, c52);
     }
     return bad;

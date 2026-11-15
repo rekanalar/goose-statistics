@@ -33,11 +33,11 @@ fn run_entropy_hostile() -> i64 {
         hostile_report(bad, sound_value(v12, c12), "entropy", k, c12);
         let v13, c13 = statistics::relative_entropy(xs[..], ys[..], alpha);
         hostile_report(bad, sound_value(v13, c13), "relative_entropy", k, c13);
-        let v14, c14 = statistics::kstat(xs[..], (rnd(st) % 7) as i64);
+        let v14, c14 = statistics::kstat(xs[..], (rnd(st) % 7));
         hostile_report(bad, sound_value(v14, c14), "kstat", k, c14);
-        let v15, c15 = statistics::kstatvar(xs[..], (rnd(st) % 5) as i64);
+        let v15, c15 = statistics::kstatvar(xs[..], (rnd(st) % 5));
         hostile_report(bad, sound_value(v15, c15), "kstatvar", k, c15);
-        let v16, c16 = statistics::differential_entropy(xs[..], (rnd(st) % 8) as i64, (rnd(st) % 4) as i64, alpha);
+        let v16, c16 = statistics::differential_entropy(xs[..], (rnd(st) % 8), (rnd(st) % 4), alpha);
         hostile_report(bad, sound_value(v16, c16), "differential_entropy", k, c16);
     }
     return bad;

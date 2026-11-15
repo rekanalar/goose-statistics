@@ -106,7 +106,7 @@ fn nchypergeom_fisher_cdf(k: f64, m: f64, n: f64, d: f64, odds: f64) -> f64, i64
     let last = floor(k) - lo;
     var s: f64 = 0.0;
     var i: i64 = 0;
-    while i as f64 <= last {
+    while i <= last {
         s += pm[i];
         i += 1;
     }
@@ -128,7 +128,7 @@ fn nchypergeom_fisher_ppf(q: f64, m: f64, n: f64, d: f64, odds: f64) -> f64, i64
     var s: f64 = 0.0;
     for i in 0..pm.len {
         s += pm[i];
-        if s >= q { return lo + i as f64, OK; }
+        if s >= q { return lo + i, OK; }
     }
     return hi, OK;
 }

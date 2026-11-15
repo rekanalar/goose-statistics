@@ -35,7 +35,7 @@ fn run_circular_hostile() -> i64 {
         hostile_report(bad, sound_value(v31, c31), "circvar", k, c31);
         let v32, c32 = statistics::circstd(xs[..], 0.0, alpha, rnd(st) % 2 == 0);
         hostile_report(bad, sound_value(v32, c32), "circstd", k, c32);
-        let v33, c33 = statistics::directional_stats(out, xs[..], (rnd(st) % 4) as i64, rnd(st) % 2 == 0);
+        let v33, c33 = statistics::directional_stats(out, xs[..], (rnd(st) % 4), rnd(st) % 2 == 0);
         hostile_report(bad, sound_value(v33, c33), "directional_stats", k, c33);
     }
     return bad;

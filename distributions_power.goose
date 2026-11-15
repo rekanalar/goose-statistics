@@ -69,7 +69,7 @@ fn fisk_ppf(p: f64, c: f64) -> f64, i64 {
 // The raw moment of order n of the log-logistic law. It is the beta
 // function of d + n / c and 1 - n / c.
 fn fisk_raw(n: i64, c: f64) -> f64, i64 {
-    let nc = n as f64 / c;
+    let nc = n / c;
     let b, cb = beta(1.0 + nc, 1.0 - nc);
     if cb != OK { return nan(), cb; }
     return b, OK;
@@ -176,7 +176,7 @@ fn burr_ppf(p: f64, c: f64, d: f64) -> f64, i64 {
 // The raw moment of order n of the law of Burr. It is the beta function
 // of d + n / c and 1 - n / c.
 fn burr_raw(n: i64, c: f64, d: f64) -> f64, i64 {
-    let nc = n as f64 / c;
+    let nc = n / c;
     let b, cb = beta(d + nc, 1.0 - nc);
     if cb != OK { return nan(), cb; }
     return d * b, OK;
@@ -292,7 +292,7 @@ fn burr12_ppf(p: f64, c: f64, d: f64) -> f64, i64 {
 // The raw moment of order n of the law of Burr of the twelfth kind. It
 // is the beta function of 1 + n / c and d - n / c.
 fn burr12_raw(n: i64, c: f64, d: f64) -> f64, i64 {
-    let nc = n as f64 / c;
+    let nc = n / c;
     let b, cb = beta(1.0 + nc, d - nc);
     if cb != OK { return nan(), cb; }
     return d * b, OK;
@@ -427,7 +427,7 @@ fn betaprime_ppf(p: f64, a: f64, b: f64) -> f64, i64 {
 // function of a + n and b - n over the beta function of a and b. The
 // moment exists when b is above n.
 fn betaprime_raw(n: i64, a: f64, b: f64) -> f64, i64 {
-    let top, ct = beta(a + n as f64, b - n as f64);
+    let top, ct = beta(a + n, b - n);
     if ct != OK { return nan(), ct; }
     let bottom, cb = beta(a, b);
     if cb != OK { return nan(), cb; }

@@ -58,7 +58,7 @@ fn kde_fit(data: const f64[:], dims: i64, weights: const f64[:], bw: i64, factor
     var w: f64[>..] = [];
     var sum: f64 = 0.0;
     if weights.len == 0 {
-        for k in 0..n { w.push(1.0 / n as f64); }
+        for k in 0..n { w.push(1.0 / n); }
         sum = 1.0;
     } else {
         if weights.len != n { return kde_fault(ERR_LENGTH), ERR_LENGTH; }

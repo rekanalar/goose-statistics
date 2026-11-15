@@ -103,7 +103,7 @@ fn gengamma_check(a: f64, c: f64) -> i64 {
 // of the gamma function of the shape plus n over the shape c, and of the
 // shape. The moment exists when that sum is above 0.
 fn gengamma_raw(n: i64, a: f64, c: f64) -> f64, i64 {
-    let t = a + n as f64 / c;
+    let t = a + n / c;
     if t <= 0.0 { return nan(), ERR_UNDEFINED; }
     let l1, s1, c1 = lgamma(t);
     if c1 != OK { return nan(), c1; }
@@ -254,14 +254,14 @@ fn genexpon_raw(n: i64, a: f64, b: f64, c: f64) -> f64, i64 {
     // fallen below a small part of its peak. A law with a slow decay
     // needs a long range.
     let top = genexpon_reach(a, b, c);
-    let width = top / FAM_PANELS as f64;
+    let width = top / FAM_PANELS;
     for k in 0..FAM_PANELS {
-        let left = width * k as f64;
+        let left = width * k;
         for j in 0..FAM_NODES {
             let x = left + width * (gx[j] + 1.0) / 2.0;
             let d, cd = genexpon_density(x, a, b, c);
             if cd != OK { return nan(), cd; }
-            total += pow(x, n as f64) * d * gw[j] * width / 2.0;
+            total += pow(x, n) * d * gw[j] * width / 2.0;
         }
     }
     if is_nan(total) || is_inf(total) { return nan(), ERR_OVERFLOW; }

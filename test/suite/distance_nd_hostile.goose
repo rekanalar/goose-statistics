@@ -14,7 +14,7 @@ fn nd_points(st: u64&, n: i64, dims: i64, hostile: bool) -> f64[>..] {
         if hostile && r == 0 { out.push(0.0 / 0.0); }
         else if hostile && r == 1 { out.push(1.0 / 0.0); }
         else if hostile && r == 2 { out.push(1e200); }
-        else { out.push((rnd(st) % 11) as f64 - 5.0); }
+        else { out.push((rnd(st) % 11) - 5.0); }
     }
     return out;
 }
@@ -38,8 +38,8 @@ fn run_distance_nd_hostile() -> i64 {
         hostile_report(bad, ok, "wasserstein_distance_nd", k, c);
         var uw: f64[>..] = [];
         var vw: f64[>..] = [];
-        for j in 0..nu { uw.push((rnd(st) % 4) as f64); }
-        for j in 0..nv { vw.push((rnd(st) % 4) as f64); }
+        for j in 0..nu { uw.push((rnd(st) % 4)); }
+        for j in 0..nv { vw.push((rnd(st) % 4)); }
         let dw, cw = statistics::wasserstein_distance_nd_weighted(u[..], v[..], dims, uw[..], vw[..]);
         var okw = false;
         if cw == 0 { okw = !is_nan(dw) && !is_inf(dw) && dw >= 0.0; }

@@ -15,7 +15,7 @@ fn run_time_assoc_somers(n: i64) -> i64 {
     let r, c = statistics::somersd(xs[..], ys[..]);
     time_shape(bad, r.statistic, c, "somersd", t0);
     var table: f64[>..] = [];
-    for k in 0..statistics::MAX_TABLE_SIDE * statistics::MAX_TABLE_SIDE { table.push((k % 7) as f64); }
+    for k in 0..statistics::MAX_TABLE_SIDE * statistics::MAX_TABLE_SIDE { table.push((k % 7)); }
     let t1 = clock();
     let r2, c2 = statistics::somersd_table(table[..], statistics::MAX_TABLE_SIDE, statistics::MAX_TABLE_SIDE);
     time_shape(bad, r2.statistic, c2, "somersd_table", t1);

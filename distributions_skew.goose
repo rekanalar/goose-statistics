@@ -58,9 +58,9 @@ fn fam_owens_integral(h: f64, a: f64) -> f64 {
     var total: f64 = 0.0;
     if ah >= 1.0 {
         let top = min(ah * a, 12.0);
-        let width = top / panels as f64;
+        let width = top / panels;
         for k in 0..panels {
-            let left = width * k as f64;
+            let left = width * k;
             for j in 0..FAM_NODES {
                 let s = left + width * (gx[j] + 1.0) / 2.0;
                 let t = s / ah;
@@ -70,9 +70,9 @@ fn fam_owens_integral(h: f64, a: f64) -> f64 {
         }
         return total / (ah * 2.0 * PI);
     }
-    let width = a / panels as f64;
+    let width = a / panels;
     for k in 0..panels {
-        let left = width * k as f64;
+        let left = width * k;
         for j in 0..FAM_NODES {
             let t = left + width * (gx[j] + 1.0) / 2.0;
             let d = 1.0 + t * t;
@@ -182,10 +182,10 @@ fn skewnorm_left_tail(w: f64, a: f64) -> f64 {
     var gw: f64[>..] = [];
     gauss_legendre(gx, gw, FAM_NODES);
     let panels: i64 = 32;
-    let width: f64 = 10.0 / panels as f64;
+    let width: f64 = 10.0 / panels;
     var total: f64 = 0.0;
     for k in 0..panels {
-        let left = width * k as f64;
+        let left = width * k;
         for j in 0..FAM_NODES {
             let u = left + width * (gx[j] + 1.0) / 2.0;
             let z = u * u / b;

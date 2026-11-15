@@ -28,7 +28,7 @@ fn run_distributions_skew_hostile() -> i64 {
         let s = ((rnd(st) % 801) as f64 - 400.0) / 100.0;
         let v1, cc1 = statistics::skewnorm_pdf(x, s);
         let v2, cc2 = statistics::skewnorm_cdf(x, s);
-        let v3, cc3 = statistics::laplace_asymmetric_cdf(x, 0.5 + (rnd(st) % 40) as f64 / 10.0);
+        let v3, cc3 = statistics::laplace_asymmetric_cdf(x, 0.5 + (rnd(st) % 40) / 10.0);
         hostile_report(bad, cc1 == 0 && !is_nan(v1) && !is_inf(v1), "skewnorm pdf", k, cc1);
         hostile_report(bad, cc2 == 0 && !is_nan(v2) && !is_inf(v2), "skewnorm cdf", k, cc2);
         hostile_report(bad, cc3 == 0 && !is_nan(v3) && !is_inf(v3), "laplace_asymmetric cdf", k, cc3);

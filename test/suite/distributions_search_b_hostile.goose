@@ -30,7 +30,7 @@ fn run_distributions_search_b_hostile() -> i64 {
     for k in 0..tests_count() / 20 {
         let x = (rnd(st) % 401) as f64 / 100.0 - 1.0;
         let a = (rnd(st) % 400 + 1) as f64 / 100.0;
-        let b = a + (rnd(st) % 300 + 1) as f64 / 100.0;
+        let b = a + (rnd(st) % 300 + 1) / 100.0;
         let v1, cc1 = statistics::loguniform_pdf(x, a, b);
         let v2, cc2 = statistics::gausshyper_cdf(x, a, b, 1.0, 0.5);
         let v3, cc3 = statistics::geninvgauss_cdf(x, a, b);

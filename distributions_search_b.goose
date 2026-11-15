@@ -87,7 +87,7 @@ fn irwinhall_both(x: f64, n: i64) -> f64, f64 {
             var b: f64 = 0.0;
             if j < m - 1 { a = (f + j) * v[j]; }
             if j > 0 { b = (m - f - j) * v[j - 1]; }
-            next.push((a + b) / (m - 1) as f64);
+            next.push((a + b) / (m - 1));
         }
         v = copy(next);
         if m == n && fl < v.len { dens = v[fl]; }

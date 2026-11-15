@@ -72,12 +72,12 @@ fn truncexpon_raw(n: i64, b: f64) -> f64, i64 {
     var t: f64 = 0.0;
     var term: f64 = 1.0;
     for k in 1..n + 1 {
-        term *= b / k as f64;
+        term *= b / k;
         t += term;
     }
     // The factorial of n.
     var fact: f64 = 1.0;
-    for k in 2..n + 1 { fact *= k as f64; }
+    for k in 2..n + 1 { fact *= k; }
     let e = exp(-b);
     let num = -d - e * t;
     return fact * num / -d, OK;
@@ -361,7 +361,7 @@ fn truncnorm_edge(x: f64, k: i64) -> f64, i64 {
     let p, cp = norm_pdf(x);
     if cp != OK { return nan(), cp; }
     if k == 0 { return p, OK; }
-    return p * pow(x, k as f64), OK;
+    return p * pow(x, k), OK;
 }
 
 // The integral of the point to the n times the density of the normal law
@@ -380,7 +380,7 @@ recursive fn truncnorm_integral(n: i64, a: f64, b: f64) -> f64, i64 {
     if n == 1 { return ea - eb, OK; }
     let prev, cp = truncnorm_integral(n - 2, a, b);
     if cp != OK { return nan(), cp; }
-    return ea - eb + (n as f64 - 1.0) * prev, OK;
+    return ea - eb + (n - 1.0) * prev, OK;
 }
 
 // The raw moment of order n of the truncated normal law.

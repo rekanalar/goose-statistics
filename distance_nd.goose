@@ -176,8 +176,8 @@ fn ndw_run(u: const f64[:], v: const f64[:], dims: i64, uw: const f64[:], vw: co
         for w in uw { sup.push(w / su); }
         for w in vw { dem.push(w / sv); }
     } else {
-        for k in 0..n { sup.push(1.0 / n as f64); }
-        for k in 0..m { dem.push(1.0 / m as f64); }
+        for k in 0..n { sup.push(1.0 / n); }
+        for k in 0..m { dem.push(1.0 / m); }
     }
     var cost: f64[>..] = [];
     let cc = ndw_costs(cost, u, v, dims);

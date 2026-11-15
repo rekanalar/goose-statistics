@@ -10,11 +10,11 @@ fn run_distributions_objects_time() -> i64 {
     var bad: i64 = 0;
     var edges: f64[>..] = [];
     var content: f64[>..] = [];
-    for i in 0..20001 { edges.push(i as f64); }
-    for i in 0..20000 { content.push(1.0 + (i % 7) as f64); }
+    for i in 0..20001 { edges.push(i); }
+    for i in 0..20000 { content.push(1.0 + (i % 7)); }
     var s: f64 = 0.0;
     for k in 0..50 {
-        let v, c = statistics::histogram_cdf(content[..], edges[..], true, 50.0 * k as f64 + 0.5);
+        let v, c = statistics::histogram_cdf(content[..], edges[..], true, 50.0 * k + 0.5);
         if c != 0 { bad += 1; }
         s = s + v;
     }

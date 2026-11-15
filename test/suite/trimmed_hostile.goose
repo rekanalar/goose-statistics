@@ -33,15 +33,15 @@ fn run_trimmed_hostile() -> i64 {
         hostile_report(bad, sound_value(v25, c25), "tmin", k, c25);
         let v26, c26 = statistics::tmax(xs[..], alpha, rnd(st) % 2 == 0);
         hostile_report(bad, sound_value(v26, c26), "tmax", k, c26);
-        let v27, c27 = statistics::tvar(xs[..], alpha, alpha, rnd(st) % 2 == 0, rnd(st) % 2 == 0, true, true, (rnd(st) % 3) as i64);
+        let v27, c27 = statistics::tvar(xs[..], alpha, alpha, rnd(st) % 2 == 0, rnd(st) % 2 == 0, true, true, (rnd(st) % 3));
         hostile_report(bad, sound_value(v27, c27), "tvar", k, c27);
         let n28, c28 = statistics::trimboth(out, xs[..], prop);
         hostile_report(bad, sound_count(n28, c28, out.len), "trimboth", k, c28);
         let n29, c29 = statistics::trim1(out, xs[..], prop, tail);
         hostile_report(bad, sound_count(n29, c29, out.len), "trim1", k, c29);
-        let v43, c43 = statistics::tstd(xs[..], alpha, level, rnd(st) % 2 == 0, rnd(st) % 2 == 0, rnd(st) % 2 == 0, rnd(st) % 2 == 0, (rnd(st) % 3) as i64);
+        let v43, c43 = statistics::tstd(xs[..], alpha, level, rnd(st) % 2 == 0, rnd(st) % 2 == 0, rnd(st) % 2 == 0, rnd(st) % 2 == 0, (rnd(st) % 3));
         hostile_report(bad, sound_value(v43, c43), "tstd", k, c43);
-        let v44, c44 = statistics::tsem(xs[..], alpha, level, rnd(st) % 2 == 0, rnd(st) % 2 == 0, rnd(st) % 2 == 0, rnd(st) % 2 == 0, (rnd(st) % 3) as i64);
+        let v44, c44 = statistics::tsem(xs[..], alpha, level, rnd(st) % 2 == 0, rnd(st) % 2 == 0, rnd(st) % 2 == 0, rnd(st) % 2 == 0, (rnd(st) % 3));
         hostile_report(bad, sound_value(v44, c44), "tsem", k, c44);
     }
     return bad;

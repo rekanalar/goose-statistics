@@ -11,7 +11,7 @@ fn run_distributions_nch_tests() -> i64 {
     var bad: i64 = 0;
     var total_nchypergeom_fisher: f64 = 0.0;
     for k in 0..16 {
-        let v, c = statistics::nchypergeom_fisher_pmf(k as f64, 30.0, 10.0, 12.0, 0.5);
+        let v, c = statistics::nchypergeom_fisher_pmf(k, 30.0, 10.0, 12.0, 0.5);
         if c == 0 { total_nchypergeom_fisher += v; } else { bad += 1; }
     }
     chk_val(bad, "nchypergeom_fisher masses sum to 1", total_nchypergeom_fisher, 0, 1.0, 1e-9);
@@ -26,7 +26,7 @@ fn run_distributions_nch_tests() -> i64 {
     chk_code(bad, "nchypergeom_fisher odds 0", cd2, 5);
     var total_nchypergeom_wallenius: f64 = 0.0;
     for k in 0..16 {
-        let v, c = statistics::nchypergeom_wallenius_pmf(k as f64, 30.0, 10.0, 12.0, 0.5);
+        let v, c = statistics::nchypergeom_wallenius_pmf(k, 30.0, 10.0, 12.0, 0.5);
         if c == 0 { total_nchypergeom_wallenius += v; } else { bad += 1; }
     }
     chk_val(bad, "nchypergeom_wallenius masses sum to 1", total_nchypergeom_wallenius, 0, 1.0, 1e-9);

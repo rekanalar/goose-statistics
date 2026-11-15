@@ -24,7 +24,7 @@ fn run_contingency_risk_hostile() -> i64 {
     let n = tests_count();
     for k in 0..n {
         var tab: f64[4] = [0.0, 0.0, 0.0, 0.0];
-        for i in 0..4 { tab[i] = (rnd(st) % 21) as f64; }
+        for i in 0..4 { tab[i] = (rnd(st) % 21); }
         // the conditional form costs a search, so it runs once in fifty rounds
         var kind = statistics::ODDS_SAMPLE;
         if k % 50 == 0 { kind = statistics::ODDS_CONDITIONAL; }
@@ -33,9 +33,9 @@ fn run_contingency_risk_hostile() -> i64 {
         let r, c = statistics::odds_ratio(tab[..], kind, alt, level);
         hostile_report(bad, risk_ok(r, c), "odds_ratio", k, c);
         let ec = (rnd(st) % 21) as f64;
-        let et = ec + (rnd(st) % 21) as f64;
+        let et = ec + (rnd(st) % 21);
         let cc = (rnd(st) % 21) as f64;
-        let ct = cc + (rnd(st) % 21) as f64;
+        let ct = cc + (rnd(st) % 21);
         let r2, c2 = statistics::relative_risk(ec, et, cc, ct, level);
         hostile_report(bad, risk_ok(r2, c2), "relative_risk", k, c2);
     }

@@ -43,7 +43,7 @@ fn filliben_medians(n: i64, out: f64[>..]&) {
         let a = (k + 1) as f64;
         let b = (n - k) as f64;
         let v, c = betaincinv(a, b, 0.5);
-        if c != OK { out.push(((k + 1) - 0.3175) / (n as f64 + 0.365)); }
+        if c != OK { out.push(((k + 1) - 0.3175) / (n + 0.365)); }
         else { out.push(v); }
     }
 }
@@ -55,8 +55,8 @@ fn filliben_corr(xs: const f64[:], ys: const f64[:]) -> f64, i64 {
     var mx: f64 = 0.0;
     var my: f64 = 0.0;
     for i in 0..n { mx = mx + xs[i]; my = my + ys[i]; }
-    mx = mx / n as f64;
-    my = my / n as f64;
+    mx = mx / n;
+    my = my / n;
     var num: f64 = 0.0;
     var dx: f64 = 0.0;
     var dy: f64 = 0.0;
@@ -287,7 +287,7 @@ fn fit_nelder<F>(x: f64[>..]&, v: f64[>..]&, n: i64, steps: i64) {
 fn fit_chi2(s: const f64[:]) -> f64, f64, i64 {
     var sum: f64 = 0.0;
     for v in s { sum += v; }
-    let mean = sum / s.len as f64;
+    let mean = sum / s.len;
     if !(mean > 0.0) { return nan(), nan(), ERR_FIT; }
     // The start follows the method of moments: the mean of the law is
     // the degrees of freedom times the scale.
@@ -318,10 +318,10 @@ fn fit_chi2(s: const f64[:]) -> f64, f64, i64 {
 fn fit_t(s: const f64[:]) -> f64, f64, f64, i64 {
     var sum: f64 = 0.0;
     for v in s { sum += v; }
-    let m = sum / s.len as f64;
+    let m = sum / s.len;
     var ss: f64 = 0.0;
     for v in s { let d = v - m; ss += d * d; }
-    let sd = sqrt(ss / (s.len as f64 - 1.0));
+    let sd = sqrt(ss / (s.len - 1.0));
     if !(sd > 0.0) || is_inf(sd) { return nan(), nan(), nan(), ERR_FIT; }
     var full: f64[>..] = [];
     var vals: f64[>..] = [];
@@ -355,7 +355,7 @@ fn fit_t(s: const f64[:]) -> f64, f64, f64, i64 {
 fn fit_f(s: const f64[:]) -> f64, f64, f64, i64 {
     var sum: f64 = 0.0;
     for v in s { sum += v; }
-    let mean = sum / s.len as f64;
+    let mean = sum / s.len;
     if !(mean > 0.0) { return nan(), nan(), nan(), ERR_FIT; }
     // The start follows the method of moments: the mean of the law is
     // d2 / (d2 - 2) for d2 above 2, and the scale follows from it.

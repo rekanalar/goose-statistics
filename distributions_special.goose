@@ -359,9 +359,9 @@ fn kappa3_ppf(q: f64, a: f64) -> f64, i64 {
 // The raw moment of order n of the Kappa law of the third kind. The moment
 // exists only when the shape is above n.
 fn kappa3_raw(n: i64, a: f64) -> f64, i64 {
-    if a <= n as f64 { return nan(), ERR_UNDEFINED; }
-    let e = n as f64 / a;
-    let lg = (e - 1.0) * log(a) + fam_lngamma((n as f64 + 1.0) / a)
+    if a <= n { return nan(), ERR_UNDEFINED; }
+    let e = n / a;
+    let lg = (e - 1.0) * log(a) + fam_lngamma((n + 1.0) / a)
         + fam_lngamma(1.0 - e) - fam_lngamma(1.0 + 1.0 / a);
     if is_nan(lg) { return nan(), ERR_UNDEFINED; }
     return exp(lg), OK;

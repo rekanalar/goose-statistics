@@ -47,7 +47,7 @@ fn run_distributions_bounded_hostile() -> i64 {
         let x = ((rnd(st) % 2001) as f64 - 1000.0) / 100.0;
         let p = (rnd(st) % 1001) as f64 / 1000.0;
         let c1 = (rnd(st) % 5) as f64 / 10.0;
-        let d1 = c1 + (rnd(st) % 5) as f64 / 10.0;
+        let d1 = c1 + (rnd(st) % 5) / 10.0;
         let v1, cc1 = statistics::trapezoid_pdf(x, c1, d1);
         let v2, cc2 = statistics::bradford_ppf(p, 1.5);
         let v3, cc3 = statistics::moyal_cdf(x);

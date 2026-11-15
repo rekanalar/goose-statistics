@@ -254,7 +254,7 @@ fn levy_integrate(n: LevyN, want_pdf: bool) -> f64 {
         let blo, bhi, cp = levy_peak_bracket(n);
         if cp == OK {
             for i in 0..17 {
-                pts.push(blo + (bhi - blo) * (i as f64) / 16.0);
+                pts.push(blo + (bhi - blo) * (i) / 16.0);
             }
         }
     }

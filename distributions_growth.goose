@@ -91,23 +91,23 @@ fn genlogistic_ppf(p: f64, c: f64) -> f64, i64 {
 fn genlogistic_zeta(s: i64, c: f64) -> f64 {
     var total: f64 = 0.0;
     for k in 0..20 {
-        total += pow(c + k as f64, -(s as f64));
+        total += pow(c + k, -(s as f64));
     }
     let q = c + 20.0;
-    total += pow(q, 1.0 - s as f64) / (s as f64 - 1.0);
+    total += pow(q, 1.0 - s) / (s - 1.0);
     total += 0.5 * pow(q, -(s as f64));
     // The Bernoulli numbers B2, B4, B6, B8, B10 and B12.
     let bern: f64[6] = [1.0 / 6.0, -1.0 / 30.0, 1.0 / 42.0, -1.0 / 30.0, 5.0 / 66.0, -691.0 / 2730.0];
     for m in 1..6 + 1 {
         var r: f64 = 1.0;
         for i in 0..2 * m - 1 {
-            r *= s as f64 + i as f64;
+            r *= s as f64 + i;
         }
         var f: f64 = 1.0;
         for i in 2..2 * m + 1 {
-            f *= i as f64;
+            f *= i;
         }
-        total += bern[m - 1] / f * r * pow(q, -(s as f64) - 2.0 * m as f64 + 1.0);
+        total += bern[m - 1] / f * r * pow(q, -(s as f64) - 2.0 * m + 1.0);
     }
     return total;
 }
@@ -198,12 +198,12 @@ fn genhalflogistic_raw(n: i64, c: f64) -> f64 {
     let panels: i64 = 50;
     let width = 1.0 / panels as f64;
     for k in 0..panels {
-        let left = width * k as f64;
+        let left = width * k;
         for j in 0..FAM_NODES {
             let u = left + width * (gx[j] + 1.0) / 2.0;
             let y = (1.0 - u) / (1.0 + u);
             // The change of variable gives the uniform law on the point u.
-            total += pow((1.0 - pow(y, c)) / c, n as f64) * gw[j] * width / 2.0;
+            total += pow((1.0 - pow(y, c)) / c, n) * gw[j] * width / 2.0;
         }
     }
     return total;
@@ -308,13 +308,13 @@ fn gompertz_raw(n: i64, c: f64) -> f64 {
     let panels: i64 = 100;
     // The range 0 to 400 / c holds the whole mass of the exponential law.
     let hi = 400.0 / c;
-    let width = hi / panels as f64;
+    let width = hi / panels;
     for k in 0..panels {
-        let left = width * k as f64;
+        let left = width * k;
         for j in 0..FAM_NODES {
             let y = left + width * (gx[j] + 1.0) / 2.0;
             let l = log(1.0 + y);
-            total += c * pow(l, n as f64) * exp(-c * y) * gw[j] * width / 2.0;
+            total += c * pow(l, n) * exp(-c * y) * gw[j] * width / 2.0;
         }
     }
     return total;

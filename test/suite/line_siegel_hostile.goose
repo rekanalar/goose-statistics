@@ -25,8 +25,8 @@ fn run_line_siegel_hostile() -> i64 {
     var big_x: f64[>..] = [];
     var big_y: f64[>..] = [];
     for i in 0..statistics::MAX_SIEGEL_POINTS + 1 {
-        big_x.push(i as f64);
-        big_y.push(2.0 * i as f64);
+        big_x.push(i);
+        big_y.push(2.0 * i);
     }
     let _bs, _bb, bc = statistics::siegelslopes(big_y[..], big_x[..]);
     chk_code(bad, "siegelslopes too long", bc, 9);

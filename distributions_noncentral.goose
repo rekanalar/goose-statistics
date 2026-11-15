@@ -490,7 +490,7 @@ fn kstwo_cdf_value(n: f64, d: f64) -> f64 {
     }
     let k = floor(n * d) as i64 + 1;
     let m = 2 * k - 1;
-    let h = k as f64 - n * d;
+    let h = k - n * d;
     var hm: f64[>..] = [];
     for i in 0..m {
         for j in 0..m {
@@ -506,11 +506,11 @@ fn kstwo_cdf_value(n: f64, d: f64) -> f64 {
         hm[i * m] = hm[i * m] - hp[i];
         hm[(m - 1) * m + i] = hm[(m - 1) * m + i] - hp[m - 1 - i];
     }
-    if 2.0 * h - 1.0 > 0.0 { hm[(m - 1) * m] = hm[(m - 1) * m] + pow(2.0 * h - 1.0, m as f64); }
+    if 2.0 * h - 1.0 > 0.0 { hm[(m - 1) * m] = hm[(m - 1) * m] + pow(2.0 * h - 1.0, m); }
     for i in 0..m {
         for j in 0..m {
             if i - j + 1 > 0 {
-                for g in 1..(i - j + 2) { hm[i * m + j] = hm[i * m + j] / g as f64; }
+                for g in 1..(i - j + 2) { hm[i * m + j] = hm[i * m + j] / g; }
             }
         }
     }
@@ -546,7 +546,7 @@ fn kstwo_cdf_value(n: f64, d: f64) -> f64 {
     var v = r[(k - 1) * m + k - 1];
     let ni = n as i64;
     for i in 1..(ni + 1) {
-        v = v * i as f64 / n;
+        v = v * i / n;
         if v < 1e-140 {
             v = v * 1e140;
             er -= 140;

@@ -39,7 +39,7 @@ fn run_probplot_hostile() -> i64 {
     }
     // a sample above the bound gives the too long fault in the searches
     var big: f64[>..] = [];
-    for i in 0..statistics::MAX_PPCC_POINTS + 1 { big.push(i as f64); }
+    for i in 0..statistics::MAX_PPCC_POINTS + 1 { big.push(i); }
     let cb = statistics::ppcc_plot(osm, big[..], 0.0, 1.0, 3);
     chk_code(bad, "ppcc_plot too many values", cb, 9);
     let sb, cs = statistics::ppcc_max(big[..]);

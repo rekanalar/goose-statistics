@@ -192,7 +192,7 @@ fn run_accept() -> i64 {
     var spaced: f64[>..] = [];
     var backward: f64[>..] = [];
     for e in 0..40 {
-        part.push(pow(2.0, -1070.0 + 52.0 * (e as f64)));
+        part.push(pow(2.0, -1070.0 + 52.0 * (e)));
     }
     for r in 0..4 {
         for v in part {

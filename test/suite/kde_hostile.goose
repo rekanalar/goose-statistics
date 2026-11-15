@@ -16,8 +16,8 @@ fn run_kde_hostile() -> i64 {
         let points = 2 + rnd(st) % 8;
         var data: f64[>..] = [];
         for i in 0..points * dims {
-            if rnd(st) % 5 == 0 { data.push((rnd(st) % 21) as f64 - 10.0); }
-            else { data.push((rnd(st) % 21) as f64); }
+            if rnd(st) % 5 == 0 { data.push((rnd(st) % 21) - 10.0); }
+            else { data.push((rnd(st) % 21)); }
         }
         let bw = rnd(st) % 3;
         let kd, ck = statistics::kde_fit(data[..], dims, [], bw, 0.5);

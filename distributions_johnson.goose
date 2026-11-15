@@ -88,11 +88,11 @@ fn jf_skew_t_raw(n: i64, a: f64, b: f64) -> f64, i64 {
     if cb != OK { return nan(), cb; }
     var sum: f64 = 0.0;
     for i in 0..n + 1 {
-        let d, cd = beta(a + half - i as f64, b - half + i as f64);
+        let d, cd = beta(a + half - i, b - half + i);
         if cd != OK { return nan(), cd; }
         // The binomial coefficient of n over i.
         var comb: f64 = 1.0;
-        for k in 0..i { comb = comb * (n - k) as f64 / (k + 1) as f64; }
+        for k in 0..i { comb = comb * (n - k) / (k + 1); }
         let sign = if i % 2 == 0 { 1.0 } else { -1.0 };
         sum += comb * sign * d;
     }
@@ -220,7 +220,7 @@ fn johnsonsb_raw(n: i64, a: f64, b: f64) -> f64, i64 {
     let panels: i64 = 100;
     let width = 1.0 / panels as f64;
     for k in 0..panels {
-        let left = width * k as f64;
+        let left = width * k;
         for j in 0..FAM_NODES {
             let x = left + width * (gx[j] + 1.0) / 2.0;
             if x <= 0.0 || x >= 1.0 { continue; }
@@ -228,7 +228,7 @@ fn johnsonsb_raw(n: i64, a: f64, b: f64) -> f64, i64 {
             let p, cp = norm_pdf(a + b * l);
             if cp != OK { return nan(), cp; }
             let d = b * p / (x * (1.0 - x));
-            total += pow(x, n as f64) * d * gw[j] * width / 2.0;
+            total += pow(x, n) * d * gw[j] * width / 2.0;
         }
     }
     if is_nan(total) || is_inf(total) { return nan(), ERR_OVERFLOW; }
@@ -353,7 +353,7 @@ fn johnsonsu_raw(n: i64, a: f64, b: f64) -> f64, i64 {
     for k in 0..n + 1 {
         // The binomial coefficient of n over k.
         var comb: f64 = 1.0;
-        for j in 0..k { comb = comb * (n - j) as f64 / (j + 1) as f64; }
+        for j in 0..k { comb = comb * (n - j) / (j + 1); }
         let sign = if k % 2 == 0 { 1.0 } else { -1.0 };
         let d = (n - 2 * k) as f64;
         let term = comb * sign * exp(d * m + d * d * s2 / 2.0);

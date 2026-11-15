@@ -41,20 +41,20 @@ fn run_frequency_hostile() -> i64 {
         hostile_report(bad, sound_count(n21, c21, out.len), "ecdf_censored", k, c21);
         let n22, c22 = statistics::ecdf_censored_interval(out, out2, xs[..], ys[..], level);
         hostile_report(bad, sound_count(n22, c22, out.len), "ecdf_censored_interval", k, c22);
-        let f23, c23 = statistics::cumfreq(out, xs[..], (rnd(st) % 6) as i64);
+        let f23, c23 = statistics::cumfreq(out, xs[..], (rnd(st) % 6));
         hostile_report(bad, sound_freqs(f23, c23), "cumfreq", k, c23);
-        let f24, c24 = statistics::relfreq(out, xs[..], (rnd(st) % 6) as i64);
+        let f24, c24 = statistics::relfreq(out, xs[..], (rnd(st) % 6));
         hostile_report(bad, sound_freqs(f24, c24), "relfreq", k, c24);
         let v40, c40 = statistics::ecdf_value(xs[..], alpha);
         hostile_report(bad, sound_value(v40, c40), "ecdf_value", k, c40);
-        let f45, c45 = statistics::cumfreq_limits(out, xs[..], (rnd(st) % 6) as i64, alpha, level);
+        let f45, c45 = statistics::cumfreq_limits(out, xs[..], (rnd(st) % 6), alpha, level);
         hostile_report(bad, sound_freqs(f45, c45), "cumfreq_limits", k, c45);
-        let f46, c46 = statistics::relfreq_limits(out, xs[..], (rnd(st) % 6) as i64, alpha, level);
+        let f46, c46 = statistics::relfreq_limits(out, xs[..], (rnd(st) % 6), alpha, level);
         hostile_report(bad, sound_freqs(f46, c46), "relfreq_limits", k, c46);
         let ws = weights_of(st, xs.len);
-        let f47, c47 = statistics::cumfreq_weighted(out, xs[..], ws[..], (rnd(st) % 6) as i64);
+        let f47, c47 = statistics::cumfreq_weighted(out, xs[..], ws[..], (rnd(st) % 6));
         hostile_report(bad, sound_freqs(f47, c47), "cumfreq_weighted", k, c47);
-        let f48, c48 = statistics::relfreq_weighted(out, xs[..], ws[..], (rnd(st) % 6) as i64);
+        let f48, c48 = statistics::relfreq_weighted(out, xs[..], ws[..], (rnd(st) % 6));
         hostile_report(bad, sound_freqs(f48, c48), "relfreq_weighted", k, c48);
     }
     return bad;

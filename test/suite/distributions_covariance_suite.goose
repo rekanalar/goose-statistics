@@ -26,7 +26,7 @@ fn run_distributions_covariance_tests() -> i64 {
     let v1, c1 = statistics::covariance_log_pdet(1, sing, 3);
     chk_val(bad, "the log pdet of a singular form", v1, c1, log(3.0), 1e-12);
     let r1, cr1 = statistics::covariance_rank(1, sing, 3);
-    chk_val(bad, "the rank of a singular form", r1 as f64, cr1, 2.0, 1e-12);
+    chk_val(bad, "the rank of a singular form", r1, cr1, 2.0, 1e-12);
     // A dimension of zero gives the domain fault.
     let _v3, k3 = statistics::covariance_log_pdet(1, dg, 0);
     chk_code(bad, "a dimension of zero", k3, 5);

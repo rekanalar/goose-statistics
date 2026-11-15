@@ -12,8 +12,8 @@ fn run_distributions_covariance_time() -> i64 {
     var diag: f64[>..] = [];
     var x: f64[>..] = [];
     for i in 0..100 {
-        diag.push(1.0 + (i % 5) as f64);
-        x.push((i as f64 - 50.0) * 0.01);
+        diag.push(1.0 + (i % 5));
+        x.push((i - 50.0) * 0.01);
     }
     let k1 = statistics::covariance_whiten(out, 1, diag[..], 100, x[..]);
     check(bad, k1 == 0, "the whitening of a large form");

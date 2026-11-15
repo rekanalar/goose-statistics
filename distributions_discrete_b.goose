@@ -80,7 +80,7 @@ fn poisson_binom_pmf(k: f64, ps: const f64[:]) -> f64, i64 {
     if c != OK { return nan(), c; }
     let kc = disc_count(k);
     if kc != OK { return nan(), kc; }
-    if k < 0.0 || k > ps.len as f64 { return 0.0, OK; }
+    if k < 0.0 || k > ps.len { return 0.0, OK; }
     let masses = poisson_binom_masses(ps);
     return masses[k as i64], OK;
 }
@@ -91,7 +91,7 @@ fn poisson_binom_cdf(k: f64, ps: const f64[:]) -> f64, i64 {
     let kc = disc_count(k);
     if kc != OK { return nan(), kc; }
     if k < 0.0 { return 0.0, OK; }
-    if k >= ps.len as f64 { return 1.0, OK; }
+    if k >= ps.len { return 1.0, OK; }
     let masses = poisson_binom_masses(ps);
     var total: f64 = 0.0;
     var i: i64 = 0;
@@ -108,16 +108,16 @@ fn poisson_binom_ppf(q: f64, ps: const f64[:]) -> f64, i64 {
     let qc = check_prob(q);
     if qc != OK { return nan(), qc; }
     if q == 0.0 { return 0.0, OK; }
-    if q == 1.0 { return ps.len as f64, OK; }
+    if q == 1.0 { return ps.len, OK; }
     let masses = poisson_binom_masses(ps);
     var total: f64 = 0.0;
     var i: i64 = 0;
     while i < masses.len {
         total += masses[i];
-        if total >= q { return i as f64, OK; }
+        if total >= q { return i, OK; }
         i += 1;
     }
-    return ps.len as f64, OK;
+    return ps.len, OK;
 }
 
 // ---- randint: the law of a whole number between two bounds --------------
@@ -187,7 +187,7 @@ fn skellam_bessel_log(n: f64, z: f64) -> f64, i64 {
     var steps: i64 = 0;
     while steps < MAX_ITER_SERIES {
         // The next term of the series.
-        lt = lt + 2.0 * lh - log(k as f64) - log(k as f64 + n);
+        lt = lt + 2.0 * lh - log(k as f64) - log(k + n);
         if lt > mx {
             // The largest term grew, so the sum shrinks by that factor.
             total = total * exp(mx - lt);

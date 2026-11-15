@@ -217,9 +217,9 @@ fn mgc_statistic(keep: i64[>..]&, map: const f64[:], nx: i64, ny: i64, base: f64
     if global > thr { thr = global; }
     let size = mgc_component(keep, map, nx, ny, thr);
     if size == 0 { return global, nx, ny; }
-    var big = ceil(0.02 * max(nx, ny) as f64);
-    big = big * min(nx, ny) as f64;
-    if size as f64 < big { return global, nx, ny; }
+    var big = ceil(0.02 * max(nx, ny));
+    big = big * min(nx, ny);
+    if size < big { return global, nx, ny; }
     var top = -inf();
     for c in 0..nx * ny {
         if keep[c] == 1 && map[c] > top { top = map[c]; }
@@ -268,7 +268,7 @@ fn mgc_core(map: f64[>..]&, dx: const f64[:], dy: const f64[:], n: i64, reps: i6
         let ps, pkx, pky = mgc_statistic(keep, pmap[..], nx, ny, base);
         if ps >= stat { count += 1; }
     }
-    let p = (1 + count) as f64 / (1 + reps) as f64;
+    let p = (1 + count) as f64 / (1 + reps);
     return MgcResult { statistic: stat, pvalue: p, kx: kx, ky: ky, rows: nx, cols: ny }, OK;
 }
 

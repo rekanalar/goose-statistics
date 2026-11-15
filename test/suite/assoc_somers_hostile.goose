@@ -39,7 +39,7 @@ fn run_assoc_somers_hostile() -> i64 {
     // a table of more cells than the bound gives the too long fault
     var wide_x: f64[>..] = [];
     var wide_y: f64[>..] = [];
-    for k in 0..1025 { wide_x.push(k as f64); wide_y.push(k as f64); }
+    for k in 0..1025 { wide_x.push(k); wide_y.push(k); }
     let rw, cw = statistics::somersd(wide_x[..], wide_y[..]);
     chk_code(bad, "a table above the cell bound", cw, 9);
     return bad;

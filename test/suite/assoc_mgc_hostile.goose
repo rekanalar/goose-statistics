@@ -25,9 +25,9 @@ fn run_assoc_mgc_hostile() -> i64 {
             if hostile && r == 0 { xs.push(0.0 / 0.0); }
             else if hostile && r == 1 { xs.push(1.0 / 0.0); }
             else if hostile && r == 2 { xs.push(1e200); }
-            else { xs.push((rnd(st) % 6) as f64); }
+            else { xs.push((rnd(st) % 6)); }
         }
-        for i in 0..pts * yd { ys.push((rnd(st) % 5) as f64); }
+        for i in 0..pts * yd { ys.push((rnd(st) % 5)); }
         if rnd(st) % 30 == 0 { ys.push(1.0); }
         let reps = rnd(st) % 4;
         let res, c = statistics::multiscale_graphcorr(map, xs[..], ys[..], xd, yd, reps, gen);

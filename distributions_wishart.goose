@@ -38,7 +38,7 @@ fn wishart_rvs(out: f64[>..]&, shape: const f64[:], df: f64, d: i64, size: i64, 
                     f[i * d + j] = rs_normal(r);
                 } else {
                     // The degrees of freedom that are left, at least one.
-                    let g, gc = mv_chisq_draw(df - (i as f64), r);
+                    let g, gc = mv_chisq_draw(df - (i), r);
                     if gc != OK { return gc; }
                     f[i * d + i] = sqrt(g);
                 }

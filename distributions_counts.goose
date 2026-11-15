@@ -21,7 +21,7 @@ fn multinomial_pmf(x: const f64[:], n: i64, p: const f64[:]) -> f64, i64 {
         if v < 0.0 || v != floor(v) { return nan(), ERR_DOMAIN; }
         total = total + v;
     }
-    if total != n as f64 { return nan(), ERR_DOMAIN; }
+    if total != n { return nan(), ERR_DOMAIN; }
     var sp: f64 = 0.0;
     for v in p {
         if is_nan(v) { return nan(), ERR_NAN; }
@@ -31,7 +31,7 @@ fn multinomial_pmf(x: const f64[:], n: i64, p: const f64[:]) -> f64, i64 {
     if abs(sp - 1.0) > 1e-9 { return nan(), ERR_DOMAIN; }
     // The mass is n! times the product of p_i to the count, over the
     // factorials of the counts.
-    let ln, sgn, cl = lgamma(n as f64 + 1.0);
+    let ln, sgn, cl = lgamma(n + 1.0);
     if cl != OK { return nan(), cl; }
     var s = ln;
     for i in 0..x.len {
@@ -49,7 +49,7 @@ fn multinomial_mean(out: f64[>..]&, n: i64, p: const f64[:]) -> i64 {
     out.resize(0);
     for v in p {
         if v < 0.0 || v > 1.0 { return ERR_DOMAIN; }
-        out.push(n as f64 * v);
+        out.push(n * v);
     }
     return OK;
 }
@@ -60,7 +60,7 @@ fn multinomial_cov(out: f64[>..]&, n: i64, p: const f64[:]) -> i64 {
     let k = p.len;
     for i in 0..k {
         for j in 0..k {
-            if i == j { out.push(n as f64 * p[i] * (1.0 - p[i])); }
+            if i == j { out.push(n * p[i] * (1.0 - p[i])); }
             else { out.push(-n as f64 * p[i] * p[j]); }
         }
     }
@@ -85,13 +85,13 @@ fn multinomial_rvs(out: f64[>..]&, n: i64, p: const f64[:], size: i64, r: rng&) 
         // count of each category is a draw of a binomial law.
         var left = n;
         for i in 0..k - 1 {
-            let v, c = binom_ppf(rs_unit(r), left as f64, p[i]);
+            let v, c = binom_ppf(rs_unit(r), left, p[i]);
             if c != OK { return c; }
             let cnt = v as i64;
-            out.push(cnt as f64);
+            out.push(cnt);
             left = left - cnt;
         }
-        out.push(left as f64);
+        out.push(left);
     }
     return OK;
 }

@@ -281,8 +281,8 @@ fn logistic_moment(order: i64) -> f64 {
     var cs: f64[>..] = [];
     var fac: f64 = 1.0;
     for j in 0..m + 1 {
-        if j > 0 { fac = fac * (2.0 * j as f64) * (2.0 * j as f64 + 1.0); }
-        var c = pow(PI, 2.0 * j as f64) / fac;
+        if j > 0 { fac = fac * (2.0 * j) * (2.0 * j + 1.0); }
+        var c = pow(PI, 2.0 * j) / fac;
         if j % 2 == 1 { c = -c; }
         cs.push(c);
     }
@@ -299,7 +299,7 @@ fn logistic_moment(order: i64) -> f64 {
     }
     // The moment is the coefficient times the factorial of the order.
     var fact: f64 = 1.0;
-    for i in 1..order + 1 { fact = fact * (i as f64); }
+    for i in 1..order + 1 { fact = fact * (i); }
     return fact * a[order];
 }
 
@@ -311,7 +311,7 @@ fn dist_moment(d: Dist, order: i64) -> f64, i64 {
         var m0: f64 = 1.0;
         var m1: f64 = d.a;
         for k in 2..order + 1 {
-            let m2 = d.a * m1 + (k - 1) as f64 * d.b * d.b * m0;
+            let m2 = d.a * m1 + (k - 1) * d.b * d.b * m0;
             m0 = m1;
             m1 = m2;
         }
@@ -332,8 +332,8 @@ fn dist_moment(d: Dist, order: i64) -> f64, i64 {
             let u = 1.0 / (j + 1) as f64;
             // The binomial coefficient of the order.
             var binom: f64 = 1.0;
-            for t in 0..order - j { binom = binom * ((order - t) as f64) / ((t + 1) as f64); }
-            total = total + binom * pow(c, (order - j) as f64) * pow(h, j as f64) * u;
+            for t in 0..order - j { binom = binom * ((order - t)) / ((t + 1)); }
+            total = total + binom * pow(c, (order - j)) * pow(h, j) * u;
         }
         return total, OK;
     }
@@ -346,7 +346,7 @@ fn dist_moment(d: Dist, order: i64) -> f64, i64 {
         while k <= d.a {
             let m, c = binom_pmf(k, d.a, d.b);
             if c != OK { return nan(), c; }
-            s = s + m * pow(k, order as f64);
+            s = s + m * pow(k, order);
             k = k + 1.0;
         }
         return s, OK;
