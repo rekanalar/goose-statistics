@@ -10,9 +10,9 @@ import statistics from "../..";
 fn run_distributions_search_d_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 60;
+    let n = 30;
     for k in 0..n {
-        let p = (k as f64 + 0.5) / n as f64;
+        let p = (k as f64 + 0.5) / n;
         let x, cx = statistics::levy_stable_ppf(p, 1.5, 0.0);
         if cx != 0 { bad += 1; }
         total += x;

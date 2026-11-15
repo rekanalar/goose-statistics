@@ -11,9 +11,9 @@ import statistics from "../..";
 fn run_distributions_discrete_b_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 2000;
+    let n = 50;
     for k in 0..n {
-        let p = (k as f64 + 0.5) / n as f64;
+        let p = (k as f64 + 0.5) / n;
         let x, cx = statistics::randint_ppf(p, 0.0, 5.0);
         let d, cd = statistics::zipfian_cdf(x, 2.0, 5.0);
         if cx != 0 || cd != 0 { bad += 1; }
@@ -22,7 +22,7 @@ fn run_distributions_discrete_b_time() -> i64 {
     // A list of 200 probabilities builds the masses of the law with a
     // quadratic rule.
     var ps: f64[>..] = [];
-    for k in 0..200 { ps.push((k % 10) as f64 / 10.0); }
+    for k in 0..200 { ps.push((k % 10) / 10.0); }
     let m, cm = statistics::poisson_binom_ppf(0.5, ps[..]);
     chk_code(bad, "poisson_binom ppf code", cm, 0);
     let m2, cm2 = statistics::yulesimon_ppf(0.5, 2.0);

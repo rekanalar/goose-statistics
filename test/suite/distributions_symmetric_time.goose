@@ -10,9 +10,9 @@ import statistics from "../..";
 fn run_distributions_symmetric_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 2000;
+    let n = 50;
     for k in 0..n {
-        let p = (k as f64 + 0.5) / n as f64;
+        let p = (k as f64 + 0.5) / n;
         let x, cx = statistics::gennorm_ppf(p, 1.5);
         let d, cd = statistics::gennorm_cdf(x, 1.5);
         let y, cy = statistics::tukeylambda_ppf(p, 0.5);

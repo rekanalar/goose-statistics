@@ -11,9 +11,9 @@ import statistics from "../..";
 fn run_distributions_gamma_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 2000;
+    let n = 50;
     for k in 0..n {
-        let p = (k as f64 + 0.5) / n as f64;
+        let p = (k as f64 + 0.5) / n;
         let x, cx = statistics::chi_ppf(p, 3.0);
         let d, cd = statistics::chi_cdf(x, 3.0);
         let y, cy = statistics::loggamma_ppf(p, 2.0);

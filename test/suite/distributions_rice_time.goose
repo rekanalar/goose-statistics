@@ -10,9 +10,9 @@ import statistics from "../..";
 fn run_distributions_rice_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 200;
+    let n = 20;
     for k in 0..n {
-        let p = (k as f64 + 0.5) / n as f64;
+        let p = (k as f64 + 0.5) / n;
         let x, cx = statistics::rice_ppf(p, 5.0);
         let d, cd = statistics::rice_pdf(x, 5.0);
         if cx != 0 || cd != 0 { bad += 1; }

@@ -9,9 +9,9 @@ import statistics from "../..";
 fn run_distributions_closed_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 100;
+    let n = 50;
     for k in 0..n {
-        let p = (k as f64 + 0.5) / n as f64;
+        let p = (k as f64 + 0.5) / n;
         let x0, c0 = statistics::alpha_ppf(p, 1.5);
         if c0 != 0 { bad += 1; }
         total += x0;

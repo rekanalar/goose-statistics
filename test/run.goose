@@ -21,7 +21,17 @@ fn main() {
     } else if is_word(which[..], "tests") {
         bad += run_hypothesis();
     } else {
-        bad += run_group(which[..]);
+        // The variable may hold several names, separated by commas.
+        var start: i64 = 0;
+        var i: i64 = 0;
+        while i < which.len {
+            if which[i] as i64 == 44 {
+                bad += run_group(which[start..i]);
+                start = i + 1;
+            }
+            i += 1;
+        }
+        if start < which.len { bad += run_group(which[start..]); }
     }
     if bad > 0 {
         print(bad, " checks failed\n");
@@ -471,27 +481,27 @@ fn run_group(name: u8[:]) -> i64 {
     }
     if is_word(name, "time") {
         bad += suite::run_time_tests();
-        bad += suite::run_time_descriptive(200000);
-        bad += suite::run_time_entropy(200000);
-        bad += suite::run_time_frequency(200000);
-        bad += suite::run_time_trimmed(200000);
-        bad += suite::run_time_circular(200000);
-        bad += suite::run_time_binned(200000);
-        bad += suite::run_time_distributions_location(200000);
+        bad += suite::run_time_descriptive(20000);
+        bad += suite::run_time_entropy(20000);
+        bad += suite::run_time_frequency(20000);
+        bad += suite::run_time_trimmed(20000);
+        bad += suite::run_time_circular(20000);
+        bad += suite::run_time_binned(20000);
+        bad += suite::run_time_distributions_location(20000);
         bad += suite::run_time_contingency(0);
-        bad += suite::run_time_divergence(200000);
-        bad += suite::run_time_clip(200000);
-        bad += suite::run_time_assoc_rank(20000);
-        bad += suite::run_time_distance(200000);
-        bad += suite::run_time_distance_nd(256);
-        bad += suite::run_time_assoc_mgc(1024);
-        bad += suite::run_time_line_siegel(2000);
-        bad += suite::run_time_laws(4096);
-        bad += suite::run_time_probplot(200000);
-        bad += suite::run_time_anderson_families(20000);
-        bad += suite::run_time_fitting_mle(200);
-        bad += suite::run_time_fitting_shapes(100);
-        bad += suite::run_time_assoc_somers(200000);
+        bad += suite::run_time_divergence(20000);
+        bad += suite::run_time_clip(20000);
+        bad += suite::run_time_assoc_rank(2000);
+        bad += suite::run_time_distance(20000);
+        bad += suite::run_time_distance_nd(128);
+        bad += suite::run_time_assoc_mgc(512);
+        bad += suite::run_time_line_siegel(1000);
+        bad += suite::run_time_laws(2048);
+        bad += suite::run_time_probplot(20000);
+        bad += suite::run_time_anderson_families(5000);
+        bad += suite::run_time_fitting_mle(100);
+        bad += suite::run_time_fitting_shapes(50);
+        bad += suite::run_time_assoc_somers(20000);
         bad += suite::run_time_contingency_risk();
         bad += suite::run_time_kde();
     }

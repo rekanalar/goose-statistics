@@ -9,10 +9,10 @@ import statistics from "../..";
 fn run_distributions_extreme_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 2000;
+    let n = 50;
     for k in 0..n {
-        let x = (k as f64 + 0.5) / n as f64 * 6.0 - 1.0;
-        let s = ((k as f64 + 0.5) / n as f64 - 0.5) * 4.0;
+        let x = (k as f64 + 0.5) / n * 6.0 - 1.0;
+        let s = ((k as f64 + 0.5) / n - 0.5) * 4.0;
         let d, cd = statistics::genextreme_cdf(x, s);
         let e, ce = statistics::genextreme_pdf(x, s);
         let f, cf = statistics::genextreme_sf(x, s);

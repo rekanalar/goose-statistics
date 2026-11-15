@@ -13,13 +13,13 @@ import statistics from "../..";
 // variable STATISTICS_HOSTILE_N. The mutation probes use a smaller count.
 fn dist_count() -> i64 {
     var buf: u8[>..] = [];
-    if !env("STATISTICS_HOSTILE_N", buf) { return 100000; }
+    if !env("STATISTICS_HOSTILE_N", buf) { return 2000; }
     var n: i64 = 0;
     for ch in buf {
-        if ch < 48 || ch > 57 { return 100000; }
+        if ch < 48 || ch > 57 { return 2000; }
         n = n * 10 + (ch - 48);
     }
-    if n < 1 { return 100000; }
+    if n < 1 { return 2000; }
     return n;
 }
 

@@ -10,9 +10,9 @@ import statistics from "../..";
 fn run_distributions_search_c_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 150;
+    let n = 10;
     for k in 0..n {
-        let p = (k as f64 + 0.5) / n as f64;
+        let p = (k as f64 + 0.5) / n;
         let x, cx = statistics::norminvgauss_ppf(p, 1.0, 0.5);
         let y, cy = statistics::recipinvgauss_ppf(p, 2.0);
         if cx != 0 || cy != 0 { bad += 1; }

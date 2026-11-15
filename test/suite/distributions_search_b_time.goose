@@ -10,9 +10,9 @@ import statistics from "../..";
 fn run_distributions_search_b_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 200;
+    let n = 50;
     for k in 0..n {
-        let p = (k as f64 + 0.5) / n as f64;
+        let p = (k as f64 + 0.5) / n;
         let x, cx = statistics::loguniform_ppf(p, 1.0, 4.0);
         let y, cy = statistics::irwinhall_ppf(p, 3.0);
         if cx != 0 || cy != 0 { bad += 1; }

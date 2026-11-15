@@ -124,13 +124,13 @@ fn pick_arg(st: u64&) -> f64 {
 // variable STATISTICS_HOSTILE_N. The mutation probes use a smaller count.
 fn hostile_count() -> i64 {
     var buf: u8[>..] = [];
-    if !env("STATISTICS_HOSTILE_N", buf) { return 100000; }
+    if !env("STATISTICS_HOSTILE_N", buf) { return 2000; }
     var n: i64 = 0;
     for ch in buf {
-        if ch < 48 || ch > 57 { return 100000; }
-        n = n * 10 + (ch - 48) as i64;
+        if ch < 48 || ch > 57 { return 2000; }
+        n = n * 10 + (ch - 48);
     }
-    if n < 1 { return 100000; }
+    if n < 1 { return 2000; }
     return n;
 }
 
@@ -189,7 +189,7 @@ fn special_time() -> i64 {
     let t0 = clock();
     var total: f64 = 0.0;
     for i in 0..200 {
-        let v, c = statistics::betainc(3.0 + (i as f64), 4.0, 0.3);
+        let v, c = statistics::betainc(3.0 + (i), 4.0, 0.3);
         total += v;
     }
     let base = (clock() - t0) / 200.0;

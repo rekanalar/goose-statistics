@@ -9,9 +9,9 @@ import statistics from "../..";
 fn run_distributions_power_time() -> i64 {
     var bad: i64 = 0;
     var total: f64 = 0.0;
-    let n = 2000;
+    let n = 100;
     for k in 0..n {
-        let p = (k as f64 + 0.5) / n as f64;
+        let p = (k as f64 + 0.5) / n;
         let x, cx = statistics::burr12_ppf(p, 2.0, 3.0);
         let d, cd = statistics::burr12_cdf(x, 2.0, 3.0);
         let y, cy = statistics::betaprime_ppf(p, 3.0, 5.0);

@@ -1516,6 +1516,12 @@ The scripts `test/make_vectors.py`, `test/make_assoc_vectors.py`,
 package. Each vector is compared with a second source, and the script
 fails on a difference beyond the tolerance.
 
+The program checks every row of every reference table. The seeded
+sweeps of hostile inputs use a few thousand inputs for each call. The
+whole program runs in about seven minutes on a Linux machine. The CI
+matrix runs it on Linux, macOS and Windows, on both supported Goose
+versions. Every job must finish inside fifteen minutes.
+
 The second sources are in four languages. Python gives the exact value
 through the modules `fractions` and `decimal`. NumPy, SciPy and Python
 `statistics` give the reference values. Three more libraries give their

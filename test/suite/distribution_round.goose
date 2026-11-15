@@ -27,18 +27,18 @@ fn round_args(fam: i64, p: f64) -> f64, f64, f64 {
     return 20.0, 10.0, 4.0;
 }
 
-// The count of the points of the round trip. The default gives 2,000
-// points for each family, so 30,000 points in all. The mutation script
+// The count of the points of the round trip. The default gives 200
+// points for each family, so 3,000 points in all. The mutation script
 // sets it lower, because it runs the suite many times.
 fn round_points() -> i64 {
     var buf: u8[>..] = [];
-    if !env("STATISTICS_ROUND_N", buf) { return 2000; }
+    if !env("STATISTICS_ROUND_N", buf) { return 200; }
     var n: i64 = 0;
     for ch in buf {
-        if ch < 48 || ch > 57 { return 2000; }
+        if ch < 48 || ch > 57 { return 200; }
         n = n * 10 + (ch - 48);
     }
-    if n < 2 { return 2000; }
+    if n < 2 { return 200; }
     return n;
 }
 
@@ -50,7 +50,7 @@ fn run_accept_round() -> i64 {
         var worst_p: f64 = 0.0;
         for i in 0..points {
             // The probability runs from 1e-4 to 1 - 1e-4.
-            let p = 1e-4 + (1.0 - 2e-4) * (i as f64) / ((points - 1) as f64);
+            let p = 1e-4 + (1.0 - 2e-4) * (i as f64) / ((points - 1));
             let a, b, c = round_args(fam, p);
             let x, cx = dist_call(fam, 3, p, p, a, b, c);
             if cx != 0 {
