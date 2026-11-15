@@ -618,7 +618,7 @@ distributions_discrete_b.goose|let den = 1.0 - pow(2.0, 1.0 - a);|let den = 1.0 
 distributions_discrete_b.goose|total += pow(k, -a);|total += pow(k, a);|the harmonic number of the Zipf law of the finite kind
 distributions_discrete_b.goose|return 1.0 / (h * pow(k, a)), OK;|return 1.0 / (h * pow(k, -a)), OK;|the mass of the Zipf law of the finite kind
 distributions_discrete_b.goose|return zipfian_harmonic(floor(k), a) / h, OK;|return zipfian_harmonic(floor(k) + 1.0, a) / h, OK;|the cumulative function of the Zipf law of the finite kind
-distributions_discrete_b.goose|while skellam_cdf(r, mu1, mu2) < q { r = r * 2.0; }|while skellam_cdf(r, mu1, mu2) < q { r = r * 3.0; }|the bound of the search of the quantile of the Skellam law
+distributions_discrete_b.goose|if k < 1.0 { return 0.0, OK; }\n    let b, bc = beta(k, alpha + 1.0);|if k < 0.0 { return 0.0, OK; }\n    let b, bc = beta(k, alpha + 1.0);|the Yule-Simon law starts at one
 distributions_rice.goose|return x * exp(-0.5 * d * d) * rice_i0e(x * b);|return x * exp(-0.5 * d * d) * rice_i0e(x);|the density of the Rice law
 distributions_rice.goose|return total / sqrt(2.0 * PI * z);|return total / sqrt(PI * z);|the asymptotic series of the Bessel function
 distributions_rice.goose|let q = 0.25 * z * z;|let q = 0.5 * z * z;|the power series of the Bessel function

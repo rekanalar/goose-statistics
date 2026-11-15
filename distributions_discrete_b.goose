@@ -203,7 +203,6 @@ fn skellam_pmf(k: f64, mu1: f64, mu2: f64) -> f64, i64 {
     if c2 != OK { return nan(), c2; }
     let kc = disc_count(k);
     if kc != OK { return nan(), kc; }
-    if mu1 <= 0.0 || mu2 <= 0.0 { return nan(), ERR_DOMAIN; }
     let n = abs(k);
     let b, bc = skellam_bessel_i(n, 2.0 * sqrt(mu1 * mu2));
     if bc != OK { return nan(), bc; }
@@ -223,7 +222,6 @@ fn skellam_cdf(k: f64, mu1: f64, mu2: f64) -> f64, i64 {
     if c2 != OK { return nan(), c2; }
     let kc = disc_count(k);
     if kc != OK { return nan(), kc; }
-    if mu1 <= 0.0 || mu2 <= 0.0 { return nan(), ERR_DOMAIN; }
     // The law has no end, so the cumulative function comes from the sum
     // of the masses. The sum runs from the lower bound of the law up to
     // the count.
@@ -258,7 +256,6 @@ fn skellam_ppf(q: f64, mu1: f64, mu2: f64) -> f64, i64 {
     if c2 != OK { return nan(), c2; }
     let qc = check_prob(q);
     if qc != OK { return nan(), qc; }
-    if mu1 <= 0.0 || mu2 <= 0.0 { return nan(), ERR_DOMAIN; }
     if q == 0.0 { return -inf(), OK; }
     if q == 1.0 { return inf(), OK; }
     // The law has no end on the lower side, so the search walks up from

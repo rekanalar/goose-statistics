@@ -52,6 +52,15 @@ fn run_distributions_discrete_a_tests() -> i64 {
     chk_code(bad, "nhypergeom ppf code", kq5, 0);
     let r5, kr5 = statistics::nhypergeom_cdf(q5, 10.0, 5.0, 3.0);
     check(bad, kr5 == 0 && r5 >= 0.7 - 1e-9, "nhypergeom cdf of the quantile");
+    // The quantile of the cumulative function of a count gives that count
+    // back. The search stops at the first count that reaches the
+    // probability, so a count with a mass of zero gives the next one.
+    let t1, kt1 = statistics::nhypergeom_cdf(0.0, 10.0, 5.0, 3.0);
+    let u1, ku1 = statistics::nhypergeom_ppf(t1, 10.0, 5.0, 3.0);
+    chk_val(bad, "nhypergeom ppf of its own cdf", u1, ku1, 0.0, 1e-12);
+    let t2, kt2 = statistics::dlaplace_cdf(0.0, 0.5);
+    let u2, ku2 = statistics::dlaplace_ppf(t2, 0.5);
+    chk_val(bad, "dlaplace ppf of its own cdf", u2, ku2, 0.0, 1e-12);
     // The quantile of the end points gives the bounds of the support.
     let e1, ce1 = statistics::bernoulli_ppf(0.0, 0.5);
     chk_val(bad, "bernoulli ppf 0", e1, ce1, 0.0, 1e-12);

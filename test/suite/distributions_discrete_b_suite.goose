@@ -87,5 +87,7 @@ fn run_distributions_discrete_b_tests() -> i64 {
     chk_code(bad, "zipfian count 0", cd6, 5);
     let _d7, cd7 = statistics::skellam_pmf(1.0, 0.0, 2.0);
     chk_code(bad, "skellam shape 0", cd7, 5);
+    let _d7b, cd7b = statistics::skellam_ppf(0.5, 0.0, 2.0);
+    chk_code(bad, "skellam ppf shape 0", cd7b, 5);
     return bad;
 }
